@@ -1,0 +1,20 @@
+{
+  "name": "concavachencom-workspace",
+  "version": "1.7.0",
+  "description": "Cá Cơm Workspace - Quản lý công việc, thời khóa biểu & Ma trận Eisenhower",
+  "scripts": {
+    "build": "node build.js",
+    "push:gas": "npx @google/clasp push -f",
+    "deploy:gas": "node build.js && npx @google/clasp push -f && npx @google/clasp deploy -i AKfycbyS6HtN40EiOxfMGGHNsqN1ZeigSn3nkRJzbsIc1EJoAX3emgBxHXGxYiVGBAtD4sUEag"
+  },
+  "keywords": [
+    "workspace",
+    "fpt",
+    "timetable",
+    "eisenhower-matrix",
+    "supabase",
+    "google-apps-script"
+  ],
+  "author": "Nguyễn Trọng Tài",
+  "license": "MIT"
+}

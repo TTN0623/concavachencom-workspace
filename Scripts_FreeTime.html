@@ -1,0 +1,440 @@
+<script>
+// =====================================================================
+        // QUẢN LÝ LỊCH RẢNH & TÍNH TOÁN KHUNG GIỜ TRỐNG TRONG TUẦN
+        // =====================================================================
+        function formatDuration(min) {
+            if (min <= 0) return '0 phút';
+            const h = Math.floor(min / 60);
+            const m = min % 60;
+            if (h > 0 && m > 0) return `${h}h ${m}p`;
+            if (h > 0) return `${h} giờ`;
+            return `${m} phút`;
+        }
+
+        function formatMinutesToTime(min) {
+            const h = Math.floor(min / 60).toString().padStart(2, '0');
+            const m = (min % 60).toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function getTimePeriodLabel(min) {
+            if (min < 11 * 60 + 30) return '☀️ Buổi sáng';
+            if (min < 13 * 60 + 30) return '🥪 Buổi trưa';
+            if (min < 17 * 60 + 30) return '🌤️ Buổi chiều';
+            return '🌙 Buổi tối';
+        }
+
+        function changeFreeTimeRange(val) {
+            try {
+                localStorage.setItem(STORAGE_KEY_FREETIME_RANGE, val);
+            } catch(e) {}
+            renderFreeTimeSchedule();
+        }
+
+        function toggleShowBusy(checked) {
+            try {
+                localStorage.setItem(STORAGE_KEY_SHOW_BUSY, checked ? 'true' : 'false');
+            } catch(e) {}
+            renderFreeTimeSchedule();
+        }
+
+        function calculateDayFreeSlots(dayIndex, startInput = 7, endInput = 22) {
+            // Hỗ trợ cả truyền giờ (<= 24) hoặc phút (> 24)
+            const dayStartMin = (startInput <= 24) ? Math.round(startInput * 60) : startInput;
+            const dayEndMin = (endInput <= 24) ? Math.round(endInput * 60) : endInput;
+
+            const dayTasks = allTasksList.filter((t) => {
+                if (t.status === 'cancelled') return false;
+                if (t.day !== undefined && t.day !== null && t.day !== '') {
+                    return parseInt(t.day, 10) === dayIndex;
+                }
+                return false;
+            });
+
+            const busyIntervals = [];
+            dayTasks.forEach(t => {
+                const parsed = parseTaskDetails(t.task, t.time);
+                const timeStr = parsed.time || t.time;
+                if (!timeStr) return;
+
+                const m = timeStr.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+                if (m) {
+                    const sH = parseInt(m[1], 10);
+                    const sM = parseInt(m[2], 10);
+                    const eH = parseInt(m[3], 10);
+                    const eM = parseInt(m[4], 10);
+                    const sTotal = sH * 60 + sM;
+                    const eTotal = eH * 60 + eM;
+                    // Chỉ lấy những việc có giao với khoảng [dayStartMin, dayEndMin]
+                    if (eTotal > sTotal && eTotal > dayStartMin && sTotal < dayEndMin) {
+                        busyIntervals.push({
+                            start: sTotal,
+                            end: eTotal,
+                            title: parsed.cleanTitle || t.task,
+                            timeStr: timeStr,
+                            task: t
+                        });
+                    }
+                }
+            });
+
+            busyIntervals.sort((a, b) => a.start - b.start);
+
+            // Gộp các khoảng bận trùng lặp hoặc sát nhau
+            const mergedBusy = [];
+            for (const b of busyIntervals) {
+                if (mergedBusy.length === 0) {
+                    mergedBusy.push({ start: b.start, end: b.end, titles: [b.title] });
+                } else {
+                    const last = mergedBusy[mergedBusy.length - 1];
+                    if (b.start <= last.end) {
+                        last.end = Math.max(last.end, b.end);
+                        last.titles.push(b.title);
+                    } else {
+                        mergedBusy.push({ start: b.start, end: b.end, titles: [b.title] });
+                    }
+                }
+            }
+
+            // Tìm các khoảng trống (free gaps)
+            const timelineItems = [];
+            let currentPointer = dayStartMin;
+
+            mergedBusy.forEach(busy => {
+                // Clamp chặt chẽ trong phạm vi khung giờ [dayStartMin, dayEndMin]
+                const busyStartClamped = Math.max(dayStartMin, Math.min(dayEndMin, busy.start));
+                const busyEndClamped = Math.min(dayEndMin, Math.max(dayStartMin, busy.end));
+
+                // Nếu có khoảng trống trước ca bận này
+                if (busyStartClamped > currentPointer) {
+                    let freeStart = currentPointer;
+                    let freeEnd = busyStartClamped;
+
+                    // Tự động làm tròn: phút 15/45 cộng thêm 15 thành 30 hoặc 00 (hh:15 -> hh:30, hh:45 -> hh:00)
+                    if (freeStart % 60 === 15 || freeStart % 60 === 45) {
+                        freeStart += 15;
+                    }
+                    if (freeEnd % 60 === 15 || freeEnd % 60 === 45) {
+                        freeEnd += 15;
+                    }
+
+                    if (freeEnd > freeStart) {
+                        const durationMin = freeEnd - freeStart;
+                        timelineItems.push({
+                            type: 'free',
+                            startMin: freeStart,
+                            endMin: freeEnd,
+                            durationMin: durationMin,
+                            timeStr: formatMinutesToTime(freeStart) + ' - ' + formatMinutesToTime(freeEnd)
+                        });
+                    }
+                }
+
+                // Ca bận
+                if (busyEndClamped > busyStartClamped) {
+                    timelineItems.push({
+                        type: 'busy',
+                        startMin: busyStartClamped,
+                        endMin: busyEndClamped,
+                        durationMin: busyEndClamped - busyStartClamped,
+                        timeStr: formatMinutesToTime(busyStartClamped) + ' - ' + formatMinutesToTime(busyEndClamped),
+                        title: busy.titles.join(', ')
+                    });
+                }
+
+                currentPointer = Math.max(currentPointer, busyEndClamped);
+            });
+
+            // Khoảng trống còn lại đến cuối khung giờ
+            if (currentPointer < dayEndMin) {
+                let freeStart = currentPointer;
+                let freeEnd = dayEndMin;
+
+                // Tự động làm tròn: phút 15/45 cộng thêm 15 thành 30 hoặc 00 (hh:15 -> hh:30, hh:45 -> hh:00)
+                if (freeStart % 60 === 15 || freeStart % 60 === 45) {
+                    freeStart += 15;
+                }
+                if (freeEnd % 60 === 15 || freeEnd % 60 === 45) {
+                    freeEnd += 15;
+                }
+
+                if (freeEnd > freeStart) {
+                    const durationMin = freeEnd - freeStart;
+                    timelineItems.push({
+                        type: 'free',
+                        startMin: freeStart,
+                        endMin: freeEnd,
+                        durationMin: durationMin,
+                        timeStr: formatMinutesToTime(freeStart) + ' - ' + formatMinutesToTime(freeEnd)
+                    });
+                }
+            }
+
+            const freeSlots = timelineItems.filter(item => item.type === 'free');
+            const totalFreeMinutes = freeSlots.reduce((acc, f) => acc + f.durationMin, 0);
+
+            return {
+                dayIndex: dayIndex,
+                busyCount: busyIntervals.length,
+                timelineItems: timelineItems,
+                freeSlots: freeSlots,
+                totalFreeMinutes: totalFreeMinutes
+            };
+        }
+
+        function renderFreeTimeSchedule() {
+            const days = getWeekDays(currentWeekOffset);
+            const gridContainer = document.getElementById('freeTimeGridContainer');
+            const metricsContainer = document.getElementById('freeTimeMetricsContainer');
+            const weekLabel = document.getElementById('freeTimeWeekLabel');
+            if (!gridContainer || !metricsContainer) return;
+
+            // Đọc cài đặt hiện lịch bận
+            const showBusy = localStorage.getItem(STORAGE_KEY_SHOW_BUSY) !== 'false';
+            const toggleBusyEl = document.getElementById('toggleShowBusyInFreeTime');
+            if (toggleBusyEl) toggleBusyEl.checked = showBusy;
+
+            // Hiển thị nhãn tuần
+            const d = days[0].fullDate;
+            const firstJan = new Date(d.getFullYear(), 0, 1);
+            const weekNum = Math.ceil((((d - firstJan) / 86400000) + firstJan.getDay() + 1) / 7);
+            if (weekLabel) {
+                weekLabel.innerText = `Tuần ${weekNum} (${days[0].dateStr} - ${days[6].dateStr})`;
+            }
+
+            // ĐỊNH NGHĨA 3 KHUNG BUỔI (Khung 12:00 - 12:30 là giờ nghỉ trưa mặc định, không đưa vào lịch rảnh)
+            const periods = [
+                { 
+                    id: 'morning',   
+                    label: '🌅 Buổi sáng', 
+                    startMin: 7 * 60,         // 07:00
+                    endMin: 12 * 60,          // 12:00
+                    timeLabel: '07:00 – 12:00',
+                    borderColor: 'border-amber-200 dark:border-amber-800',   
+                    bgHead: 'bg-amber-50 dark:bg-amber-950/40',    
+                    textHead: 'text-amber-900 dark:text-amber-200',   
+                    badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300' 
+                },
+                { 
+                    id: 'afternoon', 
+                    label: '☀️ Buổi chiều', 
+                    startMin: 12 * 60 + 30,    // 12:30 (Trừ giờ nghỉ trưa 12h - 12h30)
+                    endMin: 18 * 60,          // 18:00
+                    timeLabel: '12:30 – 18:00',
+                    borderColor: 'border-blue-200 dark:border-blue-800',     
+                    bgHead: 'bg-blue-50 dark:bg-blue-950/40',      
+                    textHead: 'text-blue-900 dark:text-blue-200',     
+                    badgeBg: 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300' 
+                },
+                { 
+                    id: 'evening',   
+                    label: '🌙 Buổi tối',   
+                    startMin: 18 * 60,        // 18:00
+                    endMin: 23 * 60,          // 23:00
+                    timeLabel: '18:00 – 23:00',
+                    borderColor: 'border-violet-200 dark:border-violet-800', 
+                    bgHead: 'bg-violet-50 dark:bg-violet-950/40',  
+                    textHead: 'text-violet-900 dark:text-violet-200', 
+                    badgeBg: 'bg-violet-100 text-violet-800 dark:bg-violet-900/60 dark:text-violet-300' 
+                }
+            ];
+
+            // Tính toán lịch rảnh 7 ngày theo 3 buổi
+            const dayCalcs = days.map((day, idx) => {
+                const morningCalc = calculateDayFreeSlots(idx, periods[0].startMin, periods[0].endMin);
+                const afternoonCalc = calculateDayFreeSlots(idx, periods[1].startMin, periods[1].endMin);
+                const eveningCalc = calculateDayFreeSlots(idx, periods[2].startMin, periods[2].endMin);
+
+                const totalFreeMinutes = morningCalc.totalFreeMinutes + afternoonCalc.totalFreeMinutes + eveningCalc.totalFreeMinutes;
+                const busyCount = morningCalc.busyCount + afternoonCalc.busyCount + eveningCalc.busyCount;
+                return {
+                    dayIndex: idx,
+                    totalFreeMinutes: totalFreeMinutes,
+                    busyCount: busyCount
+                };
+            });
+
+            // Tổng thời gian hoạt động = 7 ngày * (5h sáng + 5.5h chiều + 5h tối) = 7 * 15.5h * 60m = 6510 phút
+            const totalActiveMinutes = 7 * (5 + 5.5 + 5) * 60;
+            const totalFreeMinutes = dayCalcs.reduce((acc, c) => acc + c.totalFreeMinutes, 0);
+            const freePercent = totalActiveMinutes > 0 ? Math.round((totalFreeMinutes / totalActiveMinutes) * 100) : 0;
+            const totalBusyCount = dayCalcs.reduce((acc, c) => acc + c.busyCount, 0);
+
+            // Tìm ngày rảnh nhất
+            let mostFreeIdx = 0;
+            let maxFreeMin = -1;
+            dayCalcs.forEach((c, idx) => {
+                if (c.totalFreeMinutes > maxFreeMin) {
+                    maxFreeMin = c.totalFreeMinutes;
+                    mostFreeIdx = idx;
+                }
+            });
+            const mostFreeDay = days[mostFreeIdx];
+            const avgFreeMin = Math.round(totalFreeMinutes / 7);
+
+            // 1. RENDER 4 THẺ CHỈ SỐ METRICS
+            metricsContainer.innerHTML = `
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
+                        <span class="font-medium">Tổng giờ rảnh tuần</span>
+                        <span class="text-base p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">🌿</span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 font-mono tracking-tight">${formatDuration(totalFreeMinutes)}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Chiếm <strong>${freePercent}%</strong> quỹ thời gian (đã trừ nghỉ trưa)</div>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
+                        <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: ${freePercent}%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
+                        <span class="font-medium">Ngày rảnh nhiều nhất</span>
+                        <span class="text-base p-1 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-500">☀️</span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100">${mostFreeDay.name}</div>
+                        <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Trống <strong>${formatDuration(maxFreeMin)}</strong> (${mostFreeDay.dateStr})</div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-2">Thời điểm lý tưởng để tự học/nghỉ ngơi</div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
+                        <span class="font-medium">Giờ rảnh trung bình</span>
+                        <span class="text-base p-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#0054a6] dark:text-blue-400">⚡</span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 font-mono tracking-tight">${formatDuration(avgFreeMin)}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Bình quân mỗi ngày trong tuần</div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-2">Đủ để hoàn thành các mục tiêu quan trọng</div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
+                        <span class="font-medium">Lịch bận & ca học</span>
+                        <span class="text-base p-1 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-600">📚</span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 font-mono tracking-tight">${totalBusyCount} <span class="text-xs font-normal text-slate-500">ca đã cấn trừ</span></div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Sáng 7h-12h | Chiều 12h30-18h | Tối 18h-23h</div>
+                    </div>
+                    <div class="text-[10px] text-amber-600 dark:text-amber-400 mt-2 font-medium">☕ 12:00 – 12:30: Nghỉ trưa mặc định</div>
+                </div>
+            `;
+
+            // 2. RENDER BẢNG THỜI KHÓA BIỂU THEO DẠNG BẢNG THỐNG NHẤT:
+            // - Cột bên trái: Khung buổi (Sáng / Chiều / Tối)
+            // - Hàng trên cùng: 7 thứ ngày (chỉ hiện 1 lần duy nhất)
+            // - Mỗi buổi là một hàng, ngăn cách bằng một line kẻ (divider)
+
+            // Hàng Header 7 thứ ngày (Chỉ hiện 1 lần duy nhất ở trên)
+            const topHeaderDaysHtml = days.map((day, idx) => {
+                const isToday = day.isToday;
+                const dayTotalFree = dayCalcs[idx].totalFreeMinutes;
+                return `
+                    <div class="flex-1 min-w-[105px] sm:min-w-[115px] text-center px-1.5 py-2 rounded-xl ${isToday ? 'bg-[#0054a6] text-white shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200'} border ${isToday ? 'border-[#0054a6]' : 'border-slate-200 dark:border-slate-700'}">
+                        <div class="text-xs font-black tracking-tight">${day.short}</div>
+                        <div class="text-[10px] font-mono opacity-80">${day.dateStr}</div>
+                        <div class="text-[9px] font-semibold mt-0.5 ${isToday ? 'text-emerald-200' : 'text-emerald-600 dark:text-emerald-400'}">
+                            🌿 ${formatDuration(dayTotalFree)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Các hàng theo từng buổi (Sáng, Chiều, Tối)
+            const periodRowsHtml = periods.map((period, pIdx) => {
+                const pCalcs = days.map((day, idx) => calculateDayFreeSlots(idx, period.startMin, period.endMin));
+                const periodTotalFree = pCalcs.reduce((acc, c) => acc + c.totalFreeMinutes, 0);
+
+                // 7 ô nội dung của 7 ngày cho buổi này
+                const dayCellsHtml = days.map((day, idx) => {
+                    const pc = pCalcs[idx];
+                    const isToday = day.isToday;
+                    const periodTotal = period.endMin - period.startMin;
+                    const isFull = pc.totalFreeMinutes >= periodTotal;
+                    const isKin = pc.freeSlots.length === 0 && pc.busyCount > 0;
+
+                    // Hàm sinh HTML thẻ giờ rảnh co dãn flex-1 đồng bộ với chiều cao hàng/ô buổi
+                    const makeFreeCardHtml = (timeStr, durationMin) => `
+                        <div class="rounded-xl p-2 bg-emerald-50/90 dark:bg-emerald-950/40 border-2 border-emerald-300 dark:border-emerald-700/80 hover:bg-emerald-100 hover:border-emerald-500 transition-all flex flex-col justify-between cursor-pointer group flex-1 min-h-[54px] shadow-2xs" onclick="openDayAddModal(${idx}, '${timeStr}')" title="Rảnh ${timeStr} (${formatDuration(durationMin)})">
+                            <div class="text-[10px] font-black text-emerald-900 dark:text-emerald-100 font-mono leading-none tracking-tight">${timeStr}</div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-[9px] font-semibold text-emerald-700 dark:text-emerald-400">⏳ ${formatDuration(durationMin)}</span>
+                                <span class="text-[8px] font-bold text-emerald-700 dark:text-emerald-400 opacity-80 group-hover:opacity-100 transition-opacity">➕ Thêm</span>
+                            </div>
+                        </div>
+                    `;
+
+                    let cellContent = '';
+                    if (isFull) {
+                        const timeStr = `${formatMinutesToTime(period.startMin)} – ${formatMinutesToTime(period.endMin)}`;
+                        cellContent = makeFreeCardHtml(timeStr, pc.totalFreeMinutes);
+                    } else if (isKin) {
+                        cellContent = `
+                            <div class="rounded-xl p-2 bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center gap-0.5 flex-1 min-h-[54px]">
+                                <div class="text-sm">🔒</div>
+                                <div class="text-[9px] font-bold text-slate-500 dark:text-slate-400">Kín lịch</div>
+                            </div>
+                        `;
+                    } else {
+                        cellContent = pc.timelineItems.map(item => {
+                            if (item.type === 'free') {
+                                return makeFreeCardHtml(item.timeStr, item.durationMin);
+                            } else if (showBusy && item.type === 'busy') {
+                                return `
+                                    <div class="rounded-lg px-2 py-1.5 bg-slate-100/90 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-center gap-0.5 opacity-75 shadow-2xs" title="${item.title}">
+                                        <div class="text-[9px] font-mono text-slate-500 dark:text-slate-400 leading-none">${item.timeStr}</div>
+                                        <div class="text-[9px] font-bold text-slate-700 dark:text-slate-200 line-clamp-1">🔒 ${item.title}</div>
+                                    </div>
+                                `;
+                            }
+                            return '';
+                        }).join('');
+                    }
+
+                    return `
+                        <div class="flex-1 min-w-[105px] sm:min-w-[115px] flex flex-col gap-1.5 h-full ${isToday ? 'ring-1 ring-[#0054a6]/25 rounded-xl p-1 bg-[#0054a6]/5' : ''}">${cellContent}</div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="flex items-stretch gap-2.5 py-3">
+                        <!-- CỘT BÊN TRÁI: KHUNG BUỔI -->
+                        <div class="w-28 sm:w-32 shrink-0 rounded-xl p-2.5 ${period.bgHead} border ${period.borderColor} flex flex-col justify-center items-center text-center gap-1 shadow-2xs min-h-[85px]">
+                            <span class="text-xs font-black ${period.textHead}">${period.label}</span>
+                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 font-semibold">${period.timeLabel}</span>
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${period.badgeBg}">🌿 ${formatDuration(periodTotalFree)}</span>
+                        </div>
+
+                        <!-- 7 CỘT NỘI DUNG NGÀY -->
+                        <div class="flex-1 flex gap-2 items-stretch">
+                            ${dayCellsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            gridContainer.innerHTML = `
+                <div class="overflow-x-auto pb-2 -mx-1 px-1">
+                    <div class="min-w-[850px] flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
+                        <!-- HÀNG TIÊU ĐỀ: CỘT TRÁI + 7 THỨ NGÀY -->
+                        <div class="flex items-center gap-2.5 pb-2.5">
+                            <div class="w-28 sm:w-32 shrink-0 flex items-center justify-center p-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Buổi học
+                            </div>
+                            <div class="flex-1 flex gap-2">
+                                ${topHeaderDaysHtml}
+                            </div>
+                        </div>
+
+                        <!-- 3 HÀNG BUỔI SÁNG - CHIỀU - TỐI VỚI ĐƯỜNG KẺ NGĂN CÁCH -->
+                        ${periodRowsHtml}
+                    </div>
+                </div>
+            `;
+        }
+</script>

@@ -1,0 +1,480 @@
+<script>
+// =====================================================================
+        // PWA INSTALLATION & PROMPT HANDLERS
+        // =====================================================================
+        let deferredPwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+            const pwaDirectBtn = document.getElementById('pwaDirectInstallBtn');
+            if (pwaDirectBtn) pwaDirectBtn.classList.remove('hidden');
+        });
+
+        function triggerPwaInstall() {
+            if (deferredPwaPrompt) {
+                deferredPwaPrompt.prompt();
+                deferredPwaPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('Đã cài đặt Cá Cơm Workspace thành công!', '🎉');
+                        closePwaModal();
+                    }
+                    deferredPwaPrompt = null;
+                });
+            } else {
+                showToast('Vui lòng làm theo hướng dẫn từng bước bên dưới', 'ℹ️');
+            }
+        }
+
+        function openPwaModal() {
+            closeMobileSidebar();
+            const modal = document.getElementById('pwaInstallModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+                setPwaTab('ios');
+            } else {
+                setPwaTab('android');
+            }
+        }
+
+        function closePwaModal() {
+            document.getElementById('pwaInstallModal')?.classList.add('hidden');
+        }
+
+        function setPwaTab(tab) {
+            const iosTab = document.getElementById('pwaIosTab');
+            const androidTab = document.getElementById('pwaAndroidTab');
+            const iosContent = document.getElementById('pwaIosContent');
+            const androidContent = document.getElementById('pwaAndroidContent');
+
+            if (tab === 'ios') {
+                iosTab?.classList.add('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                iosTab?.classList.remove('border-transparent', 'text-slate-500');
+                androidTab?.classList.remove('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                androidTab?.classList.add('border-transparent', 'text-slate-500');
+                iosContent?.classList.remove('hidden');
+                androidContent?.classList.add('hidden');
+            } else {
+                androidTab?.classList.add('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                androidTab?.classList.remove('border-transparent', 'text-slate-500');
+                iosTab?.classList.remove('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                iosTab?.classList.add('border-transparent', 'text-slate-500');
+                androidContent?.classList.remove('hidden');
+                iosContent?.classList.add('hidden');
+            }
+        }
+
+
+
+        // =====================================================================
+        // TRUNG TÂM THÔNG BÁO & BÁO CÁO NGÀY (NOTIFICATION CENTER - PHASE 3)
+        // =====================================================================
+        let currentNotifications = [];
+        let activeNotificationTab = 'all'; // 'all' hoặc 'unread'
+        let serverAnnouncementsList = [];
+
+        function getReadNotificationIds() {
+            try {
+                const key = 'cacom_read_notifs_' + (currentUserEmail || 'guest');
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveReadNotificationIds(ids) {
+            try {
+                const key = 'cacom_read_notifs_' + (currentUserEmail || 'guest');
+                localStorage.setItem(key, JSON.stringify(ids));
+            } catch(e) {}
+        }
+
+        function markNotificationAsRead(notifId) {
+            const readIds = getReadNotificationIds();
+            if (!readIds.includes(notifId)) {
+                readIds.push(notifId);
+                saveReadNotificationIds(readIds);
+            }
+            renderNotificationItems();
+            updateNotificationBadge();
+        }
+
+        function markAllNotificationsAsRead() {
+            const allIds = currentNotifications.map(n => n.id);
+            saveReadNotificationIds(allIds);
+            renderNotificationItems();
+            updateNotificationBadge();
+            showToast("Đã đánh dấu tất cả thông báo là đã đọc!", "✅");
+        }
+
+        function setNotificationTab(tab) {
+            activeNotificationTab = tab;
+            const btnAll = document.getElementById('notifTabAll');
+            const btnUnread = document.getElementById('notifTabUnread');
+            if (tab === 'all') {
+                btnAll?.classList.add('bg-[#0054a6]', 'text-white');
+                btnAll?.classList.remove('text-slate-600', 'dark:text-slate-400');
+                btnUnread?.classList.remove('bg-[#0054a6]', 'text-white');
+                btnUnread?.classList.add('text-slate-600', 'dark:text-slate-400');
+            } else {
+                btnUnread?.classList.add('bg-[#0054a6]', 'text-white');
+                btnUnread?.classList.remove('text-slate-600', 'dark:text-slate-400');
+                btnAll?.classList.remove('bg-[#0054a6]', 'text-white');
+                btnAll?.classList.add('text-slate-600', 'dark:text-slate-400');
+            }
+            renderNotificationItems();
+        }
+
+        function positionNotificationPanel() {
+            const panel = document.getElementById('notificationDropdownPanel');
+            const btn = document.getElementById('notificationBellBtn');
+            if (!panel || !btn) return;
+
+            const rect = btn.getBoundingClientRect();
+            const panelWidth = Math.min(380, window.innerWidth - 24);
+
+            panel.style.position = 'fixed';
+            panel.style.top = (rect.bottom + 8) + 'px';
+            panel.style.width = panelWidth + 'px';
+            panel.style.zIndex = '9999';
+
+            // Căn lề ngang: Ưu tiên căn phải theo nút chuông, nếu bị tràn mép trái thì giữ cách mép màn hình 12px
+            let leftPos = rect.right - panelWidth;
+            if (leftPos < 12) {
+                leftPos = 12;
+            }
+            if (leftPos + panelWidth > window.innerWidth - 12) {
+                leftPos = window.innerWidth - panelWidth - 12;
+            }
+            panel.style.left = leftPos + 'px';
+            panel.style.right = 'auto';
+        }
+
+        function toggleNotificationPanel() {
+            const panel = document.getElementById('notificationDropdownPanel');
+            if (!panel) return;
+            const isHidden = panel.classList.contains('hidden');
+            if (isHidden) {
+                loadAndRenderNotifications();
+                panel.classList.remove('hidden');
+                positionNotificationPanel();
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function closeNotificationPanel() {
+            const panel = document.getElementById('notificationDropdownPanel');
+            if (panel) panel.classList.add('hidden');
+        }
+
+        function generateDailyReportNotification() {
+            const today = new Date();
+            const dateStr = today.toISOString().slice(0, 10);
+            const dayOfWeek = today.getDay(); // 0: CN, 1: T2, ...
+            const todayIdx = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+            const dayNames = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+            const todayName = dayNames[todayIdx];
+
+            // Tìm các việc và lịch học trong hôm nay
+            const todayTasks = allTasksList.filter(t => {
+                if (t.day !== undefined && t.day !== null && t.day !== '') {
+                    return parseInt(t.day, 10) === todayIdx;
+                }
+                return false;
+            });
+
+            const lessons = todayTasks.filter(t => t.source === 'fap' || (t.task && t.task.startsWith('[')));
+            const tasksOnly = todayTasks.filter(t => !lessons.includes(t));
+            const completedCount = todayTasks.filter(t => !!t.done).length;
+            const totalCount = todayTasks.length;
+
+            let reportSummary = '';
+            let reportContent = '';
+
+            if (totalCount === 0) {
+                reportSummary = `Hôm nay (${todayName}) bạn không có lịch học hay nhiệm vụ nào.`;
+                reportContent = `🎉 HÔM NAY BẠN KHÔNG CÓ LỊCH HỌC HAY NHIỆM VỤ NÀO!\n\nHãy tận hưởng một ngày nghỉ ngơi trọn vẹn, rèn luyện thể thao hoặc thư giãn cùng bạn bè nhé ✨`;
+            } else {
+                reportSummary = `Hôm nay (${todayName}): ${lessons.length} buổi học, ${tasksOnly.length} nhiệm vụ (${completedCount}/${totalCount} đã xong).`;
+                let detailList = [];
+                if (lessons.length > 0) {
+                    detailList.push('🎓 CÁC BUỔI HỌC TRÊN LỚP HÔM NAY:');
+                    lessons.forEach((l, i) => {
+                        const parsed = parseTaskDetails(l.task, l.time);
+                        detailList.push(`  ${i + 1}. ${parsed.cleanTitle} - ⏰ ${parsed.time || 'Chưa đặt'} (📍 ${parsed.room || 'Phòng học'})`);
+                    });
+                }
+                if (tasksOnly.length > 0) {
+                    detailList.push('\n📋 DANH SÁCH NHIỆM VỤ CẦN LÀM:');
+                    tasksOnly.forEach((t, i) => {
+                        const icon = t.done ? '✅' : '⏳';
+                        detailList.push(`  ${icon} ${t.task} [${t.category || 'Công việc'}]`);
+                    });
+                }
+                detailList.push(`\n📊 TIẾN ĐỘ: Đã hoàn thành ${completedCount}/${totalCount} (${Math.round(totalCount > 0 ? (completedCount / totalCount) * 100 : 0)}%).`);
+                reportContent = detailList.join('\n');
+            }
+
+            return {
+                id: 'daily_report_' + dateStr,
+                type: 'report',
+                icon: '📊',
+                typeLabel: 'Báo cáo ngày',
+                title: `Báo cáo ngày ${todayName} (${today.getDate()}/${today.getMonth() + 1})`,
+                summary: reportSummary,
+                content: reportContent,
+                createdAt: today.toISOString(),
+                actionLabel: 'Xem Lịch tuần',
+                actionType: 'goto_dashboard'
+            };
+        }
+
+        function generateDeadlineNotifications() {
+            const list = [];
+            const now = new Date();
+
+            allTasksList.forEach(task => {
+                if (!task.deadline || task.done) return;
+                const dl = new Date(task.deadline);
+                if (isNaN(dl.getTime())) return;
+
+                const diffMs = dl.getTime() - now.getTime();
+                const diffHours = Math.round(diffMs / (3600 * 1000));
+
+                if (diffMs < 0) {
+                    // Quá hạn
+                    const dateFormatted = `${dl.getDate()}/${dl.getMonth() + 1} ${String(dl.getHours()).padStart(2, '0')}:${String(dl.getMinutes()).padStart(2, '0')}`;
+                    list.push({
+                        id: 'deadline_overdue_' + task.id,
+                        type: 'deadline_overdue',
+                        icon: '🚨',
+                        typeLabel: 'Quá hạn chót',
+                        title: `Quá hạn: ${task.task}`,
+                        summary: `Đã trễ hạn từ ${dateFormatted}. Hãy hoàn thành ngay!`,
+                        content: `⚠️ CÔNG VIỆC ĐÃ QUÁ HẠN CHÓT!\n\n• Công việc: ${task.task}\n• Phân loại: ${task.category || 'Chung'}\n• Hạn chót ban đầu: ${dateFormatted}\n\nHãy tập trung ưu tiên xử lý dứt điểm công việc này!`,
+                        createdAt: task.deadline,
+                        taskId: task.id,
+                        actionLabel: 'Xem công việc',
+                        actionType: 'open_task'
+                    });
+                } else if (diffMs <= 24 * 3600 * 1000) {
+                    // Trong vòng 24h
+                    const text = diffHours <= 1 ? 'Chỉ còn dưới 1 giờ' : `Còn khoảng ${diffHours} giờ`;
+                    list.push({
+                        id: 'deadline_urgent_' + task.id,
+                        type: 'deadline_urgent',
+                        icon: '⏰',
+                        typeLabel: 'Hạn chót gấp',
+                        title: `Gấp (${text}): ${task.task}`,
+                        summary: `Cần hoàn thành trước ${dl.getHours()}:${String(dl.getMinutes()).padStart(2, '0')} hôm nay.`,
+                        content: `⏰ CẢNH BÁO HẠN CHÓT SẮP ĐẾN!\n\n• Công việc: ${task.task}\n• Thời gian còn lại: ${text}\n• Hạn chót: ${dl.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${dl.toLocaleDateString('vi-VN')}\n• Phân loại: ${task.category || 'Chung'}`,
+                        createdAt: new Date().toISOString(),
+                        taskId: task.id,
+                        actionLabel: 'Xem công việc',
+                        actionType: 'open_task'
+                    });
+                }
+            });
+
+            return list;
+        }
+
+        function loadAndRenderNotifications() {
+            // 1. Sinh báo cáo ngày
+            const dailyNotif = generateDailyReportNotification();
+
+            // 2. Sinh thông báo deadline
+            const deadlineNotifs = generateDeadlineNotifications();
+
+            // 3. Format thông báo từ Admin (đã load từ server)
+            const adminNotifs = (serverAnnouncementsList || []).map(a => ({
+                id: a.id,
+                type: 'admin',
+                icon: '📢',
+                typeLabel: 'Thông báo Admin',
+                title: a.title,
+                summary: a.content.slice(0, 75) + (a.content.length > 75 ? '...' : ''),
+                content: a.content,
+                author: a.author,
+                createdAt: a.createdAt,
+                actionLabel: 'Đóng',
+                actionType: 'close'
+            }));
+
+            currentNotifications = [dailyNotif, ...deadlineNotifs, ...adminNotifs];
+
+            renderNotificationItems();
+            updateNotificationBadge();
+        }
+
+        function renderNotificationItems() {
+            const listEl = document.getElementById('notificationList');
+            if (!listEl) return;
+
+            const readIds = getReadNotificationIds();
+
+            let displayList = currentNotifications;
+            if (activeNotificationTab === 'unread') {
+                displayList = currentNotifications.filter(n => !readIds.includes(n.id));
+            }
+
+            if (displayList.length === 0) {
+                listEl.innerHTML = `
+                    <div class="p-8 text-center flex flex-col items-center justify-center gap-2">
+                        <span class="text-3xl">✨</span>
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Không có thông báo nào</span>
+                        <span class="text-[11px] text-slate-400">Bạn đã cập nhật hết mọi tin tức & báo cáo!</span>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = displayList.map(notif => {
+                const isRead = readIds.includes(notif.id);
+                let timeStr = 'Hôm nay';
+                if (notif.createdAt) {
+                    try {
+                        const d = new Date(notif.createdAt);
+                        if (!isNaN(d.getTime())) {
+                            timeStr = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+                        }
+                    } catch(e) {}
+                }
+
+                return `
+                    <div onclick="openNotificationDetail('${escapeHtml(notif.id)}')" class="p-3 sm:p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors flex items-start gap-3 relative ${isRead ? 'opacity-70 bg-white dark:bg-slate-900' : 'bg-blue-50/30 dark:bg-blue-950/20'}">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-base shrink-0 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                            ${notif.icon}
+                        </div>
+                        <div class="flex-1 min-w-0 pr-4">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">${escapeHtml(notif.typeLabel)}</span>
+                                <span class="text-slate-300">•</span>
+                                <span class="text-[10px] text-slate-400 font-mono">${timeStr}</span>
+                            </div>
+                            <h4 class="text-xs sm:text-[13px] text-slate-800 dark:text-slate-100 truncate mt-0.5 ${isRead ? 'font-normal' : 'font-bold'}">
+                                ${escapeHtml(notif.title)}
+                            </h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                                ${escapeHtml(notif.summary)}
+                            </p>
+                        </div>
+                        ${!isRead ? `<span class="w-2 h-2 rounded-full bg-blue-600 absolute right-3 top-4 shrink-0 ring-2 ring-white dark:ring-slate-900" title="Chưa đọc"></span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateNotificationBadge() {
+            const readIds = getReadNotificationIds();
+            const unreadCount = currentNotifications.filter(n => !readIds.includes(n.id)).length;
+
+            const badge = document.getElementById('notificationBadge');
+            const unreadBadge = document.getElementById('notificationUnreadCountBadge');
+
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+
+            if (unreadBadge) {
+                if (unreadCount > 0) {
+                    unreadBadge.innerText = `${unreadCount} mới`;
+                    unreadBadge.classList.remove('hidden');
+                } else {
+                    unreadBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        function openNotificationDetail(notifId) {
+            const notif = currentNotifications.find(n => n.id === notifId);
+            if (!notif) return;
+
+            // Đóng panel thông báo khi mở popup chi tiết
+            closeNotificationPanel();
+
+            // Đánh dấu đã đọc
+            markNotificationAsRead(notifId);
+
+            // Gán dữ liệu vào modal
+            document.getElementById('notifDetailIcon').innerText = notif.icon || '🔔';
+            document.getElementById('notifDetailTypeBadge').innerText = notif.typeLabel || 'Thông báo';
+            document.getElementById('notifDetailTitle').innerText = notif.title;
+            
+            const authorEl = document.getElementById('notifDetailAuthor');
+            if (authorEl) {
+                authorEl.innerText = notif.author ? `👤 Người gửi: ${notif.author}` : '';
+            }
+
+            let dateFormatted = '';
+            if (notif.createdAt) {
+                try {
+                    const d = new Date(notif.createdAt);
+                    dateFormatted = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')} - ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                } catch(e) {}
+            }
+            document.getElementById('notifDetailTime').innerText = dateFormatted;
+            document.getElementById('notifDetailContent').innerText = notif.content;
+
+            const actionBtn = document.getElementById('notifDetailActionBtn');
+            if (actionBtn) {
+                if (notif.actionLabel && notif.actionType) {
+                    actionBtn.innerText = notif.actionLabel;
+                    actionBtn.onclick = function() {
+                        closeNotificationDetailModal();
+                        closeNotificationPanel();
+                        if (notif.actionType === 'goto_dashboard') {
+                            switchView('dashboard');
+                        } else if (notif.actionType === 'open_task' && notif.taskId) {
+                            openTaskDetailModal(notif.taskId);
+                        }
+                    };
+                    actionBtn.classList.remove('hidden');
+                } else {
+                    actionBtn.classList.add('hidden');
+                }
+            }
+
+            // Hiện modal
+            const modal = document.getElementById('notificationDetailModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeNotificationDetailModal() {
+            const modal = document.getElementById('notificationDetailModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function fetchServerAnnouncements() {
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(announcements => {
+                        if (Array.isArray(announcements)) {
+                            serverAnnouncementsList = announcements;
+                            loadAndRenderNotifications();
+                        }
+                    })
+                    .getAnnouncements();
+            } else {
+                serverAnnouncementsList = [
+                    {
+                        id: 'ann_welcome',
+                        title: 'Chào mừng bạn đến với Cá Cơm Workspace v1.6.5',
+                        content: 'Cá Cơm Workspace đã được nâng cấp toàn diện:\n• Hỗ trợ cài đặt PWA lên điện thoại (Add to Home Screen)\n• Phân loại chuẩn 3 danh mục: Học tập, Công việc, Cá nhân\n• Quản lý checklist việc con (Sub-tasks)\n• Trung tâm thông báo & Báo cáo ngày thông minh\n\nChúc bạn có một ngày làm việc và học tập thật hiệu quả!',
+                        createdAt: new Date().toISOString(),
+                        author: 'Nguyễn Trọng Tài (Admin)'
+                    }
+                ];
+                loadAndRenderNotifications();
+            }
+        }
+</script>

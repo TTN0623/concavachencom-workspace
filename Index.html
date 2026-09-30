@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#0054a6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cá Cơm">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/task--v1.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/192/task--v1.png">
+    <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22C%C3%A1%20C%C6%A1m%20Workspace%22%2C%22short_name%22%3A%22C%C3%A1%20C%C6%A1m%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230054a6%22%2C%22theme_color%22%3A%22%230054a6%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fimg.icons8.com%2Fcolor%2F192%2Ftask--v1.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fimg.icons8.com%2Fcolor%2F512%2Ftask--v1.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+
+    <!-- Thẻ chống Cache trình duyệt và Sandbox Iframe -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Cá Cơm Workspace - Quản lý công việc & Thời khóa biểu</title>
+    
+    <!-- CSS & Thư viện hỗ trợ -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+        // Khởi tạo ngay theme từ localStorage chống chớp sáng màn hình (Anti-FOUC)
+        try {
+            if (localStorage.getItem('csg_active_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        } catch(e) {}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <?!= include('Styles'); ?>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-slate-800">
+
+    <!-- =================================================================== -->
+    <header class="h-14 md:h-16 bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 px-3 md:px-6 flex items-center justify-between shrink-0 z-40 shadow-xs">
+        
+        <!-- Bên trái: Logo FPT Education & Nút Toggle Menu -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <!-- Nút Toggle Sidebar Mobile/Desktop -->
+            <button type="button" onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0" title="Ẩn/Hiện Menu">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <!-- Logo FPT Education & Trường Đại học FPT -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <div class="flex flex-col shrink-0">
+                    <div class="flex items-center gap-1.5 leading-none">
+                        <span class="text-sm font-black text-[#ea580c] tracking-tight">FPT</span>
+                        <span class="hidden sm:inline text-[11px] font-bold text-slate-600 uppercase tracking-tight">Education</span>
+                    </div>
+                    <span class="text-[10px] font-extrabold text-[#ea580c] tracking-tight uppercase leading-tight mt-0.5">TRƯỜNG ĐH FPT</span>
+                </div>
+                <div class="hidden sm:block h-6 w-[1px] bg-slate-200 mx-1"></div>
+                <span class="hidden md:inline-flex text-[11px] font-bold text-[#0054a6] bg-blue-50 px-2 py-0.5 rounded border border-blue-200 tracking-wide uppercase shrink-0">
+                    CÁ CƠM WORKSPACE
+                </span>
+            </div>
+        </div>
+
+        <!-- Giữa: Motto box (ẩn trên màn nhỏ < md) -->
+        <div id="mottoHeaderBox" onclick="openProfileModal()" class="hidden md:flex items-center gap-2 text-xs font-medium text-amber-900 bg-amber-50 hover:bg-amber-100/80 px-3 py-1.5 rounded-lg border border-amber-200/80 cursor-pointer transition-all shadow-2xs mx-3 min-w-0 flex-1 max-w-sm lg:max-w-md group" title="Mục tiêu / Động lực mỗi ngày - Bấm để thay đổi trong Hồ sơ cá nhân">
+            <span class="text-sm shrink-0">🎯</span>
+            <span id="mottoDisplayText" class="truncate font-semibold text-slate-700 text-[11px] sm:text-xs">Kỷ luật là chìa khóa của tự do & Hoàn thành đồ án xuất sắc!</span>
+            <span class="text-[10px] text-amber-600/70 group-hover:text-amber-800 shrink-0 ml-0.5">✏️</span>
+        </div>
+
+        <!-- Bên phải: Icon buttons & Profile -->
+        <div class="flex items-center gap-1 md:gap-2 shrink-0">
+            
+            <!-- Chuông thông báo & Dropdown Panel -->
+            <div class="relative" id="notificationBellContainer">
+                <button type="button" id="notificationBellBtn" onclick="toggleNotificationPanel()" class="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-300 rounded-lg transition-colors cursor-pointer" title="Thông báo & Báo cáo ngày">
+                    <span class="text-sm">🔔</span>
+                    <span id="notificationBadge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-xs">0</span>
+                </button>
+
+                <!-- Panel Dropdown thông báo (Định vị chuẩn xác ngay dưới nút chuông qua positionNotificationPanel) -->
+                <div id="notificationDropdownPanel" class="hidden fixed bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden" style="z-index: 9999; max-height: calc(100vh - 80px);">
+                    <!-- Header -->
+                    <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🔔</span>
+                            <span class="font-bold text-sm text-slate-800 dark:text-slate-100">Thông báo & Báo cáo</span>
+                            <span id="notificationUnreadCountBadge" class="hidden px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 rounded-full">0 mới</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="markAllNotificationsAsRead()" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer" title="Đánh dấu tất cả đã đọc">
+                                Đã đọc hết
+                            </button>
+                            <button type="button" onclick="closeNotificationPanel()" class="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-sm font-bold">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Tabs: Tất cả / Chưa đọc -->
+                    <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/60 flex items-center gap-1 bg-white dark:bg-slate-900 text-xs font-semibold">
+                        <button type="button" id="notifTabAll" onclick="setNotificationTab('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-[#0054a6] text-white">
+                            Tất cả
+                        </button>
+                        <button type="button" id="notifTabUnread" onclick="setNotificationTab('unread')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            Chưa đọc
+                        </button>
+                    </div>
+
+                    <!-- Danh sách thông báo -->
+                    <div id="notificationList" class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 max-h-[380px]">
+                        <!-- Render dynamic items here -->
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="p-2.5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 text-center">
+                        <span class="text-[11px] text-slate-400 font-medium">Bấm vào từng mục để xem nội dung chi tiết</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chế độ tối / sáng -->
+            <button type="button" id="themeToggleBtn" onclick="toggleDarkMode()" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer" title="Chuyển sang giao diện tối">
+                <span id="themeToggleIcon" class="text-sm">🌙</span>
+            </button>
+
+            <!-- Cài đặt PWA lên điện thoại / Desktop -->
+            <button type="button" onclick="openPwaModal()" class="px-2 md:px-2.5 py-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shrink-0 border border-blue-200 dark:border-blue-900/50" title="Cài đặt Cá Cơm Workspace lên điện thoại (PWA)">
+                <span>📲</span>
+                <span class="hidden sm:inline">Cài App</span>
+            </button>
+
+            <!-- Toàn màn hình (chỉ hiện trên md+) -->
+            <button type="button" onclick="toggleFullScreen()" class="hidden md:block p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer" title="Toàn màn hình">
+                <span class="text-sm">⛶</span>
+            </button>
+
+            <!-- Profile User FAP with Interactive Dropdown Menu -->
+            <div class="relative shrink-0" id="headerProfileContainer">
+                <button type="button" id="headerProfileTrigger" onclick="toggleProfileDropdown(event)" class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none py-1" title="Tài khoản & Cài đặt">
+                    <div id="headerAvatar" class="w-8 h-8 rounded-full bg-[#0054a6] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all">
+                        NT
+                    </div>
+                    <div class="hidden lg:flex flex-col text-left leading-tight">
+                        <span id="headerProfileName" class="text-xs font-bold text-slate-800 dark:text-slate-100">Nguyễn Trọng Tài</span>
+                        <span id="headerStudentId" class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold tracking-wider">SE211965</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 hidden sm:inline ml-0.5">▾</span>
+                </button>
+
+                <!-- DROPDOWN MENU TÀI KHOẢN (PHONG CÁCH FAP CLEAN) -->
+                <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden">
+                    <!-- User Header Info -->
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                        <div id="dropdownAvatar" class="w-10 h-10 rounded-full bg-[#0054a6] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
+                            NT
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5">
+                                <p id="dropdownProfileName" class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">Nguyễn Trọng Tài</p>
+                                <span id="dropdownRoleBadge" class="text-[9px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 shrink-0">Sinh viên</span>
+                            </div>
+                            <p id="dropdownEmail" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">trtainguyen2306@gmail.com</p>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách thao tác -->
+                    <div class="p-1.5 space-y-0.5 text-xs">
+                        <button type="button" onclick="closeProfileDropdown(); openProfileModal();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-sm">👤</span>
+                                <span class="font-medium">Hồ sơ cá nhân & Mục tiêu</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400">❯</span>
+                        </button>
+                        
+                        <button type="button" onclick="closeProfileDropdown(); openAuthModal();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-sm">🔄</span>
+                                <span class="font-medium" id="dropdownAuthLabel">Đổi / Đăng nhập Google</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400">❯</span>
+                        </button>
+
+                        <button type="button" onclick="closeProfileDropdown(); openPwaModal();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-sm">📲</span>
+                                <span class="font-medium">Cài đặt ứng dụng (PWA)</span>
+                            </div>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900">App</span>
+                        </button>
+                    </div>
+
+                    <div class="p-1.5 border-t border-slate-100 dark:border-slate-800" id="dropdownAuthActionContainer">
+                        <button type="button" onclick="closeProfileDropdown(); logoutUser();" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors text-left text-xs font-semibold cursor-pointer">
+                            <span class="text-sm">🚪</span>
+                            <span>Đăng xuất tài khoản</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nút Chat AI -->
+            <button type="button" onclick="getAISuggestion()" class="ml-1 px-2 md:px-3.5 py-1.5 bg-[#f59e0b] hover:bg-[#d97706] text-white text-xs font-bold rounded-full shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0">
+                <span>💬</span>
+                <span class="hidden sm:inline">Gợi ý AI</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- BỐ CỤC CHÍNH (SIDEBAR TRÁI + VÙNG LÀM VIỆC PHẢI)                     -->
+    <!-- =================================================================== -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- =============================================================== -->
+        <!-- SIDEBAR TRÁI (TÔNG TRẮNG / CHUẨN MENU FAP EDUCATION)             -->
+        <!-- =============================================================== -->
+        <aside id="sidebarMenu" class="fixed md:static inset-y-0 left-0 z-40 w-72 md:w-64 bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-transform duration-300 overflow-y-auto hidden md:flex shadow-2xl md:shadow-none">
+            
+            <div class="p-3.5 space-y-5 flex-1">
+                
+                <!-- Nhóm: HỌC TẬP & CÔNG VIỆC -->
+                <div>
+                    <div class="text-[10px] font-bold text-blue-900/60 uppercase tracking-widest px-3 mb-1.5">
+                        HỌC TẬP & CÔNG VIỆC
+                    </div>
+                    <nav class="space-y-1">
+                        <button type="button" id="navDashboardBtn" onclick="switchView('dashboard')" class="w-full flex items-center gap-2 px-3 py-2 bg-[#0054a6] text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer text-left transition-colors">
+                            <span>🏠</span>
+                            <span>Trang chính (Lịch & Tiến độ)</span>
+                        </button>
+                        <button type="button" id="navMatrixBtn" onclick="switchView('matrix')" class="w-full flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer">
+                            <span>📊</span>
+                            <span>Sắp xếp công việc (Ma trận)</span>
+                        </button>
+                        <button type="button" id="navFreeTimeBtn" onclick="switchView('freetime')" class="w-full flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer">
+                            <span>🌿</span>
+                            <span>Lịch rảnh (Khung giờ trống)</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Nhóm: QUẢN TRỊ VIÊN (CHỈ HIỂN THỊ VỚI ADMIN) -->
+                <div id="adminNavSection" class="hidden">
+                    <div class="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest px-3 mb-1.5 flex items-center justify-between">
+                        <span>HỆ THỐNG</span>
+                        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    </div>
+                    <nav class="space-y-1">
+                        <button type="button" id="navAdminBtn" onclick="switchView('admin')" class="w-full flex items-center justify-between px-3 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-xs font-bold transition-colors text-left cursor-pointer border border-transparent hover:border-rose-200">
+                            <div class="flex items-center gap-2">
+                                <span class="text-rose-600">🛡️</span>
+                                <span class="text-rose-600 dark:text-rose-400">Bảng Quản Trị</span>
+                            </div>
+                            <span id="adminFeedbackBadge" class="hidden px-2 py-0.5 text-[10px] font-extrabold bg-rose-500 text-white rounded-full animate-bounce">0 mới</span>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Footer Sidebar: Bản quyền & Badge Phiên bản -->
+            <div class="p-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-600 text-[11px] tracking-wide uppercase">CÁ CƠM WORKSPACE</span>
+                <span class="inline-block px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-[#0054a6] border border-blue-200 rounded-full font-bold text-[10px] cursor-pointer transition-colors" id="appVersionBadge" title="Bấm để tải lại bản mới nhất (xóa cache)" onclick="applyVersionUpdate()">v1.6.5</span>
+            </div>
+        </aside>
+
+        <!-- =============================================================== -->
+        <!-- KHU VỰC NỘI DUNG CHÍNH (MAIN WORKSPACE)                          -->
+        <!-- =============================================================== -->
+        <main class="flex-1 flex flex-col bg-[#f4f6f9] overflow-y-auto pb-24 md:pb-6">
+            
+            <div class="p-4 md:p-6 flex flex-col gap-4 max-w-7xl mx-auto w-full">
+                
+                <!-- BREADCRUMB PHONG CÁCH FAP -->
+                <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                    <span class="text-slate-400">🏠</span>
+                    <a href="javascript:void(0)" onclick="switchView('dashboard')" class="hover:text-blue-600">Trang chủ</a>
+                    <span>/</span>
+                    <span id="breadcrumbCurrent" class="text-slate-800 font-bold">Trang chính (Thời khóa biểu & Tiến độ)</span>
+                </div>
+
+                <!-- =========================================================== -->
+                <!-- VIEW 1: TRANG CHÍNH (LỊCH TUẦN & TIẾN ĐỘ HỌC TẬP)           -->
+                <!-- =========================================================== -->
+                <div id="viewDashboard" class="flex flex-col gap-5">
+                    
+                    <!-- THANH ĐIỀU HƯỚNG TUẦN & ĐỒNG BỘ GOOGLE CALENDAR -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                            <span class="text-xs font-bold text-slate-700">Tuần học tập:</span>
+                            
+                            <!-- Ô hiển thị tuần -->
+                            <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800">
+                                <span id="dashWeekDisplay">Tuần 40 (28/09 - 04/10)</span>
+                                <span class="text-slate-400 text-[11px]">📅</span>
+                            </div>
+
+                            <!-- Cụm nút chuyển tuần -->
+                            <button type="button" onclick="changeWeek(-1)" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                                &larr; Tuần trước
+                            </button>
+                            
+                            <button type="button" onclick="goToCurrentWeek()" class="px-3.5 py-1.5 bg-[#0054a6] hover:bg-[#004285] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
+                                <span>📅</span>
+                                <span>Tuần hiện tại</span>
+                            </button>
+
+                            <button type="button" onclick="changeWeek(1)" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                                Tuần sau &rarr;
+                            </button>
+                        </div>
+
+                        <!-- Cụm nút: Đồng bộ FAP + Đồng bộ Google Calendar + Thêm việc nhanh -->
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="openFapModal()" class="px-3.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer" title="Đồng bộ lịch học trực tiếp từ FAP FPT">
+                                <span>⚡</span>
+                                <span>Đồng bộ FAP</span>
+                            </button>
+                            <button type="button" id="syncCalendarBtn" onclick="syncGoogleCalendar()" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#0054a6] border border-blue-200 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                <span id="calendarSyncIcon">📅</span>
+                                <span>Đồng bộ Google Calendar</span>
+                            </button>
+                            <button type="button" onclick="openDayAddModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs">
+                                <span>➕</span>
+                                <span>Thêm lịch / việc</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KHU VỰC THEO DÕI TIẾN ĐỘ & HIỆU SUẤT (NGÀY - TUẦN - THÁNG) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                        
+                        <!-- Khối 1: Tiến độ hôm nay -->
+                        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between min-h-[195px] gap-2.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">🎯</span>
+                                    <h3 class="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wide">Tiến độ hôm nay</h3>
+                                </div>
+                                <span id="todayBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Đang thực hiện</span>
+                            </div>
+
+                            <div class="flex items-baseline justify-between mt-1">
+                                <span class="text-3xl font-extrabold text-[#0054a6] dark:text-blue-400" id="todayPercentText">0%</span>
+                                <span class="text-xs text-slate-500 font-medium" id="todayRatioText">0 / 0 việc</span>
+                            </div>
+
+                            <!-- Progress Bar Ngày -->
+                            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                                <div id="todayProgressBar" class="bg-[#0054a6] h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2" id="todayMotivationalTip">
+                                    Hoàn thành các mục tiêu trong ngày để duy trì chuỗi phong độ xuất sắc!
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Khối 2: Tiến độ & Hiệu suất tuần (Gộp hoàn chỉnh tuần + biểu đồ 7 ngày) -->
+                        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between min-h-[195px] gap-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">📊</span>
+                                    <h3 class="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wide">Tiến độ & Hiệu suất tuần</h3>
+                                </div>
+                                <span id="weekStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#0054a6] dark:bg-blue-900/60 dark:text-blue-300">Tuần 40</span>
+                            </div>
+
+                            <div class="flex items-baseline justify-between">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400" id="weekPercentText">0%</span>
+                                    <span class="text-[11px] text-slate-500 font-medium" id="weekRatioText">0 / 0 việc</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                    <span>Xong: <strong id="weekDoneCount" class="text-emerald-600 dark:text-emerald-400">0</strong></span>
+                                    <span>•</span>
+                                    <span>Còn: <strong id="weekPendingCount" class="text-amber-600 dark:text-amber-400">0</strong></span>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar Tuần -->
+                            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                                <div id="weekProgressBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+
+                            <!-- Biểu đồ năng suất 7 ngày mini lồng gọn bên dưới -->
+                            <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                                <div class="flex items-end justify-between gap-1 px-0.5" id="miniChartContainer">
+                                    <!-- Rendered dynamically by renderMiniChart() -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Khối 3: Tổng quan tháng (Mới) -->
+                        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between min-h-[195px] gap-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">🗓️</span>
+                                    <h3 class="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wide">Tổng quan tháng</h3>
+                                </div>
+                                <span id="monthBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300 font-mono">Tháng 09/2026</span>
+                            </div>
+
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-2xl sm:text-3xl font-extrabold text-purple-600 dark:text-purple-400" id="monthPercentText">0%</span>
+                                <span class="text-xs text-slate-500 font-medium" id="monthRatioText">0 / 0 việc tháng</span>
+                            </div>
+
+                            <!-- Progress Bar Tháng -->
+                            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                                <div id="monthProgressBar" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+
+                            <!-- Chi tiết số lượng tháng -->
+                            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
+                                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-1.5 px-2 flex items-center justify-between">
+                                    <span class="text-slate-500">Đã học/xong:</span>
+                                    <strong id="monthDoneCount" class="text-purple-600 dark:text-purple-400 font-bold">0</strong>
+                                </div>
+                                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-1.5 px-2 flex items-center justify-between">
+                                    <span class="text-slate-500">Còn lại:</span>
+                                    <strong id="monthPendingCount" class="text-amber-600 dark:text-amber-400 font-bold">0</strong>
+                                </div>
+                            </div>
+
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 italic truncate" id="monthMotivationalTip">
+                                Đang duy trì nhịp độ học tập ổn định trong tháng!
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- BẢNG THỜI KHÓA BIỂU TUẦN 7 NGÀY (DẠNG DỌC TỪ THỨ 2 ĐẾN CHỦ NHẬT, TASK DẠNG NGANG) -->
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 flex flex-col gap-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>🗓️</span>
+                                    <span>Thời khóa biểu & Lịch học tập tuần này</span>
+                                </h2>
+                                <p class="text-xs text-slate-500 mt-0.5">Danh sách các thứ trong tuần dạng hàng dọc, các buổi học và nhiệm vụ được sắp xếp theo hàng ngang hài hòa.</p>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs font-medium text-slate-500">
+                                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Lịch học FPT</span>
+                                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Làm ngay (Do Now)</span>
+                                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Kế hoạch (Plan)</span>
+                            </div>
+                        </div>
+
+                        <!-- BỘ LỌC CHỦ ĐỀ / MÔN HỌC / DỰ ÁN CHO THỜI KHÓA BIỂU -->
+                        <div id="categoryFilterBarDashboard" class="hidden flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none text-xs border-b border-slate-100 dark:border-slate-800">
+                            <!-- Render động qua renderCategoryFilters() -->
+                        </div>
+
+                        <!-- Khung 7 hàng ngày từ Thứ 2 đến Chủ nhật -->
+                        <div class="flex flex-col gap-3.5" id="weekGridContainer">
+                            <!-- Các hàng ngày được render động qua renderDashboard() -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- =========================================================== -->
+                <!-- VIEW 2: SẮP XẾP CÔNG VIỆC (MA TRẬN EISENHOWER 4 Ô)          -->
+                <!-- =========================================================== -->
+                <div id="viewMatrix" class="hidden flex flex-col gap-4">
+
+                <!-- THANH ĐIỀU HƯỚNG / BỘ LỌC PHONG CÁCH "CHỌN TUẦN" CỦA FAP     -->
+                <!-- =========================================================== -->
+                <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span class="text-xs font-bold text-slate-700">Chọn tuần:</span>
+                        
+                        <!-- Ô chọn ngày/tuần -->
+                        <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700">
+                            <span>Week 40, 2026</span>
+                            <span class="text-slate-400 text-[11px]">📅</span>
+                        </div>
+
+                        <!-- Cụm nút điều hướng tuần FAP -->
+                        <button type="button" onclick="showToast('Đang hiển thị lịch tuần trước.', '📅')" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                            &larr; Tuần trước
+                        </button>
+                        
+                        <button type="button" onclick="syncDataWithoutReload()" class="px-3.5 py-1.5 bg-[#0054a6] hover:bg-[#004285] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <span>📅</span>
+                            <span>Tuần hiện tại</span>
+                        </button>
+
+                        <button type="button" onclick="showToast('Đang hiển thị lịch tuần kế tiếp.', '📅')" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                            Tuần sau &rarr;
+                        </button>
+                    </div>
+
+                    <!-- Nút thao tác nhanh bên phải -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="openSpreadsheet()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <span>📊</span>
+                            <span>Mở Sheet Quản Lý</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- THANH LỌC CHỦ ĐỀ / MÔN HỌC / DỰ ÁN CHO MA TRẬN EISENHOWER -->
+                <div id="categoryFilterBarMatrix" class="hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
+                    <!-- Render động qua renderCategoryFilters() -->
+                </div>
+
+                <!-- BANNER CẢNH BÁO BẢN NHÁP DỞ DANG NẾU CÓ -->
+                <div id="draftBanner" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3.5 shadow-xs flex items-center justify-between gap-3 text-amber-900">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-lg">💡</span>
+                        <div class="text-xs">
+                            <span class="font-bold">Đã phát hiện bản nháp chưa gửi:</span>
+                            <span id="draftBannerDesc" class="ml-1 text-amber-800"></span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="button" onclick="restoreDraft()" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer">
+                            Khôi phục
+                        </button>
+                        <button type="button" onclick="dismissDraft()" class="px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-medium rounded-lg transition-colors cursor-pointer">
+                            Bỏ qua
+                        </button>
+                    </div>
+                </div>
+
+                <!-- =========================================================== -->
+                <!-- THẺ NỘI DUNG CHÍNH (CARD PHONG CÁCH BẢNG LỊCH HỌC FAP)      -->
+                <!-- =========================================================== -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 md:p-6 flex flex-col gap-6">
+                    
+                    <!-- Tiêu đề thẻ & Trạng thái -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+                        <div>
+                            <h1 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                                <span>Thời khóa biểu & Sắp xếp công việc</span>
+                                <span class="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                                    Đang đồng bộ
+                                </span>
+                            </h1>
+                            <p class="text-xs text-slate-500 mt-1">
+                                Tuần (28/09 - 04/10) &bull; Kéo thả nhiệm vụ vào 4 ô ma trận Eisenhower để sắp xếp thời gian biểu tối ưu.
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            <button type="button" id="btnBatchSchedule" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-[#0054a6] to-blue-700 hover:from-blue-700 hover:to-[#004285] text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all cursor-pointer">
+                                <span>🚀 Đẩy lên Trang chính & Lịch rảnh</span>
+                                <span id="unscheduledCountBadge" class="bg-amber-400 text-slate-900 text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none hidden">0</span>
+                            </button>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold text-slate-500">Tự động lưu:</span>
+                                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Google Sheets
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bố cục 2 Cột: Cột trái (Ma trận 4 ô) + Cột phải (Thêm việc & Inbox) -->
+                    <div class="flex flex-col lg:flex-row gap-6 items-start">
+                        
+                        <!-- CỘT TRÁI: KHỐI MA TRẬN 4 Ô EISENHOWER -->
+                        <div class="flex-1 min-w-0 w-full flex flex-col gap-3">
+                            
+                            <!-- THANH BỘ LỌC TRẠNG THÁI CÔNG VIỆC (PHASE 2) -->
+                            <div class="flex items-center justify-between flex-wrap gap-2 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                                <div class="flex items-center gap-1.5 flex-wrap text-xs">
+                                    <span class="text-slate-500 dark:text-slate-400 font-bold mr-1 text-[11px]">Lọc công việc:</span>
+                                    <button type="button" id="filterAllBtn" onclick="setMatrixFilter('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0054a6] text-white shadow-2xs transition-all cursor-pointer">
+                                        Tất cả (<span id="filterCountAll">0</span>)
+                                    </button>
+                                    <button type="button" id="filterActiveBtn" onclick="setMatrixFilter('active')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer">
+                                        ⏳ Đang làm (<span id="filterCountActive">0</span>)
+                                    </button>
+                                    <button type="button" id="filterDoneBtn" onclick="setMatrixFilter('done')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer">
+                                        ✅ Đã xong (<span id="filterCountDone">0</span>)
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+                                        <input type="checkbox" id="matrixHideDoneCheckbox" onchange="toggleHideDone(this.checked)" class="w-3.5 h-3.5 rounded text-[#0054a6] focus:ring-[#0054a6] cursor-pointer">
+                                        <span class="text-[11px] font-medium">Ẩn việc đã xong</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="matrix-grid">
+                                
+                                <!-- Ô 1: DO NOW -->
+                                <div class="q-donow rounded-xl p-3.5 flex flex-col shadow-2xs h-[305px]">
+                                     <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-red-200/60 shrink-0">
+                                         <div class="flex items-center gap-2">
+                                             <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                             <h2 class="font-bold text-red-800 text-xs tracking-wide uppercase">DO NOW (Làm ngay)</h2>
+                                         </div>
+                                         <span class="text-[10px] font-extrabold text-red-600 bg-red-100 px-2 py-0.5 rounded">Quan trọng & Khẩn cấp</span>
+                                     </div>
+                                     <div id="donow" class="flex-1 overflow-y-auto list-container space-y-2 min-h-0"></div>
+                                </div>
+
+                                <!-- Ô 2: PLAN -->
+                                <div class="q-plan rounded-xl p-3.5 flex flex-col shadow-2xs h-[305px]">
+                                     <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-yellow-200/60 shrink-0">
+                                         <div class="flex items-center gap-2">
+                                             <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                                             <h2 class="font-bold text-yellow-900 text-xs tracking-wide uppercase">PLAN (Lên kế hoạch)</h2>
+                                         </div>
+                                         <span class="text-[10px] font-extrabold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded">Quan trọng & Chưa gấp</span>
+                                     </div>
+                                     <div id="plan" class="flex-1 overflow-y-auto list-container space-y-2 min-h-0"></div>
+                                </div>
+
+                                <!-- Ô 3: DELEGATE -->
+                                <div class="q-delegate rounded-xl p-3.5 flex flex-col shadow-2xs h-[305px]">
+                                     <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-orange-200/60 shrink-0">
+                                         <div class="flex items-center gap-2">
+                                             <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                             <h2 class="font-bold text-orange-900 text-xs tracking-wide uppercase">DELEGATE (Ủy quyền)</h2>
+                                         </div>
+                                         <span class="text-[10px] font-extrabold text-orange-700 bg-orange-100 px-2 py-0.5 rounded">Khẩn cấp & Nhờ hỗ trợ</span>
+                                     </div>
+                                     <div id="delegate" class="flex-1 overflow-y-auto list-container space-y-2 min-h-0"></div>
+                                </div>
+
+                                <!-- Ô 4: DROP -->
+                                <div class="q-drop rounded-xl p-3.5 flex flex-col shadow-2xs h-[305px]">
+                                    <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-green-200/60 shrink-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                            <h2 class="font-bold text-green-900 text-xs tracking-wide uppercase">DROP (Loại bỏ)</h2>
+                                        </div>
+                                        <span class="text-[10px] font-extrabold text-green-700 bg-green-100 px-2 py-0.5 rounded">Không gấp & Cắt giảm</span>
+                                    </div>
+                                    <div id="drop" class="flex-1 overflow-y-auto list-container space-y-2 min-h-0"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CỘT PHẢI: FORM THÊM VIỆC & HỘP THƯ INBOX (CHƯA SẮP XẾP) -->
+                        <div class="w-full lg:w-[350px] xl:w-[380px] flex flex-col gap-4 shrink-0">
+                            
+                            <!-- Khối Thêm việc: Gọn gàng, trực quan -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs flex flex-col shrink-0">
+                                <div class="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center bg-slate-50/80 dark:bg-slate-800/50 rounded-t-xl shrink-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-sm">➕</span>
+                                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs uppercase tracking-wider">Thêm nhiệm vụ mới</h3>
+                                    </div>
+                                </div>
+                                
+                                <form id="taskForm" onsubmit="addTask(event)" class="p-3 flex flex-col gap-3">
+                                    <!-- 1. Nội dung công việc (100% width) -->
+                                    <div class="flex flex-col">
+                                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                                            Nội dung công việc <span class="text-red-500">*</span>
+                                        </label>
+                                        <textarea id="taskInput" required rows="2" placeholder="Ví dụ: Ôn tập môn CSI106 phòng P.205..." class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-[#0054a6] focus:border-[#0054a6] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none transition-all resize-y min-h-[50px]"></textarea>
+                                    </div>
+
+                                    <!-- 2. Hạn chót (Deadline) -->
+                                    <div class="flex flex-col gap-1.5 bg-slate-50/70 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                                        <div class="flex items-center justify-between">
+                                            <label class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                                <span>⏰</span> Hạn chót (Deadline):
+                                            </label>
+                                            <button type="button" onclick="clearDeadline('taskDeadline')" class="text-[10px] text-red-500 hover:underline cursor-pointer">Xóa hạn</button>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div id="taskDeadlineDisplay" onclick="openCustomDatePicker('taskDeadline')" class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-[#0054a6] transition-all flex items-center justify-between shadow-2xs" title="Nhấp để mở hộp thoại chọn ngày tháng và giờ">
+                                                <span id="taskDeadlineDisplayText" class="text-slate-500 dark:text-slate-400">dd/mm, --:--</span>
+                                                <span class="text-[11px] text-[#0054a6] bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded font-sans font-semibold">Chưa chọn</span>
+                                            </div>
+                                            <button type="button" onclick="openCustomDatePicker('taskDeadline')" class="px-3.5 py-2 bg-[#0054a6] hover:bg-[#004285] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 transition-colors" title="Mở hộp lựa ngày tháng và giờ">
+                                                <span>📅</span>
+                                                <span>Chọn lịch</span>
+                                            </button>
+                                            <input type="hidden" id="taskDeadline" value="">
+                                        </div>
+                                        <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                            <span class="text-[10px] text-slate-400 font-medium">Gợi ý nhanh:</span>
+                                            <button type="button" onclick="setQuickDeadlineDirect('taskDeadline', 'today18')" class="text-[10px] font-semibold bg-white dark:bg-slate-800 hover:bg-blue-50 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded cursor-pointer">18h nay</button>
+                                            <button type="button" onclick="setQuickDeadlineDirect('taskDeadline', 'today23')" class="text-[10px] font-semibold bg-white dark:bg-slate-800 hover:bg-blue-50 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded cursor-pointer">23h59</button>
+                                            <button type="button" onclick="setQuickDeadlineDirect('taskDeadline', 'tomorrow18')" class="text-[10px] font-semibold bg-white dark:bg-slate-800 hover:bg-blue-50 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded cursor-pointer">18h mai</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3. Mức độ ưu tiên -->
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300">Mức độ ưu tiên:</label>
+                                        <select id="taskPriority" class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#0054a6] outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium">
+                                            <option value="high">🔴 Cao (Khẩn cấp & Quan trọng)</option>
+                                            <option value="medium" selected>🟡 Trung bình (Bình thường)</option>
+                                            <option value="low">🟢 Thấp (Linh hoạt)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 4. Phân loại công việc (Học tập, Công việc, Cá nhân) -->
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                            <span>🏷️</span> Phân loại công việc:
+                                        </label>
+                                        <select id="taskCategory" class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#0054a6] outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold cursor-pointer">
+                                            <option value="Học tập" selected>📚 Học tập</option>
+                                            <option value="Công việc">💼 Công việc</option>
+                                            <option value="Cá nhân">🌱 Cá nhân</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 5. Thời gian hoàn thành (Duration) -->
+                                    <div class="bg-blue-50/50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-blue-100 dark:border-slate-700 flex flex-col gap-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                                <span>⏱️</span> Thời gian hoàn thành:
+                                            </span>
+                                            <span id="taskDurationLabel" class="text-[11px] font-black text-[#0054a6] dark:text-blue-400 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded shadow-2xs">60 phút (1 giờ)</span>
+                                        </div>
+                                        <input type="range" id="taskDuration" min="15" max="300" step="15" value="60" oninput="updateDurationDisplay('taskDuration', 'taskDurationLabel')" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#0054a6]">
+                                        <div class="flex items-center justify-between text-[9px] text-slate-400 font-medium px-0.5">
+                                            <span>15p</span>
+                                            <span>1h</span>
+                                            <span>2h</span>
+                                            <span>3h</span>
+                                            <span>5h (tối đa)</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                            <button type="button" onclick="setDurationQuick('taskDuration', 'taskDurationLabel', 30)" class="text-[9px] font-semibold px-2 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">30p</button>
+                                            <button type="button" onclick="setDurationQuick('taskDuration', 'taskDurationLabel', 45)" class="text-[9px] font-semibold px-2 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">45p</button>
+                                            <button type="button" onclick="setDurationQuick('taskDuration', 'taskDurationLabel', 60)" class="text-[9px] font-semibold px-2 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">1h</button>
+                                            <button type="button" onclick="setDurationQuick('taskDuration', 'taskDurationLabel', 90)" class="text-[9px] font-semibold px-2 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">1h30</button>
+                                            <button type="button" onclick="setDurationQuick('taskDuration', 'taskDurationLabel', 120)" class="text-[9px] font-semibold px-2 py-0.5 rounded bg-white dark:bg-slate-800 hover:bg-blue-50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">2h</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between gap-2 pt-1 shrink-0">
+                                        <span class="text-[10px] text-slate-400">Shift+Enter: xuống dòng</span>
+                                        <button type="submit" class="bg-[#0054a6] hover:bg-[#004285] text-white font-bold text-xs py-2 px-4 rounded-xl transition-colors shadow-xs cursor-pointer flex items-center gap-1.5 shrink-0">
+                                            <span>📥</span>
+                                            <span>Thêm vào Inbox</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Khối Inbox: Không gian thoáng, có scroll, hiển thị rõ ràng -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs flex flex-col overflow-hidden min-h-[260px] max-h-[460px]">
+                                <div class="p-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/80 dark:bg-slate-800/50 rounded-t-xl shrink-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span>📥</span>
+                                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs">Chưa sắp xếp (Inbox)</h3>
+                                    </div>
+                                    <span class="text-[10px] bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold" id="inboxCount">0</span>
+                                </div>
+                                <div class="p-3 flex-1 overflow-y-auto list-container bg-slate-50/40 dark:bg-slate-800/20 min-h-0 space-y-2" id="inbox">
+                                    <div id="loading" class="text-center text-xs text-slate-400 py-6">Đang tải dữ liệu từ Google Sheets...</div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- =========================================================== -->
+                    <!-- BẢNG LỊCH HỌC CỐ ĐỊNH (FAP SCHEDULE) - HÀNG ĐỘC LẬP BÊN DƯỚI -->
+                    <!-- =========================================================== -->
+                    <div class="w-full pt-8 mt-2 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-4 clear-both">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                    <span class="p-1 rounded-lg bg-blue-50 text-[#0054a6] border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 text-sm">🎓</span>
+                                    <span>Lịch học cố định trong tuần (FAP Schedule)</span>
+                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#0054a6] border border-blue-200 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800" id="fapScheduleTotalBadge">0 buổi</span>
+                                </h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Lịch học chính khóa cố định từ FAP. Bạn có thể bấm để đánh dấu <strong>Hoàn tất ca học</strong> hoặc <strong>Báo huỷ (Cancel)</strong> khi được nghỉ.
+                                </p>
+                            </div>
+
+                            <!-- Bộ lọc trạng thái lịch học FAP -->
+                            <div class="flex items-center gap-1.5 flex-wrap text-xs">
+                                <span class="text-slate-400 font-bold mr-1 text-[11px]">Trạng thái:</span>
+                                <button type="button" id="fapFilterAllBtn" onclick="setFapFilter('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0054a6] text-white shadow-2xs transition-all cursor-pointer">
+                                    Tất cả (<span id="fapFilterCountAll">0</span>)
+                                </button>
+                                <button type="button" id="fapFilterUpcomingBtn" onclick="setFapFilter('upcoming')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                                    ⏳ Sắp tới (<span id="fapFilterCountUpcoming">0</span>)
+                                </button>
+                                <button type="button" id="fapFilterDoneBtn" onclick="setFapFilter('done')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                                    ✅ Đã học (<span id="fapFilterCountDone">0</span>)
+                                </button>
+                                <button type="button" id="fapFilterCancelledBtn" onclick="setFapFilter('cancelled')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                                    🚫 Đã huỷ (<span id="fapFilterCountCancelled">0</span>)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Khối nội dung danh sách lịch học FAP -->
+                        <div id="fapScheduleContainer" class="flex flex-col gap-3">
+                            <div class="py-6 text-center text-xs text-slate-400">Đang tải lịch học...</div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- =========================================================== -->
+                <!-- VIEW 3: LỊCH RẢNH (KHUNG GIỜ TRỐNG TRONG TUẦN)               -->
+                <!-- =========================================================== -->
+                <div id="viewFreeTime" class="hidden flex flex-col gap-5">
+
+                    <!-- THANH ĐIỀU HƯỚNG VÀ BỘ LỌC CỦA LỊCH RẢNH -->
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">🌿</span>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 flex-wrap">
+                                    <span>Lịch rảnh & Thời gian trống trong tuần</span>
+                                    <span class="text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">Tự động trừ lịch bận</span>
+                                </h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Các ô màu xanh lá thể hiện khoảng thời gian bạn không có lịch học hoặc công việc nào cần làm.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Nút chuyển tuần -->
+                            <div class="flex items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 gap-1">
+                                <button type="button" onclick="changeWeek(-1)" class="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors cursor-pointer" title="Tuần trước">◀ Trước</button>
+                                <button type="button" onclick="goToCurrentWeek()" class="px-2.5 py-1 text-xs font-bold text-[#0054a6] dark:text-blue-400 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors cursor-pointer" title="Về tuần hiện tại">Tuần này</button>
+                                <button type="button" onclick="changeWeek(1)" class="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors cursor-pointer" title="Tuần sau">Sau ▶</button>
+                            </div>
+
+                            <!-- Giờ nghỉ trưa mặc định -->
+                            <div class="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1.5 text-xs text-amber-800 dark:text-amber-300">
+                                <span>☕</span>
+                                <span class="text-[11px] font-medium">Nghỉ trưa mặc định: <strong>12:00 – 12:30</strong></span>
+                            </div>
+
+                            <!-- Toggle hiện cả lịch bận -->
+                            <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                                <input type="checkbox" id="toggleShowBusyInFreeTime" onchange="toggleShowBusy(this.checked)" checked class="w-3.5 h-3.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                                <span class="text-[11px] font-medium">Hiện cả lịch bận</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- KHUNG THỐNG KÊ TỔNG QUAN LỊCH RẢNH -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="freeTimeMetricsContainer">
+                        <!-- Render động qua renderFreeTimeSchedule() -->
+                    </div>
+
+                    <!-- BẢNG THỜI KHÓA BIỂU LỊCH RẢNH 7 CỘT -->
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col gap-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Thời khóa biểu khung giờ trống 7 ngày</span>
+                                <span id="freeTimeWeekLabel" class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800"></span>
+                            </div>
+                            <div class="text-[11px] text-slate-400 flex items-center gap-3">
+                                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500"></span> Giờ rảnh</span>
+                                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-400"></span> Lịch bận</span>
+                            </div>
+                        </div>
+
+                        <!-- 7 cột ngày render động -->
+                        <div id="freeTimeGridContainer" class="flex flex-col gap-4">
+                            <!-- Render qua JavaScript -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- =========================================================== -->
+                <!-- VIEW 4: BẢNG QUẢN TRỊ HỆ THỐNG (CHỈ DÀNH CHO ADMIN)          -->
+                <!-- =========================================================== -->
+                <div id="viewAdmin" class="hidden flex flex-col gap-5">
+                    
+                    <!-- BANNER QUẢN TRỊ VIÊN -->
+                    <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-blue-900/50 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-2xl shadow-inner">
+                                🛡️
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="text-lg sm:text-xl font-bold tracking-tight">Trung Tâm Quản Trị Hệ Thống</h2>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-500 text-white tracking-wider">Admin Portal</span>
+                                </div>
+                                <p class="text-xs text-slate-300 mt-1">
+                                    Quản lý thành viên, kiểm tra hoạt động hệ thống và tiếp nhận ý kiến đóng góp từ người dùng.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2.5">
+                            <button type="button" onclick="loadAdminStats()" class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+                                <span>🔄</span>
+                                <span>Làm mới số liệu</span>
+                            </button>
+                            <a href="https://docs.google.com/spreadsheets/d/19kIoDPMrrdQCc1y9ZdG7bSU9kCn9MY3eoDzGNQOOek8/edit" target="_blank" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                <span>📊</span>
+                                <span>Mở Sheet tổng</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- THÔNG BÁO FEEDBACK MỚI (NẾU CÓ) -->
+                    <div id="adminNewFeedbackAlertBanner" class="hidden bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-xl p-4 flex items-center justify-between gap-3 shadow-xs text-rose-900 dark:text-rose-200">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl animate-bounce">🔔</span>
+                            <div>
+                                <p class="text-xs font-bold" id="adminNewFeedbackAlertText">Có phản hồi mới từ người dùng!</p>
+                                <p class="text-[11px] text-rose-700 dark:text-rose-300 mt-0.5">Vui lòng cuộn xuống mục "Ý kiến đóng góp" bên dưới để kiểm tra và xử lý.</p>
+                            </div>
+                        </div>
+                        <a href="#adminFeedbackSection" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition-colors shadow-2xs">
+                            Xem ngay ❯
+                        </a>
+                    </div>
+
+                    <!-- 4 THẺ CHỈ SỐ KPI HỆ THỐNG -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+                                <span>Tổng người dùng</span>
+                                <span class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600">👥</span>
+                            </div>
+                            <div class="mt-3 flex items-baseline gap-2">
+                                <span class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100" id="adminKpiTotalUsers">0</span>
+                                <span class="text-[11px] text-slate-500">tài khoản</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+                                <span>Đang hoạt động</span>
+                                <span class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">🟢</span>
+                            </div>
+                            <div class="mt-3 flex items-baseline gap-2">
+                                <span class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400" id="adminKpiActiveUsers">0</span>
+                                <span class="text-[11px] text-emerald-700 font-medium">bình thường</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+                                <span>Tổng số công việc</span>
+                                <span class="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600">📋</span>
+                            </div>
+                            <div class="mt-3 flex items-baseline gap-2">
+                                <span class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100" id="adminKpiTotalTasks">0</span>
+                                <span class="text-[11px] text-slate-500">trên Sheet</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+                                <span>Phản hồi chưa đọc</span>
+                                <span class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600">💬</span>
+                            </div>
+                            <div class="mt-3 flex items-baseline gap-2">
+                                <span class="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400" id="adminKpiNewFeedback">0</span>
+                                <span class="text-[11px] text-rose-700 font-semibold">góp ý mới</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BẢNG 1: QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG -->
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">👥</span>
+                                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Danh sách tài khoản người dùng</h3>
+                            </div>
+                            <span class="text-xs text-slate-500" id="adminUsersCountLabel">0 tài khoản</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-700 dark:text-slate-200">
+                                <thead class="bg-slate-50 dark:bg-slate-800/60 text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">Tài khoản & Email</th>
+                                        <th class="py-3 px-4">Vai trò</th>
+                                        <th class="py-3 px-4">Lần đăng nhập cuối</th>
+                                        <th class="py-3 px-4">Số lượng việc</th>
+                                        <th class="py-3 px-4">Trạng thái</th>
+                                        <th class="py-3 px-4 text-right">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr>
+                                        <td colspan="6" class="py-8 text-center text-slate-400">Đang tải danh sách người dùng...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- BẢNG 2: TIẾP NHẬN Ý KIẾN ĐÓNG GÓP & BÁO LỖI -->
+                    <div id="adminFeedbackSection" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">💡</span>
+                                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Ý kiến đóng góp & Báo lỗi từ người dùng</h3>
+                            </div>
+                            <span class="text-xs text-slate-500" id="adminFeedbackCountLabel">0 phản hồi</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-700 dark:text-slate-200">
+                                <thead class="bg-slate-50 dark:bg-slate-800/60 text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">Thời gian</th>
+                                        <th class="py-3 px-4">Người gửi</th>
+                                        <th class="py-3 px-4">Phân loại</th>
+                                        <th class="py-3 px-4 max-w-md">Nội dung góp ý</th>
+                                        <th class="py-3 px-4">Trạng thái</th>
+                                        <th class="py-3 px-4 text-right">Xử lý</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminFeedbackTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr>
+                                        <td colspan="6" class="py-8 text-center text-slate-400">Đang tải danh sách phản hồi...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- FOOTER DƯỚI BẢNG -->
+                <div class="text-center py-2 text-xs text-slate-400">
+                    Hệ thống quản lý công việc và thời khóa biểu sinh viên FPT &bull; Dữ liệu đồng bộ an toàn thời gian thực.
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+
+    <!-- MODULAR COMPONENTS -->
+    <?!= include('MobileNav'); ?>
+    <?!= include('Modals'); ?>
+
+    <!-- SERVER PRELOAD DATA (Gas Template Evaluation) -->
+    <script>
+        var PRELOADED_SERVER_TASKS = <?!= JSON.stringify(serverTasks || []) ?>;
+        var SERVER_USER_EMAIL = <?!= JSON.stringify(serverUserEmail || '') ?>;
+        var SERVER_IS_ADMIN = <?!= JSON.stringify(isAdmin || false) ?>;
+        var SERVER_NEW_FEEDBACK_COUNT = <?!= JSON.stringify(newFeedbackCount || 0) ?>;
+        var SERVER_VERSION = <?!= JSON.stringify(serverVersion || '') ?>;
+    </script>
+
+    <!-- JAVASCRIPT MODULES -->
+    <?!= include('Scripts_Core'); ?>
+    <?!= include('Scripts_Auth'); ?>
+    <?!= include('Scripts_Admin'); ?>
+    <?!= include('Scripts_Dashboard'); ?>
+    <?!= include('Scripts_FreeTime'); ?>
+    <?!= include('Scripts_TaskMatrix'); ?>
+    <?!= include('Scripts_Calendar_FAP'); ?>
+    <?!= include('Scripts_Notifications_PWA'); ?>
+    <?!= include('Scripts_Init'); ?>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!-- =============================================================== -->
+<!-- MOBILE BOTTOM NAVIGATION (Thanh điều hướng cố định dưới đáy Mobile) -->
+<!-- =============================================================== -->
+<nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 dark:bg-[#1e293b]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-30 flex items-center justify-around px-2 shadow-lg mobile-bottom-nav">
+    <button type="button" id="mNavDashBtn" onclick="switchView('dashboard')" class="flex flex-col items-center justify-center flex-1 py-1 text-[#0054a6] dark:text-blue-400 font-bold transition-colors cursor-pointer">
+        <span class="text-lg">🏠</span>
+        <span class="text-[10px] tracking-tight">Trang chính</span>
+    </button>
+    <button type="button" id="mNavMatrixBtn" onclick="switchView('matrix')" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors cursor-pointer">
+        <span class="text-lg">📊</span>
+        <span class="text-[10px] tracking-tight">Ma trận</span>
+    </button>
+    <!-- Nút Thêm Nhanh Trung Tâm Nổi Bật -->
+    <button type="button" onclick="openDayAddModal()" class="flex flex-col items-center justify-center -mt-5 bg-gradient-to-tr from-[#0054a6] to-blue-600 text-white w-12 h-12 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer border-4 border-white dark:border-[#1e293b]" title="Thêm việc / Lịch mới">
+        <span class="text-xl leading-none">➕</span>
+    </button>
+    <button type="button" id="mNavFreeTimeBtn" onclick="switchView('freetime')" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors cursor-pointer">
+        <span class="text-lg">🌿</span>
+        <span class="text-[10px] tracking-tight">Lịch rảnh</span>
+    </button>
+    <button type="button" onclick="openProfileModal(); closeMobileSidebar();" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-slate-800 transition-colors cursor-pointer">
+        <span class="text-lg">👤</span>
+        <span class="text-[10px] tracking-tight">Hồ sơ</span>
+    </button>
+</nav>

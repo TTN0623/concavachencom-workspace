@@ -1,0 +1,904 @@
+<script>
+// =====================================================================
+        // CHUYỂN ĐỔI GIAO DIỆN (TRANG CHÍNH <-> SẮP XẾP MA TRẬN <-> LỊCH RẢNH)
+        // =====================================================================
+        function switchView(viewName) {
+            activeView = viewName;
+            try {
+                localStorage.setItem(STORAGE_KEY_VIEW, viewName);
+            } catch(e) {}
+
+            closeMobileSidebar();
+
+            const dashView = document.getElementById('viewDashboard');
+            const matrixView = document.getElementById('viewMatrix');
+            const freeTimeView = document.getElementById('viewFreeTime');
+            const adminView = document.getElementById('viewAdmin');
+            const navDash = document.getElementById('navDashboardBtn');
+            const navMatrix = document.getElementById('navMatrixBtn');
+            const navFreeTime = document.getElementById('navFreeTimeBtn');
+            const navAdmin = document.getElementById('navAdminBtn');
+            const breadcrumb = document.getElementById('breadcrumbCurrent');
+
+            // Nút nav trên Mobile
+            const mNavDash = document.getElementById('mNavDashBtn');
+            const mNavMatrix = document.getElementById('mNavMatrixBtn');
+            const mNavFreeTime = document.getElementById('mNavFreeTimeBtn');
+
+            // Ẩn tất cả các view
+            dashView?.classList.add('hidden');
+            matrixView?.classList.add('hidden');
+            freeTimeView?.classList.add('hidden');
+            adminView?.classList.add('hidden');
+
+            // Reset trạng thái nút nav Desktop
+            [navDash, navMatrix, navFreeTime, navAdmin].forEach(btn => {
+                btn?.classList.remove('bg-[#0054a6]', 'text-white', 'font-bold');
+                btn?.classList.add('text-slate-600', 'hover:bg-slate-50');
+            });
+
+            // Reset trạng thái nút nav Mobile
+            [mNavDash, mNavMatrix, mNavFreeTime].forEach(btn => {
+                btn?.classList.remove('text-[#0054a6]', 'dark:text-blue-400', 'font-bold');
+                btn?.classList.add('text-slate-500', 'dark:text-slate-400');
+            });
+
+            if (viewName === 'dashboard') {
+                dashView?.classList.remove('hidden');
+                navDash?.classList.add('bg-[#0054a6]', 'text-white', 'font-bold');
+                navDash?.classList.remove('text-slate-600', 'hover:bg-slate-50');
+                mNavDash?.classList.add('text-[#0054a6]', 'dark:text-blue-400', 'font-bold');
+                mNavDash?.classList.remove('text-slate-500', 'dark:text-slate-400');
+                if (breadcrumb) breadcrumb.innerText = 'Trang chính (Thời khóa biểu & Tiến độ)';
+                renderDashboard();
+            } else if (viewName === 'matrix') {
+                matrixView?.classList.remove('hidden');
+                navMatrix?.classList.add('bg-[#0054a6]', 'text-white', 'font-bold');
+                navMatrix?.classList.remove('text-slate-600', 'hover:bg-slate-50');
+                mNavMatrix?.classList.add('text-[#0054a6]', 'dark:text-blue-400', 'font-bold');
+                mNavMatrix?.classList.remove('text-slate-500', 'dark:text-slate-400');
+                if (breadcrumb) breadcrumb.innerText = 'Sắp xếp công việc (Ma trận)';
+                renderFapScheduleTable();
+            } else if (viewName === 'freetime') {
+                freeTimeView?.classList.remove('hidden');
+                navFreeTime?.classList.add('bg-[#0054a6]', 'text-white', 'font-bold');
+                navFreeTime?.classList.remove('text-slate-600', 'hover:bg-slate-50');
+                mNavFreeTime?.classList.add('text-[#0054a6]', 'dark:text-blue-400', 'font-bold');
+                mNavFreeTime?.classList.remove('text-slate-500', 'dark:text-slate-400');
+                if (breadcrumb) breadcrumb.innerText = 'Lịch rảnh (Khung giờ trống trong tuần)';
+                renderFreeTimeSchedule();
+            } else if (viewName === 'admin') {
+                adminView?.classList.remove('hidden');
+                navAdmin?.classList.add('bg-[#0054a6]', 'text-white', 'font-bold');
+                navAdmin?.classList.remove('text-slate-600', 'hover:bg-slate-50');
+                if (breadcrumb) breadcrumb.innerText = '🛡️ Trung Tâm Quản Trị Hệ Thống';
+                loadAdminStats();
+            }
+        }
+
+        // =====================================================================
+        // XỬ LÝ NGÀY & TUẦN (WEEK TIMETABLE LOGIC)
+        // =====================================================================
+        function getWeekDays(offset = 0) {
+            const now = new Date();
+            const currentDay = now.getDay(); // 0: CN, 1: T2, ...
+            const distanceToMonday = (currentDay === 0 ? -6 : 1) - currentDay;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + distanceToMonday + (offset * 7));
+            monday.setHours(0, 0, 0, 0);
+
+            const dayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+            const shortNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+            const days = [];
+            const todayStr = now.toDateString();
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                const dayNum = String(d.getDate()).padStart(2, '0');
+                const dateStr = dayNum + '/' + String(d.getMonth() + 1).padStart(2, '0');
+                const isToday = (d.toDateString() === todayStr);
+                days.push({
+                    index: i,
+                    name: dayNames[i],
+                    short: shortNames[i],
+                    dayNum: dayNum,
+                    dateStr: dateStr,
+                    fullDate: d,
+                    isToday: isToday
+                });
+            }
+            return days;
+        }
+
+        function updateWeekTitle() {
+            const days = getWeekDays(currentWeekOffset);
+            const startStr = days[0].dateStr;
+            const endStr = days[6].dateStr;
+            const d = days[0].fullDate;
+            const firstJan = new Date(d.getFullYear(), 0, 1);
+            const weekNum = Math.ceil((((d - firstJan) / 86400000) + firstJan.getDay() + 1) / 7);
+            const title = `Tuần ${weekNum} (${startStr} - ${endStr})`;
+            const el = document.getElementById('dashWeekDisplay');
+            if (el) el.innerText = title;
+            const badge = document.getElementById('weekStatusBadge');
+            if (badge) badge.innerText = `Tuần ${weekNum}`;
+        }
+
+        function changeWeek(delta) {
+            currentWeekOffset += delta;
+            renderDashboard();
+            if (activeView === 'freetime') renderFreeTimeSchedule();
+        }
+
+        function goToCurrentWeek() {
+            currentWeekOffset = 0;
+            renderDashboard();
+            if (activeView === 'freetime') renderFreeTimeSchedule();
+        }
+
+
+
+        // =====================================================================
+        // RENDER THỜI KHÓA BIỂU TUẦN 7 NGÀY (HÀNG DỌC CÁC THỨ, TASK XẾP THEO CHIỀU NGANG)
+        // =====================================================================
+        function renderDashboard() {
+            updateWeekTitle();
+            const days = getWeekDays(currentWeekOffset);
+            const container = document.getElementById('weekGridContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const todayIndex = days.findIndex(d => d.isToday);
+
+            days.forEach((day, idx) => {
+                // Lọc các nhiệm vụ hoặc lịch học thuộc ngày này (có tính đến bộ lọc Category)
+                const dayTasks = allTasksList.filter((t) => {
+                    if (selectedCategoryFilter !== 'all') {
+                        const c = getTaskCategory(t);
+                        if (c !== selectedCategoryFilter) return false;
+                    }
+                    if (t.day !== undefined && t.day !== null && t.day !== '') {
+                        return parseInt(t.day, 10) === idx;
+                    }
+                    return false;
+                });
+
+                let tasksHtml = '';
+                if (dayTasks.length === 0) {
+                    tasksHtml = `
+                        <div class="flex-1 flex items-center py-2.5 px-3.5 rounded-xl bg-white/70 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 min-h-[52px]">
+                            <span class="text-xs font-medium flex items-center gap-2">
+                                <span class="opacity-70 text-base">☕</span>
+                                <span>Chưa có lịch học hoặc công việc nào trong ${day.name}</span>
+                            </span>
+                        </div>
+                    `;
+                } else {
+                    tasksHtml = `
+                        <div class="flex-1 flex flex-wrap items-stretch gap-2.5 min-w-0">
+                            ${dayTasks.map(t => {
+                                const isChecked = !!t.done;
+                                const isCancelled = (t.status === 'cancelled');
+                                const isCalendar = (t.source === 'fap' || t.source === 'calendar' || (t.id && String(t.id).startsWith('fap_')));
+                                const badgeColor = isCancelled
+                                    ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800'
+                                    : (isCalendar 
+                                        ? 'bg-blue-100 text-[#0054a6] border-blue-200 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800' 
+                                        : (t.quadrant === 'donow' 
+                                            ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/60 dark:text-red-300 dark:border-red-800' 
+                                            : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/60 dark:text-amber-300 dark:border-amber-800'));
+                                const badgeLabel = isCancelled ? '🚫 Đã huỷ' : (isCalendar ? '🎓 Lịch học' : (t.quadrant === 'donow' ? '🔴 Làm ngay' : '🟡 Kế hoạch'));
+                                
+                                // Bóc tách thông tin sạch qua parseTaskDetails: tiêu đề không lặp lại thời gian hay GV
+                                const parsed = parseTaskDetails(t.task, t.time);
+                                const mainTitle = parsed.cleanTitle;
+
+                                let metaParts = [];
+                                if (parsed.room) metaParts.push(`<span class="text-[10px] text-slate-500 font-medium">📍 ${parsed.room}</span>`);
+                                if (parsed.lecturer) metaParts.push(`<span class="text-[10px] text-slate-500 font-medium">👤 GV: ${parsed.lecturer}</span>`);
+                                const extraMeta = metaParts.length > 0 ? `<div class="flex items-center gap-2 flex-wrap mt-0.5">${metaParts.join('<span class="text-slate-300">•</span>')}</div>` : '';
+                                const timeHtml = parsed.time ? `<span class="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 font-mono font-semibold flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">⏰ ${parsed.time}</span>` : '';
+
+                                // Phase 2: Category tag badge
+                                const cat = getTaskCategory(t);
+                                let categoryTimetableHtml = '';
+                                if (cat) {
+                                    const col = getCategoryColor(cat);
+                                    categoryTimetableHtml = `<span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}"><span>${col.icon}</span>${escapeHtml(cat)}</span>`;
+                                }
+
+                                // Phase 2: Sub-tasks progress indicator
+                                let subtasksTimetableHtml = '';
+                                const subProgress = getSubtasksProgress(t.subtasks);
+                                if (subProgress) {
+                                    const isAllDone = (subProgress.completed === subProgress.total);
+                                    subtasksTimetableHtml = `
+                                        <div class="w-full mt-1 flex flex-col gap-0.5">
+                                            <div class="flex items-center justify-between text-[9px] text-slate-500 dark:text-slate-400">
+                                                <span class="font-semibold ${isAllDone ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}">☑️ ${subProgress.completed}/${subProgress.total}</span>
+                                                <span class="font-mono font-bold">${subProgress.percent}%</span>
+                                            </div>
+                                            <div class="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                <div class="h-full ${isAllDone ? 'bg-emerald-500' : 'bg-[#0054a6] dark:bg-blue-400'} rounded-full transition-all" style="width: ${subProgress.percent}%"></div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+
+                                // Phase 2: Deadline & Priority badge trên card timetable
+                                let deadlineTimetableHtml = '';
+                                if (t.deadline) {
+                                    const dlInfo = formatDeadlineInfo(t.deadline);
+                                    if (dlInfo) {
+                                        deadlineTimetableHtml = `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border ${dlInfo.badgeClass}" title="Hạn: ${dlInfo.dateFormatted}">${dlInfo.icon} ${dlInfo.text}</span>`;
+                                    }
+                                }
+                                let priorityTimetableHtml = '';
+                                if (t.priority === 'high') {
+                                    priorityTimetableHtml = `<span class="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800">🔴 Cao</span>`;
+                                }
+
+                                return `
+                                    <div class="timetable-card-horizontal flex-none w-[240px] sm:w-[260px] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-[#0054a6] dark:hover:border-blue-400 rounded-xl p-2.5 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between gap-1.5 group relative cursor-pointer ${isCancelled ? 'opacity-60 bg-slate-50/60' : ''}" data-task-id="${t.id}" onclick="openTaskDetailModal('${t.id}')" title="Bấm để xem chi tiết môn/công việc">
+                                        <div class="flex items-start gap-2">
+                                            <input type="checkbox" ${isChecked ? 'checked' : ''} ${isCancelled ? 'disabled' : ''} onclick="event.stopPropagation()" onchange="toggleTaskDone('${t.id}')" class="mt-0.5 w-4 h-4 text-[#0054a6] rounded border-slate-300 focus:ring-[#0054a6] cursor-pointer shrink-0">
+                                            <div class="flex-1 min-w-0">
+                                                <span class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug break-words block ${isChecked || isCancelled ? 'line-through text-slate-400 dark:text-slate-500 font-normal' : ''}">
+                                                    ${mainTitle}
+                                                </span>
+                                                ${extraMeta}
+                                                ${subtasksTimetableHtml}
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80 mt-auto flex-wrap gap-1">
+                                            <div class="flex items-center gap-1 flex-wrap">
+                                                <span class="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}">
+                                                    ${badgeLabel}
+                                                </span>
+                                                ${categoryTimetableHtml}
+                                                ${priorityTimetableHtml}
+                                                ${deadlineTimetableHtml}
+                                            </div>
+                                            ${timeHtml}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
+                // Nút "➕ Thêm" cố định ở cuối cùng mỗi hàng ngày (Canh lề phải hoàn hảo)
+                const addActionBtn = `
+                    <button type="button" onclick="openDayAddModal(${idx})" class="w-full md:w-20 lg:w-24 min-h-[50px] md:min-h-0 md:self-stretch flex md:flex-col items-center justify-center gap-1 p-2.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-[#0054a6] dark:hover:border-blue-400 bg-white/70 hover:bg-blue-50/80 dark:bg-slate-900/50 dark:hover:bg-blue-950/40 text-slate-400 hover:text-[#0054a6] dark:hover:text-blue-300 transition-all cursor-pointer group shrink-0" title="Thêm việc vào ${day.name}">
+                        <span class="text-base group-hover:scale-115 transition-transform">➕</span>
+                        <span class="text-[11px] font-bold">Thêm</span>
+                    </button>
+                `;
+
+                // Cột bên trái: Thông tin Thứ & Ngày (Dạng dọc từ Thứ 2 đến Chủ nhật)
+                const isToday = day.isToday;
+                const dayHeaderBox = isToday
+                    ? `
+                        <div class="w-full md:w-44 lg:w-48 shrink-0 flex md:flex-col items-center md:items-start justify-between pb-2 md:pb-0 md:pr-4 border-b md:border-b-0 md:border-r border-blue-200 dark:border-blue-900/50">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-full bg-[#0054a6] text-white flex items-center justify-center text-xs font-extrabold shadow-2xs shrink-0">${day.dayNum}</span>
+                                <div>
+                                    <div class="font-extrabold text-sm text-[#0054a6] dark:text-blue-400 leading-tight">${day.name}</div>
+                                    <div class="text-[11px] font-bold text-slate-500 font-mono">${day.dateStr}</div>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full bg-blue-100 text-[#0054a6] dark:bg-blue-900/60 dark:text-blue-300 text-[10px] font-extrabold tracking-wide mt-1">Hôm nay 🌟</span>
+                        </div>
+                    `
+                    : `
+                        <div class="w-full md:w-44 lg:w-48 shrink-0 flex md:flex-col items-center md:items-start justify-between pb-2 md:pb-0 md:pr-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-bold shrink-0">${day.dayNum}</span>
+                                <div>
+                                    <div class="font-bold text-sm text-slate-800 dark:text-slate-200 leading-tight">${day.name}</div>
+                                    <div class="text-[11px] font-semibold text-slate-400 font-mono">${day.dateStr}</div>
+                                </div>
+                            </div>
+                            <span class="text-[11px] text-slate-400 font-medium mt-1">${dayTasks.length} mục</span>
+                        </div>
+                    `;
+
+                const dayRowHtml = `
+                    <div class="day-row-horizontal bg-slate-50/50 dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-900 border ${isToday ? 'border-blue-300 dark:border-blue-800 bg-blue-50/20 dark:bg-blue-950/20 shadow-xs' : 'border-slate-200 dark:border-slate-800'} rounded-xl p-3 sm:p-4 transition-all flex flex-col md:flex-row md:items-center gap-3">
+                        ${dayHeaderBox}
+                        ${tasksHtml}
+                        ${addActionBtn}
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('beforeend', dayRowHtml);
+            });
+
+            updateProgressAnalytics(todayIndex);
+            if (activeView === 'freetime') {
+                renderFreeTimeSchedule();
+            }
+        }
+
+        // =====================================================================
+        // TÍNH TOÁN & CẬP NHẬT TIẾN ĐỘ HỌC TẬP (PROGRESS ANALYTICS)
+        // =====================================================================
+        function updateProgressAnalytics(todayIndex = -1) {
+            if (todayIndex === -1) {
+                const days = getWeekDays(currentWeekOffset);
+                todayIndex = days.findIndex(d => d.isToday);
+            }
+
+            // 1. Tiến độ ngày hôm nay
+            let todayTasks = [];
+            if (todayIndex >= 0) {
+                todayTasks = allTasksList.filter((t) => {
+                    if (t.day !== undefined && t.day !== null && t.day !== '') {
+                        return parseInt(t.day, 10) === todayIndex;
+                    }
+                    if (t.quadrant === 'donow') return (todayIndex === 0 || todayIndex === 1);
+                    if (t.quadrant === 'plan') return (todayIndex === 2 || todayIndex === 3);
+                    if (t.quadrant === 'delegate') return (todayIndex === 4);
+                    if (t.quadrant === 'drop') return (todayIndex === 5);
+                    return (todayIndex === 0);
+                });
+            }
+
+            const todayTotal = todayTasks.length;
+            const todayDone = todayTasks.filter(t => !!t.done).length;
+            const todayPct = todayTotal > 0 ? Math.round((todayDone / todayTotal) * 100) : 0;
+
+            const todayPctEl = document.getElementById('todayPercentText');
+            const todayBarEl = document.getElementById('todayProgressBar');
+            const todayRatioEl = document.getElementById('todayRatioText');
+            const todayBadgeEl = document.getElementById('todayBadge');
+            const todayTipEl = document.getElementById('todayMotivationalTip');
+
+            if (todayPctEl) todayPctEl.innerText = `${todayPct}%`;
+            if (todayBarEl) todayBarEl.style.width = `${todayPct}%`;
+            if (todayRatioEl) todayRatioEl.innerText = `${todayDone} / ${todayTotal} việc`;
+
+            if (todayBadgeEl) {
+                if (todayTotal === 0) {
+                    todayBadgeEl.innerText = 'Thảnh thơi';
+                    todayBadgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600';
+                } else if (todayPct === 100) {
+                    todayBadgeEl.innerText = 'Xuất sắc! 🎉';
+                    todayBadgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+                } else {
+                    todayBadgeEl.innerText = 'Đang thực hiện';
+                    todayBadgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#0054a6]';
+                }
+            }
+
+            if (todayTipEl) {
+                if (todayPct === 100 && todayTotal > 0) {
+                    todayTipEl.innerText = 'Tuyệt vời! Bạn đã hoàn thành toàn bộ mục tiêu hôm nay!';
+                } else if (todayPct >= 50) {
+                    todayTipEl.innerText = 'Rất tốt! Bạn đã đi được hơn một nửa chặng đường ngày hôm nay.';
+                } else {
+                    todayTipEl.innerText = 'Hoàn thành các mục tiêu trong ngày để duy trì chuỗi phong độ xuất sắc!';
+                }
+            }
+
+            // 2. Tiến độ cả tuần
+            const weekTotal = allTasksList.length;
+            const weekDone = allTasksList.filter(t => !!t.done).length;
+            const weekPending = weekTotal - weekDone;
+            const weekPct = weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0;
+
+            const weekPctEl = document.getElementById('weekPercentText');
+            const weekBarEl = document.getElementById('weekProgressBar');
+            const weekRatioEl = document.getElementById('weekRatioText');
+            const weekDoneEl = document.getElementById('weekDoneCount');
+            const weekPendingEl = document.getElementById('weekPendingCount');
+
+            if (weekPctEl) weekPctEl.innerText = `${weekPct}%`;
+            if (weekBarEl) weekBarEl.style.width = `${weekPct}%`;
+            if (weekRatioEl) weekRatioEl.innerText = `${weekDone} / ${weekTotal} việc`;
+            if (weekDoneEl) weekDoneEl.innerText = weekDone;
+            if (weekPendingEl) weekPendingEl.innerText = weekPending;
+
+            // 3. Tiến độ cả tháng (Tổng quan tháng)
+            const days = getWeekDays(currentWeekOffset);
+            const refDate = (days && days[0] && days[0].fullDate) ? days[0].fullDate : new Date();
+            const targetMonth = refDate.getMonth(); // 0-indexed
+            const targetYear = refDate.getFullYear();
+            const monthStr = ('0' + (targetMonth + 1)).slice(-2);
+
+            const monthBadgeEl = document.getElementById('monthBadge');
+            if (monthBadgeEl) {
+                monthBadgeEl.innerText = `Tháng ${monthStr}/${targetYear}`;
+            }
+
+            // Lọc các công việc thuộc tháng khảo sát
+            const monthTasks = allTasksList.filter(t => {
+                const fapMatch = String(t.id).match(/_(\d{4})(\d{2})\d{2}_/);
+                if (fapMatch) {
+                    const taskYear = parseInt(fapMatch[1], 10);
+                    const taskMonth = parseInt(fapMatch[2], 10) - 1;
+                    return (taskYear === targetYear && taskMonth === targetMonth);
+                }
+                if (t.createdAt) {
+                    const cd = new Date(t.createdAt);
+                    if (!isNaN(cd.getTime())) {
+                        return (cd.getFullYear() === targetYear && cd.getMonth() === targetMonth);
+                    }
+                }
+                return true;
+            });
+
+            const monthTotal = monthTasks.length;
+            const monthDone = monthTasks.filter(t => !!t.done).length;
+            const monthPending = monthTotal - monthDone;
+            const monthPct = monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0;
+
+            const monthPctEl = document.getElementById('monthPercentText');
+            const monthBarEl = document.getElementById('monthProgressBar');
+            const monthRatioEl = document.getElementById('monthRatioText');
+            const monthDoneEl = document.getElementById('monthDoneCount');
+            const monthPendingEl = document.getElementById('monthPendingCount');
+            const monthTipEl = document.getElementById('monthMotivationalTip');
+
+            if (monthPctEl) monthPctEl.innerText = `${monthPct}%`;
+            if (monthBarEl) monthBarEl.style.width = `${monthPct}%`;
+            if (monthRatioEl) monthRatioEl.innerText = `${monthDone} / ${monthTotal} việc tháng`;
+            if (monthDoneEl) monthDoneEl.innerText = monthDone;
+            if (monthPendingEl) monthPendingEl.innerText = monthPending;
+
+            if (monthTipEl) {
+                if (monthPct === 100 && monthTotal > 0) {
+                    monthTipEl.innerText = 'Tuyệt đối xuất sắc! Đã hoàn thành 100% mục tiêu tháng!';
+                } else if (monthPct >= 50) {
+                    monthTipEl.innerText = 'Tiến độ tháng rất tích cực! Tiếp tục giữ vững phong độ.';
+                } else if (monthTotal > 0) {
+                    monthTipEl.innerText = 'Đang duy trì nhịp độ học tập ổn định trong tháng!';
+                } else {
+                    monthTipEl.innerText = 'Chưa có lịch học hoặc kế hoạch phát sinh trong tháng.';
+                }
+            }
+
+            // 4. Biểu đồ năng suất 7 ngày mini
+            renderMiniChart();
+        }
+
+        // =====================================================================
+        // BIỂU ĐỒ NĂNG SUẤT 7 NGÀY (MINI BAR CHART)
+        // =====================================================================
+        function renderMiniChart() {
+            const chartContainer = document.getElementById('miniChartContainer');
+            if (!chartContainer) return;
+            chartContainer.innerHTML = '';
+
+            const days = getWeekDays(currentWeekOffset);
+
+            days.forEach((day, idx) => {
+                const dayTasks = allTasksList.filter((t) => {
+                    if (t.day !== undefined && t.day !== null && t.day !== '') {
+                        return parseInt(t.day, 10) === idx;
+                    }
+                    if (t.quadrant === 'donow') return (idx === 0 || idx === 1);
+                    if (t.quadrant === 'plan') return (idx === 2 || idx === 3);
+                    if (t.quadrant === 'delegate') return (idx === 4);
+                    if (t.quadrant === 'drop') return (idx === 5);
+                    return (idx === 0);
+                });
+
+                const total = dayTasks.length;
+                const done = dayTasks.filter(t => !!t.done).length;
+                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                const barHeight = Math.max(3, Math.round((pct / 100) * 24));
+
+                const barColor = day.isToday 
+                    ? 'bg-[#0054a6]' 
+                    : (pct === 100 && total > 0 ? 'bg-emerald-500' : (total > 0 ? 'bg-blue-300' : 'bg-slate-200'));
+
+                const barHtml = `
+                    <div class="flex-1 flex flex-col items-center gap-0.5 group cursor-pointer" title="${day.name} (${day.dateStr}): ${done}/${total} việc (${pct}%)">
+                        <span class="text-[8px] font-bold text-slate-400 group-hover:text-slate-700 leading-none">${pct}%</span>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-xs h-7 flex items-end justify-center overflow-hidden">
+                            <div class="${barColor} w-full rounded-t-xs transition-all duration-300" style="height: ${barHeight}px;"></div>
+                        </div>
+                        <span class="text-[9px] font-bold ${day.isToday ? 'text-[#0054a6] dark:text-blue-400' : 'text-slate-500'} leading-none mt-0.5">${day.short}</span>
+                    </div>
+                `;
+                chartContainer.insertAdjacentHTML('beforeend', barHtml);
+            });
+        }
+
+        // =====================================================================
+        // TÍCH CHỌN HOÀN THÀNH CÔNG VIỆC (CHECKBOX TOGGLE)
+        // =====================================================================
+        function toggleTaskDone(id) {
+            const task = allTasksList.find(t => String(t.id) === String(id));
+            if (!task) return;
+
+            task.done = !task.done;
+            renderTasks(allTasksList);
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withFailureHandler(err => showToast('Lỗi cập nhật trạng thái: ' + err, '⚠️'))
+                    .updateTask(id, { done: task.done, userEmail: currentUserEmail });
+            }
+            showToast(task.done ? 'Đã hoàn thành công việc! 🎯' : 'Đã chuyển về chưa hoàn thành.', task.done ? '✅' : '↩️');
+        }
+
+
+
+        // =====================================================================
+        // QUẢN LÝ LỊCH HỌC CỐ ĐỊNH TỪ FAP (BẢNG RIÊNG TÁCH KHỎI MA TRẬN)
+        // =====================================================================
+        let fapFilter = 'all';
+
+        function setFapFilter(filter) {
+            fapFilter = filter;
+            const filterMap = {
+                all: 'fapFilterAllBtn',
+                upcoming: 'fapFilterUpcomingBtn',
+                done: 'fapFilterDoneBtn',
+                cancelled: 'fapFilterCancelledBtn'
+            };
+            Object.keys(filterMap).forEach(key => {
+                const btn = document.getElementById(filterMap[key]);
+                if (btn) {
+                    if (key === filter) {
+                        btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0054a6] text-white shadow-2xs transition-all cursor-pointer';
+                    } else {
+                        btn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer';
+                    }
+                }
+            });
+            renderFapScheduleTable();
+        }
+
+        function isFapClass(t) {
+            if (!t) return false;
+            if (t.source === 'fap' || t.source === 'calendar') return true;
+            if (t.id && String(t.id).startsWith('fap_')) return true;
+            // Nhận diện định dạng môn học FAP: [MÃ_MÔN - LỚP] hoặc chứa ca giờ + GV
+            if (t.task && /^\[[A-Za-z0-9_]+\s*-\s*[A-Za-z0-9_]+\]/i.test(t.task)) {
+                return true;
+            }
+            if (t.task && /\(\d{1,2}:\d{2}\s*[-–—]\s*\d{1,2}:\d{2}\)/.test(t.task) && /GV:/i.test(t.task)) {
+                return true;
+            }
+            return false;
+        }
+
+        function renderFapScheduleTable() {
+            const container = document.getElementById('fapScheduleContainer');
+            if (!container) return;
+
+            const days = getWeekDays(currentWeekOffset);
+            const allFapClasses = allTasksList.filter(t => isFapClass(t));
+
+            // Thống kê đếm số lượng
+            const totalCount = allFapClasses.length;
+            const cancelledCount = allFapClasses.filter(t => t.status === 'cancelled').length;
+            const doneCount = allFapClasses.filter(t => !!t.done && t.status !== 'cancelled').length;
+            const upcomingCount = totalCount - cancelledCount - doneCount;
+
+            const totalBadge = document.getElementById('fapScheduleTotalBadge');
+            if (totalBadge) totalBadge.innerText = `${totalCount} buổi học`;
+
+            const cntAll = document.getElementById('fapFilterCountAll');
+            const cntUp = document.getElementById('fapFilterCountUpcoming');
+            const cntDone = document.getElementById('fapFilterCountDone');
+            const cntCanc = document.getElementById('fapFilterCountCancelled');
+            if (cntAll) cntAll.innerText = totalCount;
+            if (cntUp) cntUp.innerText = upcomingCount;
+            if (cntDone) cntDone.innerText = doneCount;
+            if (cntCanc) cntCanc.innerText = cancelledCount;
+
+            if (totalCount === 0) {
+                container.innerHTML = `
+                    <div class="py-8 text-center text-slate-400 dark:text-slate-500 bg-slate-50/60 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                        <div class="text-2xl mb-1">📅</div>
+                        <div class="text-xs font-semibold">Chưa có lịch học FAP nào trong tuần này.</div>
+                        <div class="text-[11px] mt-0.5 opacity-80">Bấm "Tuần hiện tại" hoặc đồng bộ lịch từ FAP để cập nhật.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sắp xếp các buổi học theo Thứ (0 -> 6) và theo Giờ bắt đầu
+            const sortedClasses = [...allFapClasses].sort((a, b) => {
+                const dayA = (a.day !== '' && a.day !== undefined) ? parseInt(a.day, 10) : 0;
+                const dayB = (b.day !== '' && b.day !== undefined) ? parseInt(b.day, 10) : 0;
+                if (dayA !== dayB) return dayA - dayB;
+                
+                const parseTime = (t) => {
+                    const m = (t.time || t.task || '').match(/(\d{1,2}):(\d{2})/);
+                    return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 0;
+                };
+                return parseTime(a) - parseTime(b);
+            });
+
+            // Lọc theo fapFilter
+            const filteredClasses = sortedClasses.filter(t => {
+                const isCancelled = t.status === 'cancelled';
+                const isDone = !!t.done && !isCancelled;
+                const isUpcoming = !isCancelled && !isDone;
+
+                if (fapFilter === 'upcoming') return isUpcoming;
+                if (fapFilter === 'done') return isDone;
+                if (fapFilter === 'cancelled') return isCancelled;
+                return true;
+            });
+
+            if (filteredClasses.length === 0) {
+                container.innerHTML = `
+                    <div class="py-6 text-center text-slate-400 dark:text-slate-500 bg-slate-50/60 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs">
+                        Không có buổi học nào phù hợp với bộ lọc hiện tại.
+                    </div>
+                `;
+                return;
+            }
+
+            // Nhóm theo ngày để hiển thị gọn gàng và phân minh
+            const groupedByDay = {};
+            filteredClasses.forEach(item => {
+                const dayIdx = (item.day !== '' && item.day !== undefined) ? parseInt(item.day, 10) : 0;
+                if (!groupedByDay[dayIdx]) groupedByDay[dayIdx] = [];
+                groupedByDay[dayIdx].push(item);
+            });
+
+            let html = '';
+            for (let dIdx = 0; dIdx < 7; dIdx++) {
+                const dayItems = groupedByDay[dIdx];
+                if (!dayItems || dayItems.length === 0) continue;
+
+                const dayInfo = days[dIdx] || { name: `Thứ ${dIdx + 2}`, dateStr: '', isToday: false };
+                const dayLabel = dIdx === 6 ? 'Chủ Nhật' : dayInfo.name;
+
+                html += `
+                    <div class="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden">
+                        <!-- Tiêu đề ngày -->
+                        <div class="px-4 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-black text-slate-800 dark:text-slate-100 ${dayInfo.isToday ? 'text-[#0054a6] dark:text-blue-400' : ''}">
+                                    ${dayLabel}
+                                </span>
+                                <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                    ${dayInfo.dateStr ? `(${dayInfo.dateStr})` : ''}
+                                </span>
+                                ${dayInfo.isToday ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#0054a6] text-white">Hôm nay</span>' : ''}
+                            </div>
+                            <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                ${dayItems.length} ca học
+                            </span>
+                        </div>
+
+                        <!-- Danh sách các ca học trong ngày -->
+                        <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                            ${dayItems.map(t => {
+                                const parsed = parseTaskDetails(t.task, t.time);
+                                const isCancelled = t.status === 'cancelled';
+                                const isDone = !!t.done && !isCancelled;
+
+                                let statusBadge = '';
+                                if (isCancelled) {
+                                    statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">🚫 Đã huỷ / Báo nghỉ</span>`;
+                                } else if (isDone) {
+                                    statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">✅ Đã hoàn tất</span>`;
+                                } else {
+                                    statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-[#0054a6] dark:text-blue-300 border border-blue-200 dark:border-blue-800">⏳ Sắp tới</span>`;
+                                }
+
+                                return `
+                                    <div class="p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${isCancelled ? 'bg-slate-50/80 dark:bg-slate-900/60 opacity-65' : (isDone ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30')}">
+                                        
+                                        <!-- Khối thông tin môn & thời gian -->
+                                        <div class="flex items-start gap-3 min-w-0">
+                                            <!-- Checkbox toggle hoàn tất -->
+                                            <button type="button" onclick="toggleFapDone('${t.id}')" title="${isDone ? 'Bấm để đánh dấu chưa học' : 'Bấm để đánh dấu hoàn tất ca học'}" class="mt-0.5 w-6 h-6 rounded-lg border flex items-center justify-center transition-all cursor-pointer shrink-0 ${isDone ? 'bg-emerald-500 border-emerald-600 text-white shadow-xs' : (isCancelled ? 'border-slate-300 dark:border-slate-700 text-slate-300 cursor-not-allowed opacity-40' : 'border-slate-300 dark:border-slate-700 hover:border-[#0054a6] text-transparent hover:text-slate-300 bg-white dark:bg-slate-800')}" ${isCancelled ? 'disabled' : ''}>
+                                                <span class="text-xs font-bold leading-none">✓</span>
+                                            </button>
+
+                                            <div class="flex flex-col gap-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 ${isCancelled ? 'line-through text-slate-400 dark:text-slate-500' : ''}">
+                                                        ${parsed.cleanTitle || t.task}
+                                                    </span>
+                                                    ${statusBadge}
+                                                </div>
+
+                                                <!-- Chi tiết phụ (Thời gian, Phòng, GV) -->
+                                                <div class="flex items-center gap-2 flex-wrap text-slate-500 dark:text-slate-400 text-[11px]">
+                                                    ${parsed.time ? `<span class="font-mono font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 flex items-center gap-1">⏰ ${parsed.time}</span>` : ''}
+                                                    ${parsed.room ? `<span class="flex items-center gap-1">📍 ${parsed.room}</span>` : ''}
+                                                    ${parsed.lecturer ? `<span class="flex items-center gap-1">👤 GV: ${parsed.lecturer}</span>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Cụm nút thao tác (Hoàn tất & Huỷ lịch) -->
+                                        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                            ${isCancelled ? `
+                                                <button type="button" onclick="toggleFapCancelled('${t.id}')" class="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-700 dark:text-slate-300 hover:text-[#0054a6] bg-white dark:bg-slate-800 transition-all cursor-pointer flex items-center gap-1 shadow-2xs" title="Khôi phục lại ca học này">
+                                                    <span>🔄</span>
+                                                    <span>Khôi phục ca học</span>
+                                                </button>
+                                            ` : `
+                                                <button type="button" onclick="toggleFapDone('${t.id}')" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1 shadow-2xs ${isDone ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700' : 'bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'}" title="${isDone ? 'Chuyển về chưa hoàn tất' : 'Đánh dấu đã học xong'}">
+                                                    <span>${isDone ? '↩️' : '✅'}</span>
+                                                    <span>${isDone ? 'Chưa học' : 'Hoàn tất'}</span>
+                                                </button>
+                                                
+                                                <button type="button" onclick="toggleFapCancelled('${t.id}')" class="px-2.5 py-1 text-xs font-bold rounded-lg border border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 bg-white dark:bg-slate-800 transition-all cursor-pointer flex items-center gap-1 shadow-2xs" title="Báo huỷ ca học (giờ này sẽ được giải phóng thành giờ rảnh)">
+                                                    <span>🚫</span>
+                                                    <span>Báo huỷ</span>
+                                                </button>
+                                            `}
+                                        </div>
+
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function toggleFapDone(taskId) {
+            const task = allTasksList.find(t => String(t.id) === String(taskId));
+            if (!task) return;
+
+            task.done = !task.done;
+            if (task.done) {
+                task.status = 'active';
+            }
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            renderFapScheduleTable();
+            renderDashboard();
+            renderFreeTimeSchedule();
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withFailureHandler(err => showToast('Lỗi lưu trạng thái: ' + err, '⚠️'))
+                    .updateTask(taskId, { done: task.done, status: task.status, userEmail: currentUserEmail });
+            }
+            showToast(task.done ? 'Đã hoàn tất ca học! ✅' : 'Đã chuyển về chưa học.', '🎓');
+        }
+
+        function toggleFapCancelled(taskId) {
+            const task = allTasksList.find(t => String(t.id) === String(taskId));
+            if (!task) return;
+
+            const isCurrentlyCancelled = (task.status === 'cancelled');
+            task.status = isCurrentlyCancelled ? 'active' : 'cancelled';
+            if (task.status === 'cancelled') {
+                task.done = false;
+            }
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            renderFapScheduleTable();
+            renderDashboard();
+            renderFreeTimeSchedule();
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withFailureHandler(err => showToast('Lỗi cập nhật trạng thái huỷ: ' + err, '⚠️'))
+                    .updateTask(taskId, { status: task.status, done: task.done, userEmail: currentUserEmail });
+            }
+            showToast(task.status === 'cancelled' 
+                ? 'Đã báo huỷ ca học (khung giờ này đã được mở thành giờ rảnh)! 🚫' 
+                : 'Đã khôi phục ca học! 🔄', '🎓');
+        }
+
+        // Hiển thị dữ liệu bền vững, chống biến mất (Hỗ trợ lọc & đếm trạng thái)
+        function renderTasks(tasks) {
+            document.getElementById('loading')?.remove();
+            
+            if (Array.isArray(tasks) && tasks.length > 0) {
+                allTasksList = tasks;
+                try {
+                    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+                } catch(e) {}
+            } else if (allTasksList.length === 0 && Array.isArray(tasks)) {
+                allTasksList = tasks;
+            }
+
+            try {
+                ['inbox', 'donow', 'plan', 'delegate', 'drop'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '';
+                });
+
+                // Tách riêng: Nhiệm vụ cá nhân (Ma trận Eisenhower) và Lịch học FAP
+                const matrixTasks = allTasksList.filter(t => !isFapClass(t));
+
+                // Đếm số lượng theo trạng thái cho ma trận Eisenhower
+                const totalCount = matrixTasks.length;
+                const doneCount = matrixTasks.filter(t => !!t.done).length;
+                const activeCount = totalCount - doneCount;
+
+                const countAllEl = document.getElementById('filterCountAll');
+                const countActiveEl = document.getElementById('filterCountActive');
+                const countDoneEl = document.getElementById('filterCountDone');
+                if (countAllEl) countAllEl.innerText = totalCount;
+                if (countActiveEl) countActiveEl.innerText = activeCount;
+                if (countDoneEl) countDoneEl.innerText = doneCount;
+
+                // Cập nhật thanh lọc Category & Tag
+                renderCategoryFilters();
+
+                matrixTasks.forEach(task => {
+                    const isDone = !!task.done;
+                    // Lọc theo bộ lọc ma trận
+                    if (matrixFilter === 'active' && isDone) return;
+                    if (matrixFilter === 'done' && !isDone) return;
+                    if (matrixHideDone && isDone && matrixFilter !== 'done') return;
+                    if (selectedCategoryFilter !== 'all' && getTaskCategory(task) !== selectedCategoryFilter) return;
+
+                    const container = document.getElementById(task.quadrant) || document.getElementById('inbox');
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', createTaskHTML(task));
+                    }
+                });
+
+                updateInboxCount();
+                updateUnscheduledBadge();
+                renderDashboard();
+                renderFapScheduleTable();
+                loadAndRenderNotifications();
+            } catch (renderErr) {
+                console.error("Lỗi khi renderTasks:", renderErr);
+            }
+        }
+
+        // CẤU HÌNH KÉO THẢ (SortableJS)
+        function initSortable() {
+            const zones = ['inbox', 'donow', 'plan', 'delegate', 'drop'];
+            zones.forEach(zoneId => {
+                const zoneEl = document.getElementById(zoneId);
+                if (!zoneEl) return;
+                new Sortable(zoneEl, {
+                    group: 'matrix', 
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    delayOnTouchOnly: true, 
+                    delay: 150, 
+                    onEnd: function (evt) {
+                        const taskId = evt.item.dataset.id;
+                        const fromId = evt.from.id;
+                        const toId = evt.to.id;
+
+                        if (fromId !== toId) {
+                            evt.item.className = evt.item.className.replace(/border-l-\w+-\d+/, getBorderColor(toId));
+                            
+                            // Cập nhật ngay quadrant mới vào allTasksList và lưu trữ
+                            let task = allTasksList.find(t => String(t.id) === String(taskId));
+                            if (!task) {
+                                task = allTasksList.find(t => String(t.id).includes(String(taskId)));
+                            }
+                            if (task) {
+                                task.quadrant = toId;
+                                try {
+                                    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+                                } catch(e) {}
+                            }
+                            
+                            updateInboxCount();
+                            updateUnscheduledBadge();
+
+                            if (window.google && google.script && google.script.run) {
+                                google.script.run.updateTask(taskId, { quadrant: toId, userEmail: currentUserEmail });
+                            }
+                        }
+                    }
+                });
+            });
+        }
+</script>

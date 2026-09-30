@@ -1,0 +1,78 @@
+<script>
+// =====================================================================
+        // CHẠY KHI MỞ TRANG
+        // =====================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initUserAuth();    // Phase 4: Nhận diện tài khoản Google & phân quyền Admin
+            renderProfileUI(); // Phase 1: Render profile sau khi xác định auth
+            initTheme();
+            loadUserMotto();
+            checkExistingDraft();
+            checkServerVersion();
+            setInterval(checkServerVersion, 30000);
+            window.addEventListener('focus', checkServerVersion);
+
+            // Khởi tạo trạng thái ẩn việc đã xong
+            try {
+                const savedHideDone = localStorage.getItem(STORAGE_KEY_HIDE_DONE);
+                if (savedHideDone === 'true') {
+                    matrixHideDone = true;
+                    const chk = document.getElementById('matrixHideDoneCheckbox');
+                    if (chk) chk.checked = true;
+                }
+            } catch(e) {}
+
+            const savedView = localStorage.getItem(STORAGE_KEY_VIEW) || 'dashboard';
+            switchView(savedView);
+
+            // Phím tắt ô nhập nhiệm vụ (Enter: Thêm vào Inbox, Shift + Enter: Xuống dòng)
+            const taskInputEl = document.getElementById('taskInput');
+            taskInputEl?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    if (!e.shiftKey) {
+                        e.preventDefault();
+                        document.getElementById('taskForm')?.requestSubmit();
+                    }
+                }
+            });
+
+            // Hiển thị ngay lập tức nếu đã có dữ liệu trong cache/preload (0ms delay)
+            if (allTasksList.length > 0) {
+                renderTasks(allTasksList);
+            }
+
+            if (currentUserEmail && window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(renderTasks)
+                    .withFailureHandler(err => {
+                        console.warn("Lỗi tải getTasks từ server, giữ nguyên cache:", err);
+                        showToast("Đang dùng dữ liệu đã lưu ngoại tuyến.", "💾");
+                    })
+                    .getTasks(currentUserEmail);
+            }
+            initSortable();
+            initIcsDragDrop();
+            fetchServerAnnouncements();
+            loadAndRenderNotifications();
+        });
+
+
+
+        // Tự động đóng dropdown khi click ra ngoài
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('notificationBellContainer');
+            const panel = document.getElementById('notificationDropdownPanel');
+            if (panel && !panel.classList.contains('hidden')) {
+                if (container && !container.contains(e.target)) {
+                    panel.classList.add('hidden');
+                }
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            const panel = document.getElementById('notificationDropdownPanel');
+            if (panel && !panel.classList.contains('hidden')) {
+                positionNotificationPanel();
+            }
+        });
+</script>

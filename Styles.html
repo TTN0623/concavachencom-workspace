@@ -1,0 +1,202 @@
+<style>
+    /* Tối ưu hóa cảm ứng Mobile & Chế độ PWA */
+    html, body { 
+        overscroll-behavior-y: contain;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    @supports (padding-top: env(safe-area-inset-top)) {
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
+    .mobile-bottom-nav {
+        padding-bottom: calc(0.35rem + env(safe-area-inset-bottom));
+    }
+    body { 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        background-color: #f4f6f9; 
+        color: #1e293b;
+    }
+    
+    /* Hiệu ứng thẻ công việc theo chuẩn FAP Slot Card */
+    .task-card { 
+        cursor: grab; 
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-left-width: 4px;
+    }
+    .task-card:active { cursor: grabbing; transform: scale(0.98); }
+    .task-card:hover { 
+        box-shadow: 0 4px 12px -2px rgba(0, 84, 166, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05); 
+        border-color: #0054a6;
+    }
+    .sortable-ghost { 
+        opacity: 0.35; 
+        background-color: #e2e8f0 !important; 
+        border: 2px dashed #94a3b8 !important;
+    }
+    
+    /* Cấu trúc lưới ma trận với kích thước cố định cân bằng */
+    .matrix-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: 305px 305px;
+        gap: 16px;
+        width: 100%;
+    }
+    @media (max-width: 768px) {
+        .matrix-grid {
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: auto;
+        }
+    }
+    
+    /* Màu sắc 4 ô theo phong cách FAP Soft Tone */
+    .q-donow { background-color: #fff5f5; border: 1px solid #fee2e2; }
+    .q-plan { background-color: #fefce8; border: 1px solid #fef08a; }
+    .q-delegate { background-color: #fff7ed; border: 1px solid #ffedd5; }
+    .q-drop { background-color: #f0fdf4; border: 1px solid #dcfce7; }
+    
+    /* Cuộn mượt thanh cuộn */
+    .list-container::-webkit-scrollbar { width: 5px; }
+    .list-container::-webkit-scrollbar-track { background: transparent; }
+    .list-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .list-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* ================= GIAO DIỆN TỐI (DARK MODE) ================= */
+    .dark body { 
+        background-color: #0b1120 !important; 
+        color: #f1f5f9 !important; 
+    }
+    .dark main {
+        background-color: #0b1120 !important;
+    }
+    .dark header, 
+    .dark aside,
+    .dark .bg-white { 
+        background-color: #1e293b !important; 
+        border-color: #334155 !important; 
+    }
+    .dark .bg-slate-50,
+    .dark .bg-slate-50\/80,
+    .dark .bg-slate-50\/40,
+    .dark .bg-slate-50\/50,
+    .dark .bg-slate-100 { 
+        background-color: #0f172a !important; 
+        border-color: #334155 !important; 
+    }
+    .dark .border-slate-100,
+    .dark .border-slate-200,
+    .dark .border-slate-300 { 
+        border-color: #334155 !important; 
+    }
+    .dark .text-slate-900,
+    .dark .text-slate-800,
+    .dark .text-slate-700 { 
+        color: #f8fafc !important; 
+    }
+    .dark .text-slate-600,
+    .dark .text-slate-500 { 
+        color: #94a3b8 !important; 
+    }
+    .dark .text-slate-400 { 
+        color: #64748b !important; 
+    }
+    
+    /* 4 Khối Ma trận trong Dark Mode */
+    .dark .q-donow { background-color: #3b1419 !important; border-color: #6b2128 !important; }
+    .dark .q-plan { background-color: #362810 !important; border-color: #634617 !important; }
+    .dark .q-delegate { background-color: #381f10 !important; border-color: #683416 !important; }
+    .dark .q-drop { background-color: #0f2e1d !important; border-color: #165633 !important; }
+
+    .dark .q-donow h2 { color: #fca5a5 !important; }
+    .dark .q-plan h2 { color: #fde047 !important; }
+    .dark .q-delegate h2 { color: #fdba74 !important; }
+    .dark .q-drop h2 { color: #86efac !important; }
+
+    .dark .q-donow .border-red-200\/60 { border-color: #6b2128 !important; }
+    .dark .q-plan .border-yellow-200\/60 { border-color: #634617 !important; }
+    .dark .q-delegate .border-orange-200\/60 { border-color: #683416 !important; }
+    .dark .q-drop .border-green-200\/60 { border-color: #165633 !important; }
+
+    /* Thẻ công việc Task Card trong Dark Mode */
+    .dark .task-card {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    .dark .task-card:hover {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 4px 14px -2px rgba(56, 189, 248, 0.2) !important;
+    }
+    .dark .sortable-ghost {
+        background-color: #1e293b !important;
+        border-color: #475569 !important;
+    }
+
+    /* Ô nhập liệu & Textarea trong Dark Mode */
+    .dark input, 
+    .dark textarea {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    .dark input::placeholder, 
+    .dark textarea::placeholder {
+        color: #64748b !important;
+    }
+
+    /* Box đặc biệt Header trong Dark Mode */
+    .dark #mottoHeaderBox {
+        background-color: #291a0a !important;
+        border-color: #5c3510 !important;
+    }
+    .dark #mottoDisplayText {
+        color: #fde68a !important;
+    }
+
+    /* Modals trong Dark Mode */
+    .dark #editModal > div,
+    .dark #deleteModal > div,
+    .dark #profileModal > div,
+    .dark #aiModal > div,
+    .dark #calendarModal > div,
+    .dark #fapModal > div,
+    .dark #dayAddModal > div {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    .dark #calendarModal .bg-slate-50,
+    .dark #fapModal .bg-slate-50,
+    .dark #fapModal .bg-orange-50\/70,
+    .dark #dayAddModal .bg-slate-50 {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+    }
+    .dark .day-card {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+    }
+    .dark .day-header-today {
+        background-color: #1e3a5f !important;
+        border-color: #0284c7 !important;
+    }
+    .dark .day-header-today span:first-child {
+        color: #93c5fd !important;
+    }
+    .dark #viewDashboard .bg-white {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    .dark .timetable-item {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    .dark .list-container::-webkit-scrollbar-thumb {
+        background: #475569;
+    }
+</style>

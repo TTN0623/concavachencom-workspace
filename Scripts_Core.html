@@ -1,0 +1,539 @@
+<script>
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHNsqN1ZeigSn3nkRJzbsIc1EJoAX3emgBxHXGxYiVGBAtD4sUEag/exec';
+        const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/19kIoDPMrrdQCc1y9ZdG7bSU9kCn9MY3eoDzGNQOOek8/edit';
+
+        // =====================================================================
+        // STORAGE KEYS - Tập trung tất cả key localStorage vào 1 chỗ
+        // =====================================================================
+        const STORAGE_KEY_VERSION      = 'csg_active_version';
+        const STORAGE_KEY_TASKS        = 'csg_cached_tasks';
+        const STORAGE_KEY_DRAFT        = 'csg_draft_backup';
+        const STORAGE_KEY_MOTTO        = 'csg_user_motto';
+        const STORAGE_KEY_THEME        = 'csg_active_theme';
+        const STORAGE_KEY_VIEW         = 'csg_active_view';
+        const STORAGE_KEY_FREETIME_RANGE = 'csg_freetime_range';
+        const STORAGE_KEY_SHOW_BUSY    = 'csg_show_busy';
+        const STORAGE_KEY_PROFILE      = 'csg_user_profile';  // KEY MỚI - Phase 1
+        const STORAGE_KEY_HIDE_DONE    = 'csg_hide_done';     // KEY MỚI - Phase 2
+        const STORAGE_KEY_CURRENT_USER = 'csg_current_user_email'; // Định danh tài khoản Google Mail
+
+        const DEFAULT_MOTTO = 'Kỷ luật là chìa khóa của tự do & Hoàn thành đồ án xuất sắc!';
+        const ADMIN_PRIMARY_EMAIL = 'trtainguyen2306@gmail.com';
+
+        // Giá trị mặc định hồ sơ - dùng khi là Khách chưa đăng nhập
+        const DEFAULT_PROFILE = {
+            fullName:   'Khách',
+            studentId:  'Chưa đăng nhập',
+            major:      '',
+            avatarInitials: '👤'
+        };
+        let currentAppVersion = (typeof SERVER_VERSION !== 'undefined' && SERVER_VERSION) ? SERVER_VERSION : 'v1.7.0';
+        let targetNewVersion = null;
+        let allTasksList = [];
+
+        // Preload dữ liệu server đã được khởi tạo từ Index.html
+        if (typeof PRELOADED_SERVER_TASKS === 'undefined') {
+            var PRELOADED_SERVER_TASKS = [];
+            var SERVER_USER_EMAIL = '';
+            var SERVER_IS_ADMIN = false;
+            var SERVER_NEW_FEEDBACK_COUNT = 0;
+            var SERVER_VERSION = '';
+        }
+
+        const IS_LOGGED_OUT_STATE = (localStorage.getItem('csg_logged_out') === 'true');
+        let currentUserEmail = '';
+        if (!IS_LOGGED_OUT_STATE) {
+            currentUserEmail = localStorage.getItem(STORAGE_KEY_CURRENT_USER) || SERVER_USER_EMAIL || '';
+        }
+        let isCurrentUserAdmin = (!!currentUserEmail && (SERVER_IS_ADMIN || currentUserEmail.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase()));
+        let currentFeedbackBadgeCount = isCurrentUserAdmin ? (SERVER_NEW_FEEDBACK_COUNT || 0) : 0;
+
+        try {
+            if (!IS_LOGGED_OUT_STATE && !!currentUserEmail) {
+                if (Array.isArray(PRELOADED_SERVER_TASKS) && PRELOADED_SERVER_TASKS.length > 0) {
+                    allTasksList = PRELOADED_SERVER_TASKS;
+                    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+                } else {
+                    const cached = localStorage.getItem(STORAGE_KEY_TASKS);
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            allTasksList = parsed;
+                        }
+                    }
+                }
+            } else {
+                allTasksList = [];
+            }
+        } catch(e) {
+            console.warn("Lỗi khôi phục cache nhiệm vụ:", e);
+        }
+
+        // =====================================================================
+        // CORE HELPERS: HTML ESCAPE, CATEGORIES & SUB-TASKS (PHASE 2)
+        // =====================================================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        const STANDARD_CATEGORIES = [
+            { key: 'Học tập', label: 'Học tập', icon: '📚', bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-[#0054a6] dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800', dot: 'bg-blue-500' },
+            { key: 'Công việc', label: 'Công việc', icon: '💼', bg: 'bg-purple-50 dark:bg-purple-950/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800', dot: 'bg-purple-500' },
+            { key: 'Cá nhân', label: 'Cá nhân', icon: '🌱', bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' }
+        ];
+
+        function normalizeCategory(category, taskTitle = '') {
+            const cat = String(category || '').trim().toLowerCase();
+            if (cat.includes('học') || cat.includes('hoc') || cat.includes('study')) return 'Học tập';
+            if (cat.includes('việc') || cat.includes('viec') || cat.includes('work') || cat.includes('job')) return 'Công việc';
+            if (cat.includes('nhân') || cat.includes('nhan') || cat.includes('personal')) return 'Cá nhân';
+            if (/^[a-z]{2,4}\d{2,4}/i.test(cat)) return 'Học tập';
+
+            const title = String(taskTitle || '').toLowerCase();
+            if (title.startsWith('[') || title.includes('lab') || title.includes('ôn tập') || title.includes('thi') || title.includes('học') || title.includes('bài tập') || title.includes('fap')) {
+                return 'Học tập';
+            }
+            if (title.includes('hợp đồng') || title.includes('dự án') || title.includes('báo cáo') || title.includes('khách hàng') || title.includes('công ty') || title.includes('studio') || title.includes('code') || title.includes('fix')) {
+                return 'Công việc';
+            }
+            return 'Cá nhân';
+        }
+
+        function getCategoryColor(category) {
+            const norm = normalizeCategory(category);
+            return STANDARD_CATEGORIES.find(c => c.key === norm) || STANDARD_CATEGORIES[0];
+        }
+
+        function getTaskCategory(task) {
+            if (!task) return 'Học tập';
+            return normalizeCategory(task.category, task.task);
+        }
+
+        function parseTaskSubtasks(subtasks) {
+            if (!subtasks) return [];
+            if (Array.isArray(subtasks)) return subtasks;
+            if (typeof subtasks === 'string') {
+                try {
+                    const parsed = JSON.parse(subtasks);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+            return [];
+        }
+
+        function getSubtasksProgress(subtasks) {
+            const list = parseTaskSubtasks(subtasks);
+            if (list.length === 0) return null;
+            const total = list.length;
+            const completed = list.filter(s => !!s.done).length;
+            const percent = Math.round((completed / total) * 100);
+            return { total, completed, percent };
+        }
+
+        let selectedCategoryFilter = 'all';
+
+        function setCategoryFilter(category) {
+            selectedCategoryFilter = category || 'all';
+            renderCategoryFilters();
+            renderDashboard();
+            renderTasks(allTasksList);
+        }
+
+        function renderCategoryFilters() {
+            let countStudy = 0;
+            let countWork = 0;
+            let countPersonal = 0;
+
+            allTasksList.forEach(t => {
+                const c = getTaskCategory(t);
+                if (c === 'Học tập') countStudy++;
+                else if (c === 'Công việc') countWork++;
+                else if (c === 'Cá nhân') countPersonal++;
+            });
+            const totalCount = allTasksList.length;
+
+            const catItems = [
+                { key: 'all', label: 'Tất cả', icon: '🎯', count: totalCount },
+                { key: 'Học tập', label: 'Học tập', icon: '📚', count: countStudy, col: STANDARD_CATEGORIES[0] },
+                { key: 'Công việc', label: 'Công việc', icon: '💼', count: countWork, col: STANDARD_CATEGORIES[1] },
+                { key: 'Cá nhân', label: 'Cá nhân', icon: '🌱', count: countPersonal, col: STANDARD_CATEGORIES[2] }
+            ];
+
+            const generatePillsHtml = () => {
+                return catItems.map(item => {
+                    const isSelected = (selectedCategoryFilter === item.key);
+                    if (item.key === 'all') {
+                        return `
+                            <button type="button" onclick="setCategoryFilter('all')" class="px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-[#0054a6] text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'}">
+                                <span>${item.icon} ${item.label}</span>
+                                <span class="px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">${item.count}</span>
+                            </button>
+                        `;
+                    }
+                    return `
+                        <button type="button" onclick="setCategoryFilter('${item.key}')" class="px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-[#0054a6] text-white shadow-xs' : `${item.col.bg} ${item.col.text} border ${item.col.border} hover:opacity-90`}">
+                            <span>${item.icon} ${item.label}</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-white/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200'}">${item.count}</span>
+                        </button>
+                    `;
+                }).join('');
+            };
+
+            const pillsHtml = generatePillsHtml();
+
+            const barDashboard = document.getElementById('categoryFilterBarDashboard');
+            if (barDashboard) {
+                barDashboard.innerHTML = `
+                    <span class="text-xs font-bold text-slate-500 shrink-0 flex items-center gap-1">
+                        <span>🏷️</span> Phân loại:
+                    </span>
+                    ${pillsHtml}
+                `;
+                barDashboard.classList.remove('hidden');
+            }
+
+            const barMatrix = document.getElementById('categoryFilterBarMatrix');
+            if (barMatrix) {
+                barMatrix.innerHTML = `
+                    <span class="text-xs font-bold text-slate-500 shrink-0 flex items-center gap-1">
+                        <span>🏷️</span> Phân loại:
+                    </span>
+                    ${pillsHtml}
+                `;
+                barMatrix.classList.remove('hidden');
+            }
+        }
+
+        // =====================================================================
+        // DEADLINE & PRIORITY HELPERS (PHASE 2)
+        // =====================================================================
+        function formatDeadlineInfo(deadlineStr) {
+            if (!deadlineStr) return null;
+            const dl = new Date(deadlineStr);
+            if (isNaN(dl.getTime())) return null;
+
+            const now = new Date();
+            const diffMs = dl.getTime() - now.getTime();
+            const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+            const pad = n => String(n).padStart(2, '0');
+            const dateFormatted = `${pad(dl.getDate())}/${pad(dl.getMonth() + 1)} ${pad(dl.getHours())}:${pad(dl.getMinutes())}`;
+
+            if (diffMs < 0) {
+                return {
+                    status: 'overdue',
+                    badgeClass: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800',
+                    icon: '⚠️',
+                    text: `Quá hạn (${dateFormatted})`,
+                    dateFormatted: dateFormatted
+                };
+            } else if (diffHours <= 24) {
+                return {
+                    status: 'due-soon',
+                    badgeClass: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+                    icon: '⏳',
+                    text: diffHours <= 1 ? `Hạn trong 1h (${dateFormatted})` : `Hạn ${diffHours}h (${dateFormatted})`,
+                    dateFormatted: dateFormatted
+                };
+            } else if (diffDays <= 3) {
+                return {
+                    status: 'upcoming',
+                    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
+                    icon: '📅',
+                    text: `Hạn: ${dateFormatted}`,
+                    dateFormatted: dateFormatted
+                };
+            } else {
+                return {
+                    status: 'normal',
+                    badgeClass: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+                    icon: '🗓️',
+                    text: `Hạn: ${dateFormatted}`,
+                    dateFormatted: dateFormatted
+                };
+            }
+        }
+
+        let currentWeekOffset = 0;
+        let activeView = 'dashboard';
+        let pendingCalendarEvents = [];
+        let activeDayAddIndex = 0;
+
+        // Khởi tạo trạng thái theme sáng / tối
+        function initTheme() {
+            try {
+                const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+                const isDark = (savedTheme === 'dark');
+                applyTheme(isDark);
+            } catch(e) {
+                console.error('Lỗi khởi tạo theme:', e);
+            }
+        }
+
+        // Áp dụng class dark lên documentElement và cập nhật icon
+        function applyTheme(isDark) {
+            const htmlEl = document.documentElement;
+            const iconEl = document.getElementById('themeToggleIcon');
+            const btnEl = document.getElementById('themeToggleBtn');
+            if (isDark) {
+                htmlEl.classList.add('dark');
+                if (iconEl) iconEl.innerText = '☀️';
+                if (btnEl) btnEl.title = 'Chuyển sang giao diện sáng';
+            } else {
+                htmlEl.classList.remove('dark');
+                if (iconEl) iconEl.innerText = '🌙';
+                if (btnEl) btnEl.title = 'Chuyển sang giao diện tối';
+            }
+        }
+
+        // Bật / tắt chế độ tối
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const newTheme = !isDark;
+            applyTheme(newTheme);
+            try {
+                localStorage.setItem(STORAGE_KEY_THEME, newTheme ? 'dark' : 'light');
+            } catch(e) {
+                console.error('Lỗi lưu theme:', e);
+            }
+            showToast(newTheme ? 'Đã kích hoạt Chế độ giao diện Tối!' : 'Đã quay lại Chế độ giao diện Sáng!', newTheme ? '🌙' : '☀️');
+        }
+
+
+
+        function openSpreadsheet() {
+            window.open(SPREADSHEET_URL, '_blank');
+        }
+
+        // Tải lại phiên bản mới nhất sạch sẽ, phá vỡ cache và chống trắng trang
+        function applyVersionUpdate() {
+            const currentInput = document.getElementById('taskInput')?.value?.trim();
+            if (currentInput) {
+                const draftData = {
+                    fromVersion: currentAppVersion,
+                    toVersion: targetNewVersion || currentAppVersion,
+                    text: currentInput,
+                    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                };
+                localStorage.setItem(STORAGE_KEY_DRAFT, JSON.stringify(draftData));
+            }
+            if (targetNewVersion) {
+                localStorage.setItem(STORAGE_KEY_VERSION, targetNewVersion);
+            }
+            showToast('Đang nạp phiên bản mới nhất...', '🔄');
+            const freshUrl = WEB_APP_URL + '?v=' + Date.now();
+            window.open(freshUrl, '_top');
+        }
+
+        function dismissUpdateBanner() {
+            const banner = document.getElementById('updateNoticeBanner');
+            if (banner) banner.classList.add('hidden');
+        }
+
+        // =====================================================================
+        // SIDEBAR: Toggle + Overlay đóng khi click ngoài trên mobile
+        // =====================================================================
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebarMenu');
+            if (!sb) return;
+            const isHidden = sb.classList.contains('hidden');
+            if (isHidden) {
+                sb.classList.remove('hidden');
+                showSidebarOverlay();
+            } else {
+                sb.classList.add('hidden');
+                hideSidebarOverlay();
+            }
+        }
+
+        function closeMobileSidebar() {
+            if (window.innerWidth < 768) {
+                const sb = document.getElementById('sidebarMenu');
+                if (sb && !sb.classList.contains('hidden')) {
+                    sb.classList.add('hidden');
+                    hideSidebarOverlay();
+                }
+            }
+        }
+
+        function showSidebarOverlay() {
+            let overlay = document.getElementById('sidebarOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sidebarOverlay';
+                overlay.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-35 md:hidden transition-opacity';
+                overlay.addEventListener('click', () => {
+                    document.getElementById('sidebarMenu')?.classList.add('hidden');
+                    hideSidebarOverlay();
+                });
+                document.body.appendChild(overlay);
+            }
+            overlay.classList.remove('hidden');
+        }
+
+        function hideSidebarOverlay() {
+            const overlay = document.getElementById('sidebarOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        // Toàn màn hình
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                }
+            }
+        }
+
+        // Hiển thị thông báo Toast
+        function showToast(message, icon = 'ℹ️', duration = 3000) {
+            const toast = document.getElementById('toastNotification');
+            if (!toast) return;
+            document.getElementById('toastIcon').innerText = icon;
+            document.getElementById('toastMessage').innerText = message;
+            toast.classList.remove('translate-y-8', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-8', 'opacity-0', 'pointer-events-none');
+            }, duration);
+        }
+
+        // Cập nhật nhãn version trên giao diện
+        function setDisplayVersion(ver) {
+            if (!ver) return;
+            currentAppVersion = ver;
+            const badge = document.getElementById('appVersionBadge');
+            if (badge) badge.innerText = currentAppVersion;
+        }
+
+        // Kiểm tra xem có bản nháp từ phiên bản trước không
+        function checkExistingDraft() {
+            const raw = localStorage.getItem(STORAGE_KEY_DRAFT);
+            if (!raw) return;
+            try {
+                const draft = JSON.parse(raw);
+                if (draft && draft.text && draft.text.trim()) {
+                    const banner = document.getElementById('draftBanner');
+                    const desc = document.getElementById('draftBannerDesc');
+                    if (banner) banner.classList.remove('hidden');
+                    if (desc) {
+                        const snippet = draft.text.length > 60 ? draft.text.slice(0, 60) + '...' : draft.text;
+                        desc.innerText = `Nội dung từ phiên bản ${draft.fromVersion || 'cũ'}: "${snippet}"`;
+                    }
+                }
+            } catch (e) {
+                console.error('Lỗi đọc bản nháp:', e);
+            }
+        }
+
+        // Khôi phục bản nháp
+        function restoreDraft() {
+            const raw = localStorage.getItem(STORAGE_KEY_DRAFT);
+            if (!raw) return;
+            try {
+                const draft = JSON.parse(raw);
+                const input = document.getElementById('taskInput');
+                if (input && draft.text) {
+                    input.value = draft.text;
+                    input.focus();
+                    showToast('Đã khôi phục bản nháp vào ô nhập liệu!', '✅');
+                }
+            } catch (e) {
+                console.error('Lỗi khôi phục:', e);
+            }
+            dismissDraft(false);
+        }
+
+        // Bỏ qua bản nháp
+        function dismissDraft(notify = true) {
+            localStorage.removeItem(STORAGE_KEY_DRAFT);
+            const banner = document.getElementById('draftBanner');
+            if (banner) banner.classList.add('hidden');
+            if (notify) showToast('Đã bỏ qua bản nháp.', '🗑️');
+        }
+
+        // Hot-Sync dữ liệu không giật/trắng trang
+        function syncDataWithoutReload() {
+            showToast('Đang làm mới dữ liệu từ Google Sheets...', '🔄');
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(tasks => {
+                        renderTasks(tasks);
+                        showToast('Đồng bộ dữ liệu thành công!', '✅');
+                    })
+                    .withFailureHandler(err => showToast('Lỗi đồng bộ: ' + err, '⚠️'))
+                    .getTasks();
+            }
+        }
+
+        // Kiểm tra phiên bản mới từ Server
+        function checkServerVersion() {
+            if (!window.google || !google.script || !google.script.run) return;
+            google.script.run
+                .withSuccessHandler(serverVer => {
+                    if (!serverVer) return;
+                    const savedVer = localStorage.getItem(STORAGE_KEY_VERSION);
+
+                    // Phát hiện phiên bản mới khi serverVer khác với savedVer hoặc khác với currentAppVersion client đang chạy
+                    const hasNewVersion = (savedVer && savedVer !== serverVer) || (currentAppVersion && currentAppVersion !== serverVer);
+
+                    if (hasNewVersion) {
+                        console.info(`[Version Update] Phát hiện version mới: ${serverVer} (hiện tại: ${currentAppVersion}, đã lưu: ${savedVer})`);
+                        targetNewVersion = serverVer;
+                        
+                        const currentInput = document.getElementById('taskInput')?.value?.trim();
+                        if (currentInput) {
+                            const draftData = {
+                                fromVersion: currentAppVersion || savedVer,
+                                toVersion: serverVer,
+                                text: currentInput,
+                                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                            };
+                            localStorage.setItem(STORAGE_KEY_DRAFT, JSON.stringify(draftData));
+                        }
+
+                        // Hiển thị banner cập nhật nổi bật trên cùng màn hình (Chống cache & Chống trắng trang)
+                        const banner = document.getElementById('updateNoticeBanner');
+                        const text = document.getElementById('updateNoticeText');
+                        if (banner && text) {
+                            text.innerText = `Đã có bản cập nhật mới (${serverVer})!`;
+                            banner.classList.remove('hidden');
+                        }
+                        showToast(`Đã có bản cập nhật mới ${serverVer}! Bấm "Nạp giao diện mới ngay" để xem.`, '🚀', 8000);
+
+                        // Cập nhật nhãn và đồng bộ dữ liệu
+                        setDisplayVersion(serverVer);
+                        checkExistingDraft();
+                        syncDataWithoutReload();
+                    } else {
+                        if (!savedVer) {
+                            localStorage.setItem(STORAGE_KEY_VERSION, serverVer);
+                        }
+                        setDisplayVersion(serverVer);
+                    }
+                })
+                .withFailureHandler(err => console.warn('Không thể kiểm tra version:', err))
+                .getAppVersion();
+        }
+
+        // Màu viền thẻ dựa trên quadrant
+        const getBorderColor = (quadrant) => {
+            switch(quadrant) {
+                case 'donow': return 'border-l-red-500';
+                case 'plan': return 'border-l-yellow-400';
+                case 'delegate': return 'border-l-orange-400';
+                case 'drop': return 'border-l-green-500';
+                default: return 'border-l-slate-400';
+            }
+        };
+</script>

@@ -1,0 +1,1622 @@
+<script>
+// =====================================================================
+        // TIỆN ÍCH BÓC TÁCH THÔNG TIN CÔNG VIỆC / LỊCH HỌC (SINGLE RESPONSIBILITY)
+        // Loại bỏ thời gian và giảng viên trùng lặp khỏi tiêu đề chính
+        // =====================================================================
+        function parseTaskDetails(rawTaskText, fallbackTime = '') {
+            if (!rawTaskText || typeof rawTaskText !== 'string') {
+                return { cleanTitle: '', time: fallbackTime || '', room: '', lecturer: '', hasMeta: false };
+            }
+            let text = rawTaskText.trim();
+            let extractedTime = fallbackTime || '';
+            let extractedRoom = '';
+            let extractedLecturer = '';
+
+            // 1. Trích xuất thời gian trong ngoặc: (07:00 - 09:15) hoặc (7:00 – 9:15)
+            const timeRegex = /\((\d{1,2}:\d{2}\s*[-–—]\s*\d{1,2}:\d{2})\)/;
+            const timeMatch = text.match(timeRegex);
+            if (timeMatch) {
+                if (!extractedTime) extractedTime = timeMatch[1].replace(/\s+/g, ' ');
+                text = text.replace(timeRegex, '').trim();
+            }
+
+            // 2. Trích xuất phòng học: P.xxx hoặc Phòng xxx
+            const roomRegex = /[-–—]?\s*(?:P\.|Phòng)\s*([A-Za-z0-9_-]+)/i;
+            const roomMatch = text.match(roomRegex);
+            if (roomMatch) {
+                extractedRoom = 'P.' + roomMatch[1].trim();
+                text = text.replace(roomRegex, '').trim();
+            }
+
+            // 3. Trích xuất giảng viên: Giảng viên: ABC hoặc GV: ABC hoặc Lecturer: ABC
+            const gvRegex = /[-–—]?\s*(?:Giảng\s*viên|GV|Lecturer):\s*([^)]*)$/i;
+            const gvMatch = text.match(gvRegex);
+            if (gvMatch) {
+                extractedLecturer = gvMatch[1].trim();
+                text = text.replace(gvRegex, '').trim();
+            } else {
+                // Kiểm tra dạng kết thúc: - MãGV (ví dụ: "[PFP191 - IA2102] - PhucNT40")
+                const trailingGvRegex = /[-–—]\s*([A-Za-z0-9_]{3,20})$/;
+                const trailingMatch = text.match(trailingGvRegex);
+                if (trailingMatch && !text.startsWith(trailingMatch[0])) {
+                    extractedLecturer = trailingMatch[1].trim();
+                    text = text.replace(trailingGvRegex, '').trim();
+                }
+            }
+
+            // 4. Dọn dẹp ký tự nối (- : –) và khoảng trắng dư thừa ở đầu và cuối chuỗi
+            text = text.replace(/^[-–—\s:]+|[-–—\s:]+$/g, '').replace(/\s+/g, ' ').trim();
+            const hasMeta = !!(extractedRoom || extractedLecturer || extractedTime);
+
+            return {
+                cleanTitle: text || rawTaskText,
+                time: extractedTime,
+                room: extractedRoom,
+                lecturer: extractedLecturer,
+                hasMeta: hasMeta
+            };
+        }
+
+        // Tạo giao diện 1 thẻ công việc phong cách FAP (Matrix View - Phase 2: Category, Subtasks, Deadline, Priority & Done)
+        function createTaskHTML(taskObj) {
+            const borderClass = getBorderColor(taskObj.quadrant);
+            const parsed = parseTaskDetails(taskObj.task, taskObj.time);
+            const isDone = !!taskObj.done;
+
+            let metaItems = [];
+            if (parsed.time) metaItems.push(`<span>⏰ ${parsed.time}</span>`);
+            if (parsed.room) metaItems.push(`<span>📍 ${parsed.room}</span>`);
+            if (parsed.lecturer) metaItems.push(`<span>👤 ${parsed.lecturer}</span>`);
+            const metaHtml = metaItems.length > 0 
+                ? `<div class="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500 flex-wrap">${metaItems.join('<span class="text-slate-300">•</span>')}</div>` 
+                : '';
+
+            // Category tag badge
+            let categoryHtml = '';
+            const cat = getTaskCategory(taskObj);
+            if (cat) {
+                const col = getCategoryColor(cat);
+                categoryHtml = `<span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}"><span>${col.icon}</span>${escapeHtml(cat)}</span>`;
+            }
+
+            // Subtasks progress indicator
+            let subtasksHtml = '';
+            const subProgress = getSubtasksProgress(taskObj.subtasks);
+            if (subProgress) {
+                const isAllDone = (subProgress.completed === subProgress.total);
+                subtasksHtml = `
+                    <div class="w-full mt-1.5 flex flex-col gap-0.5">
+                        <div class="flex items-center justify-between text-[9px] text-slate-500 dark:text-slate-400">
+                            <span class="inline-flex items-center gap-1 font-semibold ${isAllDone ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}">
+                                <span>☑️</span> Việc con: ${subProgress.completed}/${subProgress.total}
+                            </span>
+                            <span class="font-mono font-bold">${subProgress.percent}%</span>
+                        </div>
+                        <div class="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full ${isAllDone ? 'bg-emerald-500' : 'bg-[#0054a6] dark:bg-blue-400'} rounded-full transition-all" style="width: ${subProgress.percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Deadline badge
+            let deadlineHtml = '';
+            if (taskObj.deadline) {
+                const dlInfo = formatDeadlineInfo(taskObj.deadline);
+                if (dlInfo) {
+                    deadlineHtml = `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${dlInfo.badgeClass}" title="Hạn chót: ${dlInfo.dateFormatted}"><span>${dlInfo.icon}</span> ${dlInfo.text}</span>`;
+                }
+            }
+
+            // Priority badge (nếu cao hoặc thấp)
+            let priorityHtml = '';
+            if (taskObj.priority === 'high') {
+                priorityHtml = `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800">🔴 Cao</span>`;
+            } else if (taskObj.priority === 'low') {
+                priorityHtml = `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">🟢 Thấp</span>`;
+            }
+
+            // Trạng thái đã xong
+            const doneBadgeHtml = isDone 
+                ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200">✅ Đã xong</span>` 
+                : '';
+
+            // Schedule status badge (Đã lên lịch biểu hay chưa)
+            let scheduleBadgeHtml = '';
+            const dayNamesShort = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+            const hasValidDay = (taskObj.day !== undefined && taskObj.day !== null && taskObj.day !== '');
+            const hasValidTime = (taskObj.time && String(taskObj.time).trim() !== '');
+
+            if (hasValidDay && hasValidTime) {
+                const dIdx = parseInt(taskObj.day, 10);
+                const dayLabel = dayNamesShort[dIdx] || 'Lịch';
+                scheduleBadgeHtml = `<button type="button" onclick="event.stopPropagation(); openScheduleModalForTask('${taskObj.id}')" class="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 dark:bg-blue-950/40 text-[#0054a6] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition-colors" title="Bấm để điều chỉnh ngày & giờ thực hiện"><span>⏰</span> ${dayLabel}: ${taskObj.time}</button>`;
+            } else if (taskObj.quadrant && taskObj.quadrant !== 'inbox' && !isDone) {
+                scheduleBadgeHtml = `<button type="button" onclick="event.stopPropagation(); openScheduleModalForTask('${taskObj.id}')" class="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-300 border-dashed bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 cursor-pointer transition-colors" title="Chưa có khung giờ trên Trang chính & Lịch rảnh. Bấm để xếp lịch ngay!"><span>⚡</span> Chưa xếp giờ</button>`;
+            }
+
+            return `
+                <div class="task-card bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg p-2.5 shadow-2xs flex items-start gap-2 group ${borderClass} ${isDone ? 'opacity-70 bg-slate-50/60 dark:bg-slate-900/60' : ''}" data-id="${taskObj.id}">
+                    <input type="checkbox" ${isDone ? 'checked' : ''} onclick="event.stopPropagation()" onchange="toggleTaskDone('${taskObj.id}')" title="${isDone ? 'Đánh dấu chưa xong' : 'Đánh dấu hoàn thành'}" class="mt-1 w-4 h-4 text-[#0054a6] rounded border-slate-300 focus:ring-[#0054a6] cursor-pointer shrink-0">
+                    <div class="flex-1 min-w-0 pr-1 cursor-pointer" onclick="openTaskDetailModal('${taskObj.id}')">
+                        <span class="text-xs font-semibold leading-relaxed break-words block ${isDone ? 'line-through text-slate-400 dark:text-slate-500 font-normal' : 'text-slate-800 dark:text-slate-100'}" id="text-${taskObj.id}">${parsed.cleanTitle}</span>
+                        ${metaHtml}
+                        ${subtasksHtml}
+                        <div class="flex items-center gap-1.5 mt-2 flex-wrap text-[10px]">
+                            ${categoryHtml}
+                            ${scheduleBadgeHtml}
+                            ${deadlineHtml}
+                            ${priorityHtml}
+                            ${doneBadgeHtml}
+                        </div>
+                    </div>
+                    <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <button type="button" onclick="event.stopPropagation(); openScheduleModalForTask('${taskObj.id}')" title="Lên lịch thực hiện" class="text-slate-400 hover:text-[#0054a6] p-1 rounded hover:bg-blue-50 dark:hover:bg-slate-800 cursor-pointer">📅</button>
+                        <button type="button" onclick="event.stopPropagation(); editTask('${taskObj.id}')" title="Sửa công việc" class="text-slate-400 hover:text-[#0054a6] p-1 rounded hover:bg-blue-50 dark:hover:bg-slate-800 cursor-pointer">✏️</button>
+                        <button type="button" onclick="event.stopPropagation(); deleteTask('${taskObj.id}')" title="Xóa công việc" class="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Cập nhật số đếm Inbox
+        function updateInboxCount() {
+            const count = document.getElementById('inbox')?.querySelectorAll('.task-card').length || 0;
+            const badge = document.getElementById('inboxCount');
+            if (badge) badge.innerText = count;
+        }
+
+
+
+        // =====================================================================
+        // THÊM NHANH CHO NGÀY CỤ THỂ
+        // =====================================================================
+        function openDayAddModal(dayIdx = 0, defaultTime = '') {
+            activeDayAddIndex = dayIdx;
+            const days = getWeekDays(currentWeekOffset);
+            const dayObj = days[dayIdx] || days[0];
+
+            const titleEl = document.getElementById('dayAddModalTitle');
+            if (titleEl) {
+                titleEl.innerText = defaultTime 
+                    ? `Thêm việc vào ${dayObj.name} (Khung giờ rảnh: ${defaultTime})` 
+                    : `Thêm việc vào ${dayObj.name} (${dayObj.dateStr})`;
+            }
+            
+            const targetDayInput = document.getElementById('dayAddTargetDay');
+            if (targetDayInput) targetDayInput.value = dayIdx;
+
+            const taskTitleInput = document.getElementById('dayAddTaskTitle');
+            if (taskTitleInput) taskTitleInput.value = '';
+
+            const taskTimeInput = document.getElementById('dayAddTaskTime');
+            if (taskTimeInput) taskTimeInput.value = defaultTime || '';
+
+            const deadlineInput = document.getElementById('dayAddTaskDeadline');
+            if (deadlineInput && dayObj.fullDate) {
+                const dlDate = new Date(dayObj.fullDate);
+                dlDate.setHours(23, 59, 0, 0);
+                const localIso = new Date(dlDate.getTime() - dlDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                deadlineInput.value = localIso;
+            }
+
+            document.getElementById('dayAddModal')?.classList.remove('hidden');
+            setTimeout(() => taskTitleInput?.focus(), 80);
+        }
+
+        function closeDayAddModal() {
+            document.getElementById('dayAddModal')?.classList.add('hidden');
+        }
+
+        function submitDayTask(event) {
+            event.preventDefault();
+            const titleInput = document.getElementById('dayAddTaskTitle');
+            const timeInput = document.getElementById('dayAddTaskTime');
+            const quadInput = document.getElementById('dayAddTaskQuad');
+            const deadlineInput = document.getElementById('dayAddTaskDeadline');
+            const categoryInput = document.getElementById('dayAddTaskCategory');
+            const targetDay = parseInt(document.getElementById('dayAddTargetDay')?.value || '0', 10);
+
+            const title = titleInput?.value?.trim();
+            if (!title) return;
+
+            const time = timeInput?.value?.trim() || '';
+            const quadrant = quadInput?.value || 'plan';
+            const deadline = deadlineInput?.value || '';
+            let category = categoryInput?.value?.trim() || '';
+            category = normalizeCategory(category, title);
+
+            if (categoryInput) categoryInput.value = 'Học tập';
+
+            const newTaskObj = {
+                id: 'task_' + Date.now(),
+                task: title,
+                category: category,
+                subtasks: [],
+                quadrant: quadrant,
+                day: targetDay,
+                time: time,
+                deadline: deadline,
+                priority: quadrant === 'donow' ? 'high' : 'medium',
+                done: false
+            };
+
+            allTasksList.push(newTaskObj);
+            renderDashboard();
+            renderTasks(allTasksList);
+            closeDayAddModal();
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(serverTask => {
+                        if (serverTask && serverTask.id) {
+                            newTaskObj.id = serverTask.id;
+                        }
+                    })
+                    .addTask(title, {
+                        quadrant: quadrant,
+                        day: targetDay,
+                        time: time,
+                        deadline: deadline,
+                        priority: newTaskObj.priority,
+                        category: category,
+                        subtasks: '[]',
+                        done: false,
+                        userEmail: currentUserEmail
+                    });
+            }
+
+            showToast('Đã thêm công việc vào lịch!', '✅');
+        }
+
+
+
+        // =====================================================================
+        // BỘ LỌC MA TRẬN EISENHOWER (PHASE 2)
+        // =====================================================================
+        let matrixFilter = 'all'; // 'all' | 'active' | 'done'
+        let matrixHideDone = false;
+
+        function setMatrixFilter(filterType) {
+            matrixFilter = filterType;
+            const allBtn = document.getElementById('filterAllBtn');
+            const activeBtn = document.getElementById('filterActiveBtn');
+            const doneBtn = document.getElementById('filterDoneBtn');
+
+            [allBtn, activeBtn, doneBtn].forEach(b => {
+                if (b) {
+                    b.className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer';
+                }
+            });
+
+            if (filterType === 'all' && allBtn) {
+                allBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0054a6] text-white shadow-2xs transition-all cursor-pointer';
+            } else if (filterType === 'active' && activeBtn) {
+                activeBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0054a6] text-white shadow-2xs transition-all cursor-pointer';
+            } else if (filterType === 'done' && doneBtn) {
+                doneBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-2xs transition-all cursor-pointer';
+            }
+
+            renderTasks(allTasksList);
+        }
+
+        function toggleHideDone(checked) {
+            matrixHideDone = !!checked;
+            try {
+                localStorage.setItem(STORAGE_KEY_HIDE_DONE, matrixHideDone ? 'true' : 'false');
+            } catch(e) {}
+            renderTasks(allTasksList);
+        }
+
+
+
+        // =====================================================================
+        // TIỆN ÍCH DURATION, DEADLINE & THỜI GIAN THỰC HIỆN
+        // =====================================================================
+        function formatDurationText(mins) {
+            const m = parseInt(mins, 10) || 0;
+            if (m < 60) return `${m} phút`;
+            const h = Math.floor(m / 60);
+            const r = m % 60;
+            return r === 0 ? `${h} giờ` : `${h} giờ ${r} phút`;
+        }
+
+        function updateDurationDisplay(sliderId, labelId) {
+            const slider = document.getElementById(sliderId);
+            const label = document.getElementById(labelId);
+            if (slider && label) {
+                label.innerText = formatDurationText(slider.value);
+            }
+        }
+
+        function setDurationQuick(sliderId, labelId, val) {
+            const slider = document.getElementById(sliderId);
+            if (slider) {
+                slider.value = val;
+                updateDurationDisplay(sliderId, labelId);
+            }
+        }
+
+        // =====================================================================
+        // CUSTOM DATE & TIME PICKER CHO HẠN CHÓT (CÓ NÚT ✅ TO RÕ RÀNG)
+        // =====================================================================
+        let customDatePickerTargetInputId = 'taskDeadline';
+
+        function initCustomDatePickerHours() {
+            const hSelect = document.getElementById('pickerHourSelect');
+            if (hSelect && hSelect.options.length === 0) {
+                for (let h = 0; h < 24; h++) {
+                    const hStr = ('0' + h).slice(-2);
+                    const opt = document.createElement('option');
+                    opt.value = hStr;
+                    opt.textContent = `${hStr} giờ`;
+                    if (h === 18) opt.selected = true;
+                    hSelect.appendChild(opt);
+                }
+            }
+        }
+
+        function openCustomDatePicker(targetInputId) {
+            customDatePickerTargetInputId = targetInputId || 'taskDeadline';
+            initCustomDatePickerHours();
+
+            const targetInput = document.getElementById(customDatePickerTargetInputId);
+            const dateInput = document.getElementById('pickerDateInput');
+            const hSelect = document.getElementById('pickerHourSelect');
+            const mSelect = document.getElementById('pickerMinuteSelect');
+
+            let currentVal = targetInput?.value || '';
+            let dateObj = null;
+
+            if (currentVal) {
+                const parsed = new Date(currentVal);
+                if (!isNaN(parsed.getTime())) {
+                    dateObj = parsed;
+                }
+            }
+
+            if (!dateObj) {
+                dateObj = new Date();
+                dateObj.setHours(18, 0, 0, 0);
+            }
+
+            const yyyy = dateObj.getFullYear();
+            const mm = ('0' + (dateObj.getMonth() + 1)).slice(-2);
+            const dd = ('0' + dateObj.getDate()).slice(-2);
+            const hh = ('0' + dateObj.getHours()).slice(-2);
+            const min = ('0' + dateObj.getMinutes()).slice(-2);
+
+            if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
+            if (hSelect) hSelect.value = hh;
+            if (mSelect) {
+                if (['00', '15', '30', '45', '59'].includes(min)) {
+                    mSelect.value = min;
+                } else if (parseInt(min, 10) >= 50) {
+                    mSelect.value = '59';
+                } else {
+                    mSelect.value = '00';
+                }
+            }
+
+            updatePickerPreview();
+            document.getElementById('customDatePickerModal')?.classList.remove('hidden');
+        }
+
+        function closeCustomDatePicker() {
+            document.getElementById('customDatePickerModal')?.classList.add('hidden');
+        }
+
+        function setPickerDateQuick(offsetDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            const yyyy = d.getFullYear();
+            const mm = ('0' + (d.getMonth() + 1)).slice(-2);
+            const dd = ('0' + d.getDate()).slice(-2);
+            const dateInput = document.getElementById('pickerDateInput');
+            if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
+            updatePickerPreview();
+        }
+
+        function setPickerTimeQuick(timeStr) {
+            const parts = timeStr.split(':');
+            const hSelect = document.getElementById('pickerHourSelect');
+            const mSelect = document.getElementById('pickerMinuteSelect');
+            if (hSelect && parts[0]) hSelect.value = parts[0];
+            if (mSelect && parts[1]) mSelect.value = parts[1];
+            updatePickerPreview();
+        }
+
+        function updatePickerPreview() {
+            const dateInput = document.getElementById('pickerDateInput');
+            const hSelect = document.getElementById('pickerHourSelect');
+            const mSelect = document.getElementById('pickerMinuteSelect');
+            const previewEl = document.getElementById('pickerPreviewText');
+            if (!dateInput || !hSelect || !mSelect || !previewEl) return;
+
+            const dateVal = dateInput.value;
+            const hVal = hSelect.value || '18';
+            const mVal = mSelect.value || '00';
+
+            if (!dateVal) {
+                previewEl.innerText = `dd/mm, ${hVal}:${mVal}`;
+                return;
+            }
+
+            const parts = dateVal.split('-');
+            if (parts.length === 3) {
+                const dd = parts[2];
+                const mm = parts[1];
+                previewEl.innerText = `${dd}/${mm}, ${hVal}:${mVal}`;
+            }
+        }
+
+        function confirmCustomDatePicker() {
+            const dateInput = document.getElementById('pickerDateInput');
+            const hSelect = document.getElementById('pickerHourSelect');
+            const mSelect = document.getElementById('pickerMinuteSelect');
+            if (!dateInput || !dateInput.value) {
+                showToast("Vui lòng chọn ngày trước khi xác nhận!", "⚠️");
+                return;
+            }
+
+            const hVal = hSelect?.value || '18';
+            const mVal = mSelect?.value || '00';
+            const isoDateTime = `${dateInput.value}T${hVal}:${mVal}`;
+
+            const targetInput = document.getElementById(customDatePickerTargetInputId);
+            if (targetInput) {
+                targetInput.value = isoDateTime;
+            }
+
+            updateDeadlineDisplayElement(customDatePickerTargetInputId, isoDateTime);
+            closeCustomDatePicker();
+            showToast("✅ Đã chọn hạn chót!", "✅");
+        }
+
+        function updateDeadlineDisplayElement(targetInputId, isoDateTime) {
+            const displayTextId = targetInputId === 'taskDeadline' ? 'taskDeadlineDisplayText' : 'editTaskDeadlineDisplayText';
+            const displayEl = document.getElementById(displayTextId);
+            if (!displayEl) return;
+
+            if (!isoDateTime) {
+                displayEl.innerHTML = `<span class="text-slate-400">dd/mm, --:--</span>`;
+                return;
+            }
+
+            try {
+                const d = new Date(isoDateTime);
+                if (isNaN(d.getTime())) {
+                    displayEl.innerText = 'dd/mm, --:--';
+                    return;
+                }
+                const pad = n => String(n).padStart(2, '0');
+                const formatted = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                displayEl.innerHTML = `<span class="text-[#0054a6] dark:text-blue-400 font-bold">${formatted}</span>`;
+            } catch(e) {
+                displayEl.innerText = isoDateTime;
+            }
+        }
+
+        function clearDeadline(targetInputId) {
+            const input = document.getElementById(targetInputId);
+            if (input) input.value = '';
+            updateDeadlineDisplayElement(targetInputId, '');
+            showToast("Đã xóa hạn chót", "ℹ️");
+        }
+
+        function setQuickDeadlineDirect(targetInputId, type) {
+            const targetDate = new Date();
+            if (type === 'today18') {
+                targetDate.setHours(18, 0, 0, 0);
+            } else if (type === 'today23') {
+                targetDate.setHours(23, 59, 0, 0);
+            } else if (type === 'tomorrow18') {
+                targetDate.setDate(targetDate.getDate() + 1);
+                targetDate.setHours(18, 0, 0, 0);
+            }
+
+            const yyyy = targetDate.getFullYear();
+            const mm = ('0' + (targetDate.getMonth() + 1)).slice(-2);
+            const dd = ('0' + targetDate.getDate()).slice(-2);
+            const hh = ('0' + targetDate.getHours()).slice(-2);
+            const min = ('0' + targetDate.getMinutes()).slice(-2);
+
+            const iso = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+            const targetInput = document.getElementById(targetInputId);
+            if (targetInput) targetInput.value = iso;
+            updateDeadlineDisplayElement(targetInputId, iso);
+
+            const pad = n => String(n).padStart(2, '0');
+            showToast(`⏰ Đã đặt hạn chót: ${pad(targetDate.getHours())}:${pad(targetDate.getMinutes())} ngày ${pad(targetDate.getDate())}/${pad(targetDate.getMonth() + 1)}`, "✅");
+        }
+
+        // Tương thích ngược
+        function confirmDeadlinePicker(inputId) { confirmCustomDatePicker(); }
+        function onDeadlineChange(inputId) {}
+        function setQuickDeadline(inputId, type) { setQuickDeadlineDirect(inputId, type); }
+
+
+        function populateTimeSelectOptions(selectId, selectedVal = '') {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Chọn giờ bắt đầu --</option>';
+
+            for (let h = 7; h <= 21; h++) {
+                for (let m = 0; m < 60; m += 15) {
+                    const hStr = ('0' + h).slice(-2);
+                    const mStr = ('0' + m).slice(-2);
+                    const val = `${hStr}:${mStr}`;
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    if (val === selectedVal) opt.selected = true;
+                    select.appendChild(opt);
+                }
+            }
+        }
+
+        function calculateEndTimeFromStart(startTimeStr, durationMinutes) {
+            if (!startTimeStr) return '';
+            const parts = startTimeStr.split(':');
+            if (parts.length < 2) return '';
+            const startTotal = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+            const endTotal = Math.min(23 * 60 + 59, startTotal + parseInt(durationMinutes, 10));
+            const endH = Math.floor(endTotal / 60);
+            const endM = endTotal % 60;
+            return ('0' + endH).slice(-2) + ':' + ('0' + endM).slice(-2);
+        }
+
+        function updateUnscheduledBadge() {
+            const matrixTasks = allTasksList.filter(t => !isFapClass(t) && !t.done);
+            // Các task đã phân ô ma trận nhưng chưa có day hoặc time
+            const unscheduled = matrixTasks.filter(t => (t.quadrant && t.quadrant !== 'inbox') && (t.day === undefined || t.day === null || t.day === '' || !t.time));
+            const badge = document.getElementById('unscheduledCountBadge');
+            if (badge) {
+                if (unscheduled.length > 0) {
+                    badge.innerText = unscheduled.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        // =====================================================================
+        // THÊM CÔNG VIỆC (Hỗ trợ Deadline, Priority, Duration & Đồng bộ an toàn)
+        // =====================================================================
+        function addTask(event) {
+            event.preventDefault();
+            const input = document.getElementById('taskInput');
+            const deadlineInput = document.getElementById('taskDeadline');
+            const priorityInput = document.getElementById('taskPriority');
+            const durationInput = document.getElementById('taskDuration');
+            const categoryInput = document.getElementById('taskCategory');
+            const taskName = input.value.trim();
+            if (!taskName) return;
+
+            const deadline = deadlineInput?.value || '';
+            const priority = priorityInput?.value || 'medium';
+            const duration = durationInput ? parseInt(durationInput.value, 10) : 60;
+            let category = categoryInput?.value?.trim() || '';
+            category = normalizeCategory(category, taskName);
+
+            input.value = ''; 
+            if (deadlineInput) {
+                deadlineInput.value = '';
+                updateDeadlineDisplayElement('taskDeadline', '');
+            }
+            if (categoryInput) {
+                categoryInput.value = 'Học tập';
+            }
+            document.getElementById('loading')?.remove();
+
+            const tempTask = {
+                id: 'task_' + Date.now(),
+                task: taskName,
+                category: category,
+                subtasks: [],
+                quadrant: 'inbox',
+                day: '',
+                time: '',
+                duration: duration,
+                done: false,
+                deadline: deadline,
+                priority: priority
+            };
+            allTasksList.unshift(tempTask);
+            renderTasks(allTasksList);
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler((newTask) => {
+                        if (newTask && newTask.id) {
+                            tempTask.id = newTask.id;
+                            renderTasks(allTasksList);
+                            if (typeof renderDashboard === 'function') renderDashboard();
+                            if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+                        }
+                    })
+                    .addTask(taskName, {
+                        quadrant: 'inbox',
+                        day: '',
+                        time: '',
+                        duration: duration,
+                        deadline: deadline,
+                        priority: priority,
+                        category: category,
+                        subtasks: '[]',
+                        userEmail: currentUserEmail
+                    });
+            }
+            showToast("Đã thêm công việc vào Inbox! Kéo vào ma trận hoặc lên lịch ngay.", "📥");
+        }
+
+
+
+        // =====================================================================
+        // MODAL SỬA CÔNG VIỆC (Đầy đủ Tên, Deadline, Priority, Day, Duration, Time)
+        // =====================================================================
+        let activeEditTaskId = null;
+        let activeDeleteTaskId = null;
+        let editingSubtasks = [];
+
+        function renderEditSubtasksList() {
+            const listEl = document.getElementById('editSubtasksList');
+            const countEl = document.getElementById('editSubtasksCount');
+            if (countEl) countEl.innerText = `${editingSubtasks.length} việc`;
+            if (!listEl) return;
+
+            if (editingSubtasks.length === 0) {
+                listEl.innerHTML = `<p class="text-[11px] text-slate-400 dark:text-slate-500 italic py-1">Chưa có việc con nào. Nhập tên và bấm Thêm!</p>`;
+                return;
+            }
+
+            listEl.innerHTML = editingSubtasks.map((s, idx) => `
+                <div class="flex items-center gap-2 p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
+                    <input type="checkbox" ${s.done ? 'checked' : ''} onchange="editingSubtasks[${idx}].done = this.checked;" class="w-3.5 h-3.5 text-[#0054a6] rounded border-slate-300 ml-1 cursor-pointer">
+                    <input type="text" value="${escapeHtml(s.text)}" onchange="editingSubtasks[${idx}].text = this.value;" class="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-100 outline-none">
+                    <button type="button" onclick="deleteEditSubtaskItem(${idx})" class="text-slate-400 hover:text-red-500 p-1 text-xs cursor-pointer mr-1" title="Xóa việc con">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function addEditSubtaskItem() {
+            const input = document.getElementById('editNewSubtaskInput');
+            const text = input?.value?.trim();
+            if (!text) return;
+            editingSubtasks.push({
+                id: 'sub_' + Date.now(),
+                text: text,
+                done: false
+            });
+            if (input) input.value = '';
+            renderEditSubtasksList();
+        }
+
+        function deleteEditSubtaskItem(index) {
+            editingSubtasks.splice(index, 1);
+            renderEditSubtasksList();
+        }
+
+        function editTask(id) {
+            let task = allTasksList.find(t => String(t.id) === String(id));
+            if (!task) {
+                task = allTasksList.find(t => String(t.id).includes(String(id)) || String(id).includes(String(t.id)));
+            }
+            if (!task) {
+                showToast("Không tìm thấy công việc để chỉnh sửa", "⚠️");
+                return;
+            }
+            activeEditTaskId = task.id;
+
+            const input = document.getElementById('editTaskInput');
+            const deadlineInput = document.getElementById('editTaskDeadline');
+            const priorityInput = document.getElementById('editTaskPriority');
+            const catInput = document.getElementById('editTaskCategory');
+            const quadInput = document.getElementById('editTaskQuadrant');
+            const dayInput = document.getElementById('editTaskDay');
+            const durationInput = document.getElementById('editTaskDuration');
+
+            if (input) input.value = task.task || '';
+            if (catInput) catInput.value = normalizeCategory(task.category, task.task);
+            if (deadlineInput) {
+                let dlVal = task.deadline || '';
+                if (dlVal && dlVal.length > 16) {
+                    try {
+                        const d = new Date(dlVal);
+                        if (!isNaN(d.getTime())) {
+                            dlVal = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                        }
+                    } catch(e) {}
+                }
+                deadlineInput.value = dlVal;
+                updateDeadlineDisplayElement('editTaskDeadline', dlVal);
+            }
+            if (priorityInput) priorityInput.value = task.priority || 'medium';
+            if (quadInput) quadInput.value = task.quadrant || 'inbox';
+            if (dayInput) dayInput.value = (task.day !== undefined && task.day !== null && task.day !== '') ? String(task.day) : '';
+
+            // Subtasks
+            editingSubtasks = JSON.parse(JSON.stringify(parseTaskSubtasks(task.subtasks)));
+            renderEditSubtasksList();
+
+            // Duration
+            const dur = task.duration ? parseInt(task.duration, 10) : 60;
+            if (durationInput) {
+                durationInput.value = dur;
+                updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
+            }
+
+            // Time & Start Time
+            let startTimeStr = '';
+            if (task.time) {
+                const m = task.time.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+                if (m) {
+                    startTimeStr = m[1];
+                }
+            }
+            populateTimeSelectOptions('editTaskStartTime', startTimeStr);
+            updateEditCalculatedTime();
+
+            document.getElementById('editModal')?.classList.remove('hidden');
+            setTimeout(() => {
+                input?.focus();
+                input?.select();
+            }, 50);
+        }
+
+        function setEditDurationQuick(val) {
+            setDurationQuick('editTaskDuration', 'editTaskDurationLabel', val);
+            updateEditCalculatedTime();
+        }
+
+        function updateEditDurationAndEndTime() {
+            updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
+            updateEditCalculatedTime();
+        }
+
+        function updateEditCalculatedTime() {
+            const startSelect = document.getElementById('editTaskStartTime');
+            const endInput = document.getElementById('editTaskEndTime');
+            const previewEl = document.getElementById('editCalculatedTimePreview');
+            const durationSlider = document.getElementById('editTaskDuration');
+            const dur = durationSlider ? parseInt(durationSlider.value, 10) : 60;
+
+            if (startSelect && endInput) {
+                const startVal = startSelect.value;
+                if (startVal) {
+                    const endVal = calculateEndTimeFromStart(startVal, dur);
+                    endInput.value = endVal;
+                    if (previewEl) previewEl.innerText = `⏰ ${startVal} - ${endVal} (${formatDurationText(dur)})`;
+                } else {
+                    endInput.value = '';
+                    if (previewEl) previewEl.innerText = '';
+                }
+            }
+        }
+
+        function onEditDayChange() {
+            updateEditCalculatedTime();
+        }
+
+        function submitEditTask() {
+            if (!activeEditTaskId) return;
+            const input = document.getElementById('editTaskInput');
+            const deadlineInput = document.getElementById('editTaskDeadline');
+            const priorityInput = document.getElementById('editTaskPriority');
+            const catInput = document.getElementById('editTaskCategory');
+            const quadInput = document.getElementById('editTaskQuadrant');
+            const dayInput = document.getElementById('editTaskDay');
+            const durationInput = document.getElementById('editTaskDuration');
+            const startSelect = document.getElementById('editTaskStartTime');
+            const endInput = document.getElementById('editTaskEndTime');
+
+            const newName = input?.value?.trim();
+            if (!newName) {
+                showToast("Tên công việc không được để trống!", "⚠️");
+                return;
+            }
+
+            let task = allTasksList.find(t => String(t.id) === String(activeEditTaskId));
+            if (!task) {
+                task = allTasksList.find(t => String(t.id).includes(String(activeEditTaskId)));
+            }
+
+            if (task) {
+                let category = normalizeCategory(catInput?.value?.trim() || '', newName);
+
+                // Đồng bộ text inputs trong list việc con
+                const listInputs = document.getElementById('editSubtasksList')?.querySelectorAll('input[type="text"]');
+                if (listInputs) {
+                    listInputs.forEach((inp, idx) => {
+                        if (editingSubtasks[idx]) editingSubtasks[idx].text = inp.value.trim();
+                    });
+                }
+
+                task.task = newName;
+                task.category = category;
+                task.subtasks = editingSubtasks;
+                task.deadline = deadlineInput?.value || '';
+                task.priority = priorityInput?.value || 'medium';
+                task.quadrant = quadInput?.value || task.quadrant || 'inbox';
+                task.day = dayInput?.value !== '' ? dayInput.value : '';
+                task.duration = durationInput ? parseInt(durationInput.value, 10) : 60;
+
+                if (startSelect && startSelect.value && endInput && endInput.value) {
+                    task.time = `${startSelect.value} - ${endInput.value}`;
+                } else if (task.day === '') {
+                    task.time = '';
+                }
+
+                renderTasks(allTasksList);
+                renderDashboard();
+                renderFreeTimeSchedule();
+
+                if (window.google && google.script && google.script.run) {
+                    google.script.run
+                        .withFailureHandler(err => showToast('Lỗi cập nhật: ' + err, '⚠️'))
+                        .updateTask(task.id, {
+                            task: task.task,
+                            category: task.category,
+                            subtasks: JSON.stringify(task.subtasks),
+                            deadline: task.deadline,
+                            priority: task.priority,
+                            quadrant: task.quadrant,
+                            day: task.day,
+                            time: task.time,
+                            duration: task.duration,
+                            userEmail: currentUserEmail
+                        });
+                }
+                showToast("Đã lưu cập nhật công việc, chủ đề & việc con!", "✅");
+            }
+            closeEditModal();
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal')?.classList.add('hidden');
+            activeEditTaskId = null;
+        }
+
+
+
+        // =====================================================================
+        // SMART SCHEDULE ASSISTANT (ĐẨY LÊN TRANG CHÍNH & LỊCH RẢNH)
+        // =====================================================================
+        function getTodayWeekdayIndex() {
+            const d = new Date();
+            const day = d.getDay();
+            return day === 0 ? 6 : day - 1;
+        }
+
+        function populateBatchTimeOptions(selectEl, selectedVal = '') {
+            if (!selectEl) return;
+            selectEl.innerHTML = '<option value="">-- Giờ --</option>';
+            for (let h = 7; h <= 21; h++) {
+                for (let m = 0; m < 60; m += 15) {
+                    const hStr = ('0' + h).slice(-2);
+                    const mStr = ('0' + m).slice(-2);
+                    const val = `${hStr}:${mStr}`;
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    if (val === selectedVal) opt.selected = true;
+                    selectEl.appendChild(opt);
+                }
+            }
+        }
+
+        function toggleTaskDurationSlider(taskId) {
+            const box = document.getElementById(`batchDurationSliderBox_${taskId}`);
+            if (box) {
+                box.classList.toggle('hidden');
+            }
+        }
+
+        function onBatchSliderChange(taskId) {
+            const slider = document.getElementById(`batchDurationSlider_${taskId}`);
+            const valLabel = document.getElementById(`batchDurationSliderVal_${taskId}`);
+            const pillLabel = document.getElementById(`batchDurationLabel_${taskId}`);
+            if (!slider) return;
+
+            const durText = formatDurationText(slider.value);
+            if (valLabel) valLabel.innerText = durText;
+            if (pillLabel) pillLabel.innerText = durText;
+
+            updateBatchCalculatedTime(taskId);
+        }
+
+        function setBatchDurationQuick(taskId, mins) {
+            const slider = document.getElementById(`batchDurationSlider_${taskId}`);
+            if (slider) {
+                slider.value = mins;
+                onBatchSliderChange(taskId);
+            }
+        }
+
+        function updateBatchCalculatedTime(taskId) {
+            const startSelect = document.getElementById(`batchStart_${taskId}`);
+            const endInput = document.getElementById(`batchEnd_${taskId}`);
+            const slider = document.getElementById(`batchDurationSlider_${taskId}`);
+            const dur = slider ? parseInt(slider.value, 10) : 60;
+
+            if (startSelect && endInput) {
+                const startVal = startSelect.value;
+                if (startVal) {
+                    endInput.value = calculateEndTimeFromStart(startVal, dur);
+                } else {
+                    endInput.value = '';
+                }
+            }
+        }
+
+        function openBatchScheduleModal() {
+            const matrixTasks = allTasksList.filter(t => !isFapClass(t) && !t.done);
+            if (matrixTasks.length === 0) {
+                showToast("Không có công việc nào cần lên lịch! Hãy thêm hoặc kéo việc vào ma trận.", "ℹ️");
+                return;
+            }
+
+            renderBatchScheduleModalList(matrixTasks);
+            const progressEl = document.getElementById('batchScheduleProgressStatus');
+            if (progressEl) {
+                progressEl.classList.add('hidden');
+                progressEl.innerHTML = '';
+            }
+            const saveBtn = document.getElementById('btnSaveBatchSchedule');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            document.getElementById('scheduleModal')?.classList.remove('hidden');
+        }
+
+        function openScheduleModalForTask(taskId) {
+            let task = allTasksList.find(t => String(t.id) === String(taskId));
+            if (!task) {
+                task = allTasksList.find(t => String(t.id).includes(String(taskId)));
+            }
+            if (!task) return;
+
+            renderBatchScheduleModalList([task]);
+            document.getElementById('scheduleModal')?.classList.remove('hidden');
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal')?.classList.add('hidden');
+        }
+
+        function renderBatchScheduleModalList(tasksToRender) {
+            const container = document.getElementById('batchScheduleTasksContainer');
+            const summaryText = document.getElementById('batchScheduleSummaryText');
+            if (!container) return;
+
+            const tasks = tasksToRender || allTasksList.filter(t => !isFapClass(t) && !t.done);
+            if (summaryText) {
+                summaryText.innerText = `Có ${tasks.length} công việc sẵn sàng phân bổ vào Thời khóa biểu:`;
+            }
+
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                        <span class="text-3xl block mb-2">🎉</span>
+                        <p class="text-xs font-semibold">Tất cả công việc đã hoàn thành hoặc chưa có công việc nào!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const todayIdx = getTodayWeekdayIndex();
+
+            container.innerHTML = tasks.map(t => {
+                const dur = parseInt(t.duration, 10) || 60;
+                
+                // Badge ô ma trận
+                let quadBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-600">📥 Inbox</span>`;
+                if (t.quadrant === 'donow') {
+                    quadBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-700">🔴 Do Now</span>`;
+                } else if (t.quadrant === 'plan') {
+                    quadBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700">🟡 Plan</span>`;
+                } else if (t.quadrant === 'delegate') {
+                    quadBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-200 bg-orange-50 text-orange-700">🟠 Delegate</span>`;
+                } else if (t.quadrant === 'drop') {
+                    quadBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">🟢 Drop</span>`;
+                }
+
+                // Deadline badge
+                let dlBadge = '';
+                if (t.deadline) {
+                    const dl = formatDeadlineInfo(t.deadline);
+                    if (dl) {
+                        dlBadge = `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-md border ${dl.badgeClass} flex items-center gap-1 shrink-0">${dl.icon} ${dl.dateFormatted}</span>`;
+                    }
+                }
+
+                // Parse existing time
+                let startTime = '';
+                let endTime = '';
+                if (t.time) {
+                    const m = t.time.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+                    if (m) {
+                        startTime = m[1];
+                        endTime = m[2];
+                    }
+                }
+                if (!endTime && startTime) {
+                    endTime = calculateEndTimeFromStart(startTime, dur);
+                }
+
+                // Selected day
+                const currentDay = (t.day !== undefined && t.day !== null && t.day !== '') ? parseInt(t.day, 10) : todayIdx;
+
+                return `
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col gap-2.5 transition-all hover:border-[#0054a6]">
+                        <!-- Task Header -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtml(t.task)}</span>
+                                ${quadBadge}
+                            </div>
+                            ${dlBadge}
+                        </div>
+
+                        <!-- Controls Row -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-center">
+                            <!-- 1. Chọn Thứ trong tuần -->
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-0.5">Thứ trong tuần:</label>
+                                <select id="batchDay_${t.id}" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-lg p-1.5 text-xs font-semibold outline-none focus:ring-1 focus:ring-[#0054a6]">
+                                    <option value="0" ${currentDay === 0 ? 'selected' : ''}>Thứ 2 (Tuần này)</option>
+                                    <option value="1" ${currentDay === 1 ? 'selected' : ''}>Thứ 3 (Tuần này)</option>
+                                    <option value="2" ${currentDay === 2 ? 'selected' : ''}>Thứ 4 (Tuần này)</option>
+                                    <option value="3" ${currentDay === 3 ? 'selected' : ''}>Thứ 5 (Tuần này)</option>
+                                    <option value="4" ${currentDay === 4 ? 'selected' : ''}>Thứ 6 (Tuần này)</option>
+                                    <option value="5" ${currentDay === 5 ? 'selected' : ''}>Thứ 7 (Tuần này)</option>
+                                    <option value="6" ${currentDay === 6 ? 'selected' : ''}>Chủ Nhật (Tuần này)</option>
+                                </select>
+                            </div>
+
+                            <!-- 2. Thời gian hoàn thành (Duration button - nhấp để mở thanh kéo) -->
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-0.5">Thời gian thực hiện:</label>
+                                <button type="button" onclick="toggleTaskDurationSlider('${t.id}')" class="w-full border border-blue-200 dark:border-blue-900 bg-blue-50/80 dark:bg-slate-900 hover:bg-blue-100 text-[#0054a6] dark:text-blue-300 rounded-lg p-1.5 text-xs font-bold flex items-center justify-between transition-colors cursor-pointer" title="Nhấp để kéo chỉnh thời lượng">
+                                    <span class="flex items-center gap-1"><span>⏱️</span> <span id="batchDurationLabel_${t.id}">${formatDurationText(dur)}</span></span>
+                                    <span class="text-[10px] opacity-70">Chỉnh ▾</span>
+                                </button>
+                            </div>
+
+                            <!-- 3. Giờ bắt đầu & Kết thúc -->
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-0.5">Khung giờ thực hiện:</label>
+                                <div class="flex items-center gap-1.5">
+                                    <select id="batchStart_${t.id}" onchange="updateBatchCalculatedTime('${t.id}')" class="flex-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-lg p-1.5 text-xs font-mono font-semibold outline-none focus:ring-1 focus:ring-[#0054a6]">
+                                        <!-- Điền qua populateBatchTimeOptions -->
+                                    </select>
+                                    <span class="text-[11px] font-bold text-slate-400">➔</span>
+                                    <input type="text" id="batchEnd_${t.id}" readonly value="${endTime}" placeholder="--:--" class="w-16 border border-slate-200 dark:border-slate-700 bg-slate-100/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg p-1.5 text-xs font-mono text-center outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible Duration Slider Container -->
+                        <div id="batchDurationSliderBox_${t.id}" class="hidden pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-col gap-1.5 bg-blue-50/40 dark:bg-slate-900/40 p-2.5 rounded-lg">
+                            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300">
+                                <span class="font-semibold">Kéo chọn thời gian:</span>
+                                <span id="batchDurationSliderVal_${t.id}" class="font-extrabold text-[#0054a6] dark:text-blue-400">${formatDurationText(dur)}</span>
+                            </div>
+                            <input type="range" id="batchDurationSlider_${t.id}" min="15" max="300" step="15" value="${dur}" oninput="onBatchSliderChange('${t.id}')" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#0054a6]">
+                            <div class="flex items-center justify-between text-[9px] text-slate-400 font-medium">
+                                <span>15p</span>
+                                <span>1h</span>
+                                <span>2h</span>
+                                <span>3h</span>
+                                <span>5h</span>
+                            </div>
+                            <div class="flex items-center gap-1 flex-wrap pt-0.5">
+                                <button type="button" onclick="setBatchDurationQuick('${t.id}', 30)" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">30p</button>
+                                <button type="button" onclick="setBatchDurationQuick('${t.id}', 45)" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">45p</button>
+                                <button type="button" onclick="setBatchDurationQuick('${t.id}', 60)" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">1h</button>
+                                <button type="button" onclick="setBatchDurationQuick('${t.id}', 90)" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">1h30</button>
+                                <button type="button" onclick="setBatchDurationQuick('${t.id}', 120)" class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">2h</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            tasks.forEach(t => {
+                const startSelect = document.getElementById(`batchStart_${t.id}`);
+                let startTime = '';
+                if (t.time) {
+                    const m = t.time.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+                    if (m) startTime = m[1];
+                }
+                if (startSelect) {
+                    populateBatchTimeOptions(startSelect, startTime);
+                    updateBatchCalculatedTime(t.id);
+                }
+            });
+        }
+
+        function saveAllBatchScheduledTasks() {
+            const progressEl = document.getElementById('batchScheduleProgressStatus');
+            const saveBtn = document.getElementById('btnSaveBatchSchedule');
+
+            const matrixTasks = allTasksList.filter(t => !isFapClass(t) && !t.done);
+            if (matrixTasks.length === 0) {
+                closeScheduleModal();
+                return;
+            }
+
+            const updates = [];
+            let countScheduled = 0;
+
+            matrixTasks.forEach(t => {
+                const daySelect = document.getElementById(`batchDay_${t.id}`);
+                const slider = document.getElementById(`batchDurationSlider_${t.id}`);
+                const startSelect = document.getElementById(`batchStart_${t.id}`);
+                const endInput = document.getElementById(`batchEnd_${t.id}`);
+
+                if (daySelect) {
+                    const dayVal = daySelect.value;
+                    const durVal = slider ? parseInt(slider.value, 10) : (t.duration || 60);
+                    const startVal = startSelect ? startSelect.value : '';
+                    const endVal = endInput ? endInput.value : '';
+
+                    if (dayVal !== '') {
+                        t.day = parseInt(dayVal, 10);
+                        t.duration = durVal;
+                        if (startVal && endVal) {
+                            t.time = `${startVal} - ${endVal}`;
+                        }
+                        if (t.quadrant === 'inbox' || !t.quadrant) {
+                            t.quadrant = 'donow';
+                        }
+                        countScheduled++;
+                    }
+
+                    updates.push({
+                        id: t.id,
+                        fields: {
+                            day: t.day !== '' ? t.day : '',
+                            duration: t.duration,
+                            time: t.time || '',
+                            quadrant: t.quadrant || 'donow',
+                            userEmail: currentUserEmail
+                        }
+                    });
+                }
+            });
+
+            // Lưu vào localStorage ngay lập tức
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            // Cập nhật giao diện tức thì (0ms)
+            renderTasks(allTasksList);
+            if (typeof renderDashboard === 'function') renderDashboard();
+            if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+
+            // Hiển thị tiến trình đẩy lên
+            if (progressEl) {
+                progressEl.classList.remove('hidden');
+                progressEl.innerHTML = `<span class="inline-flex items-center gap-1.5 text-blue-600 font-bold"><span class="animate-spin inline-block">🔄</span> Đang đẩy ${countScheduled} công việc lên Google Sheets...</span>`;
+            }
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Gửi lên server
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(() => {
+                        if (progressEl) {
+                            progressEl.innerHTML = `<span class="text-emerald-600 font-bold">✅ Đã đồng bộ thành công!</span>`;
+                        }
+                        showToast(`🎉 Đã lưu và đẩy ${countScheduled} công việc lên Trang chính & Lịch rảnh!`, "🚀");
+                        setTimeout(() => {
+                            closeScheduleModal();
+                            if (saveBtn) {
+                                saveBtn.disabled = false;
+                                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            }
+                            switchView('dashboard');
+                        }, 600);
+                    })
+                    .withFailureHandler(err => {
+                        if (progressEl) {
+                            progressEl.innerHTML = `<span class="text-amber-600">Đã lưu offline (Lỗi: ${err})</span>`;
+                        }
+                        if (saveBtn) {
+                            saveBtn.disabled = false;
+                            saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                        showToast(`Đã lưu cục bộ! Lỗi đồng bộ sheets: ${err}`, "⚠️");
+                        setTimeout(() => {
+                            closeScheduleModal();
+                            switchView('dashboard');
+                        }, 1000);
+                    })
+                    .batchUpdateTasks(updates, currentUserEmail);
+            } else {
+                if (progressEl) {
+                    progressEl.innerHTML = `<span class="text-emerald-600 font-bold">✅ Đã lưu cục bộ thành công!</span>`;
+                }
+                showToast(`🎉 Đã lưu ${countScheduled} công việc lên Trang chính & Lịch rảnh!`, "🚀");
+                setTimeout(() => {
+                    closeScheduleModal();
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                    switchView('dashboard');
+                }, 600);
+            }
+        }
+
+
+        function editTaskFromDetailModal() {
+            if (!activeDetailTaskId) return;
+            const taskId = activeDetailTaskId;
+            closeTaskDetailModal();
+            editTask(taskId);
+        }
+
+
+
+        // =====================================================================
+        // POP-UP XEM CHI TIẾT CÔNG VIỆC / LỊCH HỌC
+        // =====================================================================
+        let activeDetailTaskId = null;
+
+        function openTaskDetailModal(taskId) {
+            const task = allTasksList.find(t => String(t.id) === String(taskId));
+            if (!task) return;
+            activeDetailTaskId = taskId;
+
+            const parsed = parseTaskDetails(task.task, task.time);
+            const isCalendar = (task.source === 'fap' || task.source === 'calendar' || (task.id && String(task.id).startsWith('fap_')));
+            const isDone = !!task.done;
+
+            // Type badge
+            const badgeIcon = document.getElementById('detailBadgeIcon');
+            const badgeType = document.getElementById('detailBadgeType');
+            if (badgeType) {
+                if (isCalendar) {
+                    if (badgeIcon) badgeIcon.innerText = '🎓';
+                    badgeType.innerText = 'Lịch học FAP';
+                    badgeType.className = 'text-[11px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded border border-blue-200 bg-blue-50 text-[#0054a6] dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800';
+                } else if (task.quadrant === 'donow') {
+                    if (badgeIcon) badgeIcon.innerText = '🔴';
+                    badgeType.innerText = 'Làm ngay';
+                    badgeType.className = 'text-[11px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded border border-red-200 bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800';
+                } else {
+                    if (badgeIcon) badgeIcon.innerText = '🟡';
+                    badgeType.innerText = 'Kế hoạch';
+                    badgeType.className = 'text-[11px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800';
+                }
+            }
+
+            // Title
+            const titleEl = document.getElementById('detailTitle');
+            if (titleEl) {
+                titleEl.innerText = parsed.cleanTitle || task.task;
+                if (isDone) {
+                    titleEl.classList.add('line-through', 'text-slate-400');
+                } else {
+                    titleEl.classList.remove('line-through', 'text-slate-400');
+                }
+            }
+
+            // Day info
+            const dayTextEl = document.getElementById('detailDayText');
+            if (dayTextEl) {
+                const dayIdx = parseInt(task.day, 10);
+                const dayNames = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+                const dayName = (!isNaN(dayIdx) && dayNames[dayIdx]) ? dayNames[dayIdx] : 'Chưa phân thứ';
+                dayTextEl.innerText = `📅 ${dayName}`;
+            }
+
+            // Time, Room, Lecturer, Status
+            const timeEl = document.getElementById('detailTime');
+            if (timeEl) timeEl.innerText = parsed.time || 'Chưa đặt';
+
+            const roomEl = document.getElementById('detailRoom');
+            if (roomEl) roomEl.innerText = parsed.room || 'Không có';
+
+            const lecturerEl = document.getElementById('detailLecturer');
+            if (lecturerEl) lecturerEl.innerText = parsed.lecturer || 'Không có';
+
+            const statusEl = document.getElementById('detailStatus');
+            if (statusEl) {
+                statusEl.innerText = isDone ? 'Đã hoàn thành ✅' : 'Chưa hoàn thành ⏳';
+                statusEl.className = isDone ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'font-semibold text-amber-600 dark:text-amber-400';
+            }
+
+            // Phase 2: Deadline & Priority trong modal chi tiết
+            const deadlineEl = document.getElementById('detailDeadline');
+            if (deadlineEl) {
+                if (task.deadline) {
+                    const dlInfo = formatDeadlineInfo(task.deadline);
+                    if (dlInfo) {
+                        deadlineEl.innerHTML = `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold border ${dlInfo.badgeClass}"><span>${dlInfo.icon}</span> ${dlInfo.text}</span>`;
+                    } else {
+                        deadlineEl.innerText = task.deadline;
+                    }
+                } else {
+                    deadlineEl.innerText = 'Không có';
+                }
+            }
+
+            const priorityEl = document.getElementById('detailPriority');
+            if (priorityEl) {
+                if (task.priority === 'high') {
+                    priorityEl.innerHTML = `<span class="text-red-600 font-bold">🔴 Cao (Khẩn cấp)</span>`;
+                } else if (task.priority === 'low') {
+                    priorityEl.innerHTML = `<span class="text-emerald-600 font-bold">🟢 Thấp (Linh hoạt)</span>`;
+                } else {
+                    priorityEl.innerHTML = `<span class="text-amber-600 font-bold">🟡 Trung bình</span>`;
+                }
+            }
+
+            // Raw task text
+            const rawEl = document.getElementById('detailRawTask');
+            if (rawEl) rawEl.innerText = task.task;
+
+            // Toggle done button text
+            const toggleBtn = document.getElementById('detailToggleDoneBtn');
+            if (toggleBtn) {
+                toggleBtn.innerHTML = isDone 
+                    ? `<span>↩️</span> Đánh dấu chưa xong` 
+                    : `<span>✅</span> Đánh dấu hoàn thành`;
+            }
+
+            // Category badge
+            const cat = getTaskCategory(task);
+            const catBadge = document.getElementById('detailCategoryBadge');
+            if (catBadge) {
+                if (cat) {
+                    const col = getCategoryColor(cat);
+                    catBadge.innerHTML = `<span>${col.icon}</span> <span>${escapeHtml(cat)}</span>`;
+                    catBadge.className = `inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}`;
+                    catBadge.classList.remove('hidden');
+                } else {
+                    catBadge.classList.add('hidden');
+                }
+            }
+
+            // Phase 2: Render checklist việc con
+            renderDetailSubtasks(task);
+
+            // Show modal
+            const modal = document.getElementById('taskDetailModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function renderDetailSubtasks(task) {
+            const subtasks = parseTaskSubtasks(task.subtasks);
+            const progress = getSubtasksProgress(subtasks);
+            const progressText = document.getElementById('detailSubtasksProgressText');
+            const progressBar = document.getElementById('detailSubtasksProgressBar');
+            const listEl = document.getElementById('detailSubtasksList');
+
+            if (progressText && progressBar) {
+                if (progress) {
+                    progressText.innerText = `${progress.completed}/${progress.total} (${progress.percent}%)`;
+                    progressBar.style.width = `${progress.percent}%`;
+                    if (progress.completed === progress.total) {
+                        progressBar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-300';
+                    } else {
+                        progressBar.className = 'h-full bg-[#0054a6] dark:bg-blue-500 rounded-full transition-all duration-300';
+                    }
+                } else {
+                    progressText.innerText = '0/0 (0%)';
+                    progressBar.style.width = '0%';
+                }
+            }
+
+            if (listEl) {
+                if (subtasks.length === 0) {
+                    listEl.innerHTML = `<p class="text-[11px] text-slate-400 dark:text-slate-500 italic py-1">Chưa có việc con nào. Nhập và bấm Thêm bên dưới!</p>`;
+                } else {
+                    listEl.innerHTML = subtasks.map(s => {
+                        const isDone = !!s.done;
+                        return `
+                            <div class="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group">
+                                <label class="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
+                                    <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleSubtaskDirect('${task.id}', '${s.id}')" class="w-3.5 h-3.5 text-[#0054a6] rounded border-slate-300 focus:ring-[#0054a6] cursor-pointer shrink-0">
+                                    <span class="text-xs ${isDone ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200 font-medium'} leading-tight break-words">${escapeHtml(s.text)}</span>
+                                </label>
+                                <button type="button" onclick="deleteSubtaskDirect('${task.id}', '${s.id}')" class="text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs" title="Xóa việc con này">
+                                    🗑️
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        function addQuickSubtaskFromDetail() {
+            if (!activeDetailTaskId) return;
+            const input = document.getElementById('detailQuickSubtaskInput');
+            const text = input?.value?.trim();
+            if (!text) return;
+
+            const task = allTasksList.find(t => String(t.id) === String(activeDetailTaskId));
+            if (!task) return;
+
+            task.subtasks = parseTaskSubtasks(task.subtasks);
+            task.subtasks.push({
+                id: 'sub_' + Date.now(),
+                text: text,
+                done: false
+            });
+
+            if (input) input.value = '';
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            renderDetailSubtasks(task);
+            renderDashboard();
+            renderTasks(allTasksList);
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withFailureHandler(err => showToast('Lỗi lưu việc con: ' + err, '⚠️'))
+                    .updateTask(task.id, { subtasks: JSON.stringify(task.subtasks), userEmail: currentUserEmail });
+            }
+            showToast("Đã thêm việc con mới!", "☑️");
+        }
+
+        function toggleSubtaskDirect(taskId, subTaskId) {
+            const task = allTasksList.find(t => String(t.id) === String(taskId));
+            if (!task) return;
+
+            task.subtasks = parseTaskSubtasks(task.subtasks);
+            const sub = task.subtasks.find(s => String(s.id) === String(subTaskId));
+            if (!sub) return;
+
+            sub.done = !sub.done;
+
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            if (activeDetailTaskId && String(activeDetailTaskId) === String(taskId)) {
+                renderDetailSubtasks(task);
+            }
+            renderDashboard();
+            renderTasks(allTasksList);
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withFailureHandler(err => showToast('Lỗi cập nhật việc con: ' + err, '⚠️'))
+                    .toggleSubTask(taskId, subTaskId, currentUserEmail);
+            }
+        }
+
+        function deleteSubtaskDirect(taskId, subTaskId) {
+            const task = allTasksList.find(t => String(t.id) === String(taskId));
+            if (!task) return;
+
+            task.subtasks = parseTaskSubtasks(task.subtasks).filter(s => String(s.id) !== String(subTaskId));
+
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            if (activeDetailTaskId && String(activeDetailTaskId) === String(taskId)) {
+                renderDetailSubtasks(task);
+            }
+            renderDashboard();
+            renderTasks(allTasksList);
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withFailureHandler(err => showToast('Lỗi xóa việc con: ' + err, '⚠️'))
+                    .updateTask(taskId, { subtasks: JSON.stringify(task.subtasks), userEmail: currentUserEmail });
+            }
+            showToast("Đã xóa việc con!", "🗑️");
+        }
+
+        function closeTaskDetailModal() {
+            const modal = document.getElementById('taskDetailModal');
+            if (modal) modal.classList.add('hidden');
+            activeDetailTaskId = null;
+        }
+
+        function toggleTaskDoneFromModal() {
+            if (!activeDetailTaskId) return;
+            const taskId = activeDetailTaskId;
+            toggleTaskDone(taskId);
+            // Cập nhật lại giao diện modal sau khi đổi trạng thái
+            openTaskDetailModal(taskId);
+        }
+
+        function deleteTaskFromModal() {
+            if (!activeDetailTaskId) return;
+            const taskId = activeDetailTaskId;
+            closeTaskDetailModal();
+            deleteTask(taskId);
+        }
+
+        function deleteTask(id) {
+            activeDeleteTaskId = id;
+            const task = allTasksList.find(t => String(t.id) === String(id));
+            const el = document.getElementById(`text-${id}`);
+            const title = task ? task.task : (el ? el.innerText.trim() : 'công việc này');
+            const snippet = title.length > 50 ? title.slice(0, 50) + '...' : title;
+            const desc = document.getElementById('deleteModalDesc');
+            if (desc) desc.innerText = `Bạn có chắc chắn muốn xóa: "${snippet}"?`;
+            
+            document.getElementById('deleteModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('confirmDeleteBtn')?.focus();
+            }, 60);
+        }
+
+        function submitDeleteTask() {
+            if (!activeDeleteTaskId) return;
+            const targetId = activeDeleteTaskId;
+            allTasksList = allTasksList.filter(t => String(t.id) !== String(targetId));
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+            
+            document.querySelector(`[data-id="${targetId}"]`)?.remove();
+            document.querySelector(`[data-task-id="${targetId}"]`)?.remove();
+            updateInboxCount();
+            renderDashboard();
+            if (window.google && google.script && google.script.run) {
+                google.script.run.deleteTask(targetId, currentUserEmail);
+            }
+            showToast("Đã xóa công việc thành công!", "🗑️");
+            closeDeleteModal();
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            activeDeleteTaskId = null;
+        }
+
+        // Hỗ trợ phím tắt bàn phím toàn diện (Enter: Thực hiện Action, Esc: Hủy)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeTaskDetailModal();
+                closeEditModal();
+                closeDeleteModal();
+                closeProfileModal();
+                closeModal();
+                closePwaModal();
+                return;
+            }
+            if (e.key === 'Enter') {
+                // 1. Khi đang mở hộp thoại Xác nhận xóa: Nhấn Enter xóa ngay lập tức!
+                if (activeDeleteTaskId) {
+                    e.preventDefault();
+                    submitDeleteTask();
+                    return;
+                }
+                // 2. Khi đang mở hộp thoại Sửa việc (và không giữ Shift): Nhấn Enter lưu ngay lập tức!
+                if (activeEditTaskId && !e.shiftKey) {
+                    e.preventDefault();
+                    submitEditTask();
+                    return;
+                }
+                // 3. Khi đang mở hộp thoại Hồ sơ cá nhân (và không giữ Shift): Nhấn Enter lưu hồ sơ!
+                const profileModal = document.getElementById('profileModal');
+                if (profileModal && !profileModal.classList.contains('hidden') && !e.shiftKey) {
+                    e.preventDefault();
+                    saveProfile(); // Phase 1: dùng saveProfile thay vì saveMotto
+                    return;
+                }
+            }
+        });
+
+        // GỌI AI GỢI Ý
+</script>

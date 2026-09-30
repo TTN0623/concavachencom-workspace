@@ -1,0 +1,163 @@
+<script>
+function loadAdminStats() {
+            if (!isCurrentUserAdmin) {
+                showToast('Chỉ Admin trtainguyen2306@gmail.com mới có quyền xem trang này!', '⚠️');
+                switchView('dashboard');
+                return;
+            }
+
+            const usersTableBody = document.getElementById('adminUsersTableBody');
+            const feedbackTableBody = document.getElementById('adminFeedbackTableBody');
+            if (usersTableBody) usersTableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400"><div class="inline-block animate-spin mr-2">⏳</div> Đang tải danh sách người dùng...</td></tr>`;
+            if (feedbackTableBody) feedbackTableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400"><div class="inline-block animate-spin mr-2">⏳</div> Đang tải danh sách phản hồi...</td></tr>`;
+
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(renderAdminStats)
+                    .withFailureHandler(err => {
+                        showToast('Lỗi tải dữ liệu quản trị: ' + err, '❌');
+                    })
+                    .getAdminStats(currentUserEmail);
+            }
+        }
+
+        function renderAdminStats(data) {
+            if (!data) return;
+
+            // 1. Cập nhật các thẻ KPI
+            const kpiUsers = document.getElementById('adminKpiTotalUsers');
+            if (kpiUsers) kpiUsers.innerText = data.totalUsers || 0;
+            const kpiActive = document.getElementById('adminKpiActiveUsers');
+            if (kpiActive) kpiActive.innerText = data.activeUsers || 0;
+            const kpiTasks = document.getElementById('adminKpiTotalTasks');
+            if (kpiTasks) kpiTasks.innerText = data.totalTasks || 0;
+            const kpiFb = document.getElementById('adminKpiNewFeedback');
+            if (kpiFb) kpiFb.innerText = data.newFeedbackCount || 0;
+
+            const usersLabel = document.getElementById('adminUsersCountLabel');
+            if (usersLabel) usersLabel.innerText = `${data.totalUsers || 0} tài khoản`;
+            const fbLabel = document.getElementById('adminFeedbackCountLabel');
+            if (fbLabel) fbLabel.innerText = `${(data.feedbacks || []).length} phản hồi (${data.newFeedbackCount || 0} mới)`;
+
+            // 2. Banner cảnh báo Feedback mới
+            const alertBanner = document.getElementById('adminNewFeedbackAlertBanner');
+            const alertText = document.getElementById('adminNewFeedbackAlertText');
+            if (alertBanner && alertText) {
+                if (data.newFeedbackCount > 0) {
+                    alertText.innerText = `🔔 Có ${data.newFeedbackCount} phản hồi / góp ý mới từ người dùng!`;
+                    alertBanner.classList.remove('hidden');
+                } else {
+                    alertBanner.classList.add('hidden');
+                }
+            }
+
+            // 3. Render bảng người dùng
+            const usersTbody = document.getElementById('adminUsersTableBody');
+            if (usersTbody) {
+                if (!data.users || data.users.length === 0) {
+                    usersTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Chưa có người dùng nào được ghi nhận.</td></tr>`;
+                } else {
+                    usersTbody.innerHTML = data.users.map(u => {
+                        const isMainAdmin = (u.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase());
+                        const roleBadge = isMainAdmin
+                            ? `<span class="px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-700 text-[10px]">Super Admin</span>`
+                            : (u.role === 'admin' 
+                                ? `<span class="px-2 py-0.5 rounded-full font-bold bg-purple-100 text-purple-700 text-[10px]">Admin</span>` 
+                                : `<span class="px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-700 text-[10px]">User</span>`);
+
+                        const statusBadge = (u.status === 'blocked')
+                            ? `<span class="px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-700 text-[10px]">Đã khóa</span>`
+                            : `<span class="px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 text-[10px]">Hoạt động</span>`;
+
+                        const lastLogin = u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('vi-VN') : 'Chưa có';
+                        const toggleBtn = isMainAdmin 
+                            ? `<span class="text-slate-400 italic text-[11px]">Không thể khóa</span>`
+                            : `<button type="button" onclick="handleAdminToggleUser('${u.email}', '${u.status === 'blocked' ? 'active' : 'blocked'}')" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer ${u.status === 'blocked' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'}">${u.status === 'blocked' ? 'Mở khóa' : 'Khóa tài khoản'}</button>`;
+
+                        return `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-[11px] flex items-center justify-center shrink-0">
+                                            ${(u.fullName || u.email).slice(0, 2).toUpperCase()}
+                                        </div>
+                                        <div class="truncate max-w-xs">
+                                            <p class="font-bold text-slate-800 dark:text-slate-200">${u.fullName || 'Người dùng'}</p>
+                                            <p class="text-[11px] text-slate-500 font-mono">${u.email}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">${roleBadge}</td>
+                                <td class="py-3 px-4 text-slate-500 text-[11px]">${lastLogin}</td>
+                                <td class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">${u.tasksCount || 0} việc</td>
+                                <td class="py-3 px-4">${statusBadge}</td>
+                                <td class="py-3 px-4 text-right">${toggleBtn}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 4. Render bảng Feedback
+            const fbTbody = document.getElementById('adminFeedbackTableBody');
+            if (fbTbody) {
+                if (!data.feedbacks || data.feedbacks.length === 0) {
+                    fbTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Chưa có phản hồi hoặc góp ý nào.</td></tr>`;
+                } else {
+                    fbTbody.innerHTML = data.feedbacks.map(f => {
+                        const statusBadge = (f.status === 'new')
+                            ? `<span class="px-2 py-0.5 rounded-full font-extrabold bg-rose-100 text-rose-700 text-[10px] animate-pulse">Mới</span>`
+                            : (f.status === 'reviewed' 
+                                ? `<span class="px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700 text-[10px]">Đã xem</span>`
+                                : `<span class="px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 text-[10px]">Đã xong</span>`);
+
+                        const timeFormatted = f.createdAt ? new Date(f.createdAt).toLocaleString('vi-VN') : '';
+                        
+                        let actions = '';
+                        if (f.status === 'new') {
+                            actions = `<button type="button" onclick="handleAdminUpdateFeedback('${f.id}', 'reviewed')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md text-[11px] font-semibold cursor-pointer">Đánh dấu đã xem</button>`;
+                        } else if (f.status === 'reviewed') {
+                            actions = `<button type="button" onclick="handleAdminUpdateFeedback('${f.id}', 'resolved')" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-md text-[11px] font-semibold cursor-pointer">Hoàn thành</button>`;
+                        } else {
+                            actions = `<span class="text-slate-400 text-[11px]">Đã giải quyết</span>`;
+                        }
+
+                        return `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${f.status === 'new' ? 'bg-rose-50/20' : ''}">
+                                <td class="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">${timeFormatted}</td>
+                                <td class="py-3 px-4 font-mono text-[11px] text-slate-700 dark:text-slate-300 font-semibold">${f.userEmail}</td>
+                                <td class="py-3 px-4 whitespace-nowrap font-medium text-slate-600 dark:text-slate-300">${f.category}</td>
+                                <td class="py-3 px-4 text-slate-800 dark:text-slate-200 max-w-md break-words">${f.content}</td>
+                                <td class="py-3 px-4 whitespace-nowrap">${statusBadge}</td>
+                                <td class="py-3 px-4 text-right whitespace-nowrap">${actions}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        function handleAdminToggleUser(targetEmail, newStatus) {
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(res => {
+                        showToast(res.message, '🛡️');
+                        loadAdminStats();
+                    })
+                    .withFailureHandler(err => showToast('Lỗi: ' + err, '❌'))
+                    .toggleUserStatus(targetEmail, newStatus, currentUserEmail);
+            }
+        }
+
+        function handleAdminUpdateFeedback(feedbackId, newStatus) {
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(res => {
+                        showToast(res.message, '✅');
+                        loadAdminStats();
+                    })
+                    .withFailureHandler(err => showToast('Lỗi: ' + err, '❌'))
+                    .updateFeedbackStatus(feedbackId, newStatus, currentUserEmail);
+            }
+        }
+</script>
