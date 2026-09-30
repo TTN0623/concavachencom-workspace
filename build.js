@@ -31,10 +31,10 @@ function build() {
   const standalonePreloadBlock = `<!-- SUPABASE SDK & CLIENT CONFIGURATION -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = '${SUPABASE_CONFIG.URL}';
-        const SUPABASE_ANON_KEY = '${SUPABASE_CONFIG.KEY}';
+        window.SUPABASE_URL = '${SUPABASE_CONFIG.URL}';
+        window.SUPABASE_ANON_KEY = '${SUPABASE_CONFIG.KEY}';
         window.supabaseClient = (window.supabase && typeof window.supabase.createClient === 'function')
-            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
             : null;
 
         var PRELOADED_SERVER_TASKS = [];

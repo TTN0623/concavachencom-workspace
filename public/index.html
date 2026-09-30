@@ -2131,7 +2131,7 @@
     <!-- =================================================================== -->
     <!-- AUTH GATE: BẮT BUỘC ĐĂNG NHẬP GOOGLE TRƯỚC KHI TRUY CẬP (GATEWAY)   -->
     <!-- =================================================================== -->
-    <div id="authGateModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[9999] hidden flex items-center justify-center p-4">
+    <div id="authGateModal" style="display: none;" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[9999] items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-6 sm:p-8 text-center animate-in fade-in zoom-in duration-300">
             <!-- App Icon & Logo -->
             <div class="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0054a6] to-blue-500 text-white flex items-center justify-center text-3xl shadow-lg shadow-blue-500/30 mb-5">
@@ -2350,10 +2350,10 @@
     <!-- SUPABASE SDK & CLIENT CONFIGURATION -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = 'https://kqkvsucqkhqsuxrimhez.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
+        window.SUPABASE_URL = 'https://kqkvsucqkhqsuxrimhez.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
         window.supabaseClient = (window.supabase && typeof window.supabase.createClient === 'function')
-            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
             : null;
 
         var PRELOADED_SERVER_TASKS = [];
@@ -2371,12 +2371,12 @@
         // =====================================================================
         // SUPABASE CLIENT & TWO-WAY SYNC ARCHITECTURE
         // =====================================================================
-        const SUPABASE_URL = 'https://kqkvsucqkhqsuxrimhez.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
+        window.SUPABASE_URL = window.SUPABASE_URL || 'https://kqkvsucqkhqsuxrimhez.supabase.co';
+        window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
 
         if (!window.supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
             try {
-                window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
             } catch (e) {
                 console.warn('Supabase client init error:', e);
             }
@@ -3211,28 +3211,68 @@
             const isLoggedOut = (localStorage.getItem('csg_logged_out') === 'true');
             const authGate = document.getElementById('authGateModal');
 
-            // 1. Kiểm tra session trên Supabase (cho concavachencom.site & PWA)
+            // 1. Kiểm tra xem URL có chứa token/code từ Google OAuth redirect không
+            const url = new URL(window.location.href);
+            const oauthCode = url.searchParams.get('code');
+            const hasHashToken = window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('refresh_token'));
+            const oauthError = url.searchParams.get('error_description') || url.searchParams.get('error');
+
+            if (oauthError) {
+                console.error('Lỗi OAuth từ nhà cung cấp:', oauthError);
+                showToast('Lỗi đăng nhập: ' + decodeURIComponent(oauthError), '❌');
+            }
+
+            // 2. Xử lý Supabase Client (cho concavachencom.site & PWA)
             if (window.supabaseClient) {
                 try {
+                    // Lắng nghe sự kiện đăng nhập / đăng xuất
                     window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                        console.log('Supabase Auth Event:', event, session?.user?.email);
                         if (session && session.user) {
                             applyAuthenticatedSession(session.user);
-                        } else if (isLoggedOut || !SERVER_USER_EMAIL) {
+                        } else if (event === 'SIGNED_OUT') {
                             applyUnauthenticatedState();
                         }
                     });
 
+                    // Nếu có OAuth code trong URL (PKCE Flow)
+                    if (oauthCode) {
+                        console.log('🔄 Đang xác thực mã OAuth Code...');
+                        const { data, error } = await window.supabaseClient.auth.exchangeCodeForSession(oauthCode);
+                        if (!error && data?.session?.user) {
+                            console.log('✅ Xác thực mã OAuth thành công:', data.session.user.email);
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                            applyAuthenticatedSession(data.session.user);
+                            return;
+                        } else if (error) {
+                            console.warn('Lỗi exchangeCodeForSession:', error);
+                        }
+                    }
+
+                    // Nếu có Access Token trong URL Hash (Implicit Flow)
+                    if (hasHashToken) {
+                        console.log('🔄 Đang nhận diện Access Token từ URL Hash...');
+                        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+                        if (!error && session && session.user) {
+                            console.log('✅ Nhận diện Session từ Hash thành công:', session.user.email);
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                            applyAuthenticatedSession(session.user);
+                            return;
+                        }
+                    }
+
+                    // Kiểm tra session hiện có trong localStorage
                     const { data: { session } } = await window.supabaseClient.auth.getSession();
                     if (session && session.user && !isLoggedOut) {
                         applyAuthenticatedSession(session.user);
                         return;
                     }
-                } catch(e) {
+                } catch (e) {
                     console.warn('Lỗi kiểm tra session Supabase:', e);
                 }
             }
 
-            // 2. Chế độ Fallback: Google Apps Script Web App hoặc Local Storage
+            // 3. Chế độ Fallback: Google Apps Script Web App hoặc Local Storage
             if (isLoggedOut) {
                 applyUnauthenticatedState();
                 return;
@@ -3241,7 +3281,10 @@
             currentUserEmail = localStorage.getItem(STORAGE_KEY_CURRENT_USER) || SERVER_USER_EMAIL || '';
 
             if (currentUserEmail && currentUserEmail.includes('@')) {
-                if (authGate) authGate.classList.add('hidden');
+                if (authGate) {
+                    authGate.style.display = 'none';
+                    authGate.classList.add('hidden');
+                }
                 isCurrentUserAdmin = (SERVER_IS_ADMIN || currentUserEmail.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase());
                 currentFeedbackBadgeCount = isCurrentUserAdmin ? (SERVER_NEW_FEEDBACK_COUNT || 0) : 0;
                 renderAuthUI();
@@ -3297,7 +3340,10 @@
             currentFeedbackBadgeCount = 0;
 
             const authGate = document.getElementById('authGateModal');
-            if (authGate) authGate.classList.add('hidden');
+            if (authGate) {
+                authGate.style.display = 'none';
+                authGate.classList.add('hidden');
+            }
 
             renderAuthUI();
             renderProfileUI();
@@ -3313,7 +3359,10 @@
             allTasksList = [];
 
             const authGate = document.getElementById('authGateModal');
-            if (authGate) authGate.classList.remove('hidden');
+            if (authGate) {
+                authGate.style.display = 'flex';
+                authGate.classList.remove('hidden');
+            }
 
             renderAuthUI();
             renderProfileUI();
@@ -3673,6 +3722,11 @@
                             gateBtn.disabled = false;
                             gateBtn.innerHTML = `<span>Tiếp tục với Google</span>`;
                         }
+                        return;
+                    }
+                    if (data && data.url) {
+                        window.location.href = data.url;
+                        return;
                     }
                     return;
                 } catch (e) {

@@ -5,12 +5,12 @@
         // =====================================================================
         // SUPABASE CLIENT & TWO-WAY SYNC ARCHITECTURE
         // =====================================================================
-        const SUPABASE_URL = 'https://kqkvsucqkhqsuxrimhez.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
+        window.SUPABASE_URL = window.SUPABASE_URL || 'https://kqkvsucqkhqsuxrimhez.supabase.co';
+        window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
 
         if (!window.supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
             try {
-                window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
             } catch (e) {
                 console.warn('Supabase client init error:', e);
             }
