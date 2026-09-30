@@ -38,6 +38,18 @@ function doGet(e) {
     }
   }
 
+  // Endpoint kích hoạt đồng bộ toàn bộ Sheet sang Supabase
+  if (e && e.parameter && e.parameter.action === 'syncAllToSupabase') {
+    try {
+      const syncRes = syncAllSheetTasksToSupabase();
+      return ContentService.createTextOutput(JSON.stringify(syncRes))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
   // 2. Endpoint kiểm tra kết nối Google Calendar
   if (e && e.parameter && e.parameter.action === 'testCalendar') {
     try {

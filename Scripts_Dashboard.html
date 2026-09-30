@@ -516,7 +516,18 @@
             if (!task) return;
 
             task.done = !task.done;
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
             renderTasks(allTasksList);
+
+            // Đồng bộ Supabase & Hai chiều Google Sheets
+            if (typeof saveTaskToSupabase === 'function') {
+                saveTaskToSupabase(task);
+            }
+            if (typeof sendBackgroundGasSync === 'function') {
+                sendBackgroundGasSync('syncFromWeb', { task: task });
+            }
 
             if (window.google && google.script && google.script.run) {
                 google.script.run

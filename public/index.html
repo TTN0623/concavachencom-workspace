@@ -34,6 +34,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2127,6 +2128,57 @@
         </div>
     </div>
 
+    <!-- =================================================================== -->
+    <!-- AUTH GATE: BẮT BUỘC ĐĂNG NHẬP GOOGLE TRƯỚC KHI TRUY CẬP (GATEWAY)   -->
+    <!-- =================================================================== -->
+    <div id="authGateModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-6 sm:p-8 text-center animate-in fade-in zoom-in duration-300">
+            <!-- App Icon & Logo -->
+            <div class="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0054a6] to-blue-500 text-white flex items-center justify-center text-3xl shadow-lg shadow-blue-500/30 mb-5">
+                🐟
+            </div>
+            
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Cá Cơm Workspace</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                Hệ thống Quản lý công việc & Thời khóa biểu thông minh cho sinh viên FPT.
+            </p>
+
+            <!-- Feature Pills -->
+            <div class="my-6 p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-2 text-left">
+                <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
+                    <span class="text-base">📊</span>
+                    <span><strong>Ma trận Eisenhower 4 ô:</strong> Phân loại việc ưu tiên</span>
+                </div>
+                <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
+                    <span class="text-base">📅</span>
+                    <span><strong>Thời khóa biểu FAP:</strong> Tự động đồng bộ lịch học</span>
+                </div>
+                <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
+                    <span class="text-base">🔒</span>
+                    <span><strong>Bảo mật riêng tư 100%:</strong> Dữ liệu mã hóa đám mây</span>
+                </div>
+            </div>
+
+            <!-- Single Google Button -->
+            <button type="button" 
+                    id="btnAuthGateSignIn"
+                    onclick="handleGoogleSignIn()" 
+                    class="w-full flex items-center justify-center gap-3 py-3.5 px-5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-white font-bold text-sm rounded-xl border border-slate-300 dark:border-slate-700 shadow-md hover:shadow-lg transition-all cursor-pointer">
+                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Tiếp tục với Google</span>
+            </button>
+
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-4">
+                Bằng việc tiếp tục, bạn đồng ý với Điều khoản & Chính sách quyền riêng tư của Cá Cơm Workspace.
+            </p>
+        </div>
+    </div>
+
     <!-- MODAL ĐĂNG NHẬP / KẾT NỐI TÀI KHOẢN GOOGLE -->
     <div id="authModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
@@ -2313,8 +2365,44 @@
 
     <!-- JAVASCRIPT MODULES -->
     <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHNsqN1ZeigSn3nkRJzbsIc1EJoAX3emgBxHXGxYiVGBAtD4sUEag/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHNsqN1ZeigSn3nkRJzbsIc1EJoAX3emgBxHXGxYiVGBAtD4sUEag/exec';
         const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/19kIoDPMrrdQCc1y9ZdG7bSU9kCn9MY3eoDzGNQOOek8/edit';
+
+        // =====================================================================
+        // SUPABASE CLIENT & TWO-WAY SYNC ARCHITECTURE
+        // =====================================================================
+        const SUPABASE_URL = 'https://kqkvsucqkhqsuxrimhez.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
+
+        if (!window.supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
+            try {
+                window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (e) {
+                console.warn('Supabase client init error:', e);
+            }
+        }
+
+        /**
+         * Gửi tín hiệu đồng bộ hai chiều ngầm sang Google Sheets (GAS doPost)
+         * Đảm bảo tính liên tục, không bao giờ bị lỗi CORS hay giật lag giao diện
+         */
+        function sendBackgroundGasSync(action, payload) {
+            try {
+                if (window.google && google.script && google.script.run) {
+                    return;
+                }
+                if (typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+                    fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: action, ...payload })
+                    }).catch(e => console.warn('Background GAS sync error:', e));
+                }
+            } catch (e) {
+                console.warn('sendBackgroundGasSync failed:', e);
+            }
+        }
 
         // =====================================================================
         // STORAGE KEYS - Tập trung tất cả key localStorage vào 1 chỗ
@@ -2919,11 +3007,16 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
             // Avatar trong Header
             const headerAvatar = document.getElementById('headerAvatar');
             if (headerAvatar) {
-                headerAvatar.innerText = initials;
-                if (!isLoggedIn) {
-                    headerAvatar.className = 'w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all';
+                if (isLoggedIn && profile.avatarUrl) {
+                    headerAvatar.innerHTML = `<img src="${profile.avatarUrl}" alt="Avatar" class="w-full h-full rounded-full object-cover">`;
+                    headerAvatar.className = 'w-8 h-8 rounded-full shadow-xs shrink-0 overflow-hidden';
                 } else {
-                    headerAvatar.className = 'w-8 h-8 rounded-full bg-[#0054a6] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all';
+                    headerAvatar.innerText = initials;
+                    if (!isLoggedIn) {
+                        headerAvatar.className = 'w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all';
+                    } else {
+                        headerAvatar.className = 'w-8 h-8 rounded-full bg-[#0054a6] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all';
+                    }
                 }
             }
 
@@ -2938,10 +3031,15 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
             // Cập nhật Avatar và thông tin trong Dropdown Menu của Header
             const dropAvatar = document.getElementById('dropdownAvatar');
             if (dropAvatar) {
-                dropAvatar.innerText = initials;
-                dropAvatar.className = isLoggedIn 
-                    ? 'w-10 h-10 rounded-full bg-[#0054a6] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0' 
-                    : 'w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-black text-sm flex items-center justify-center shadow-xs shrink-0';
+                if (isLoggedIn && profile.avatarUrl) {
+                    dropAvatar.innerHTML = `<img src="${profile.avatarUrl}" alt="Avatar" class="w-full h-full rounded-full object-cover">`;
+                    dropAvatar.className = 'w-10 h-10 rounded-full shadow-xs shrink-0 overflow-hidden';
+                } else {
+                    dropAvatar.innerText = initials;
+                    dropAvatar.className = isLoggedIn 
+                        ? 'w-10 h-10 rounded-full bg-[#0054a6] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0' 
+                        : 'w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-black text-sm flex items-center justify-center shadow-xs shrink-0';
+                }
             }
 
             const dropName = document.getElementById('dropdownProfileName');
@@ -3109,37 +3207,246 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
         // =====================================================================
         // QUẢN LÝ TÀI KHOẢN, PHÂN QUYỀN & TIẾP NHẬN PHẢN HỒI (PHASE 4)
         // =====================================================================
-        function initUserAuth() {
+        async function initUserAuth() {
             const isLoggedOut = (localStorage.getItem('csg_logged_out') === 'true');
-            if (isLoggedOut) {
-                currentUserEmail = '';
-                allTasksList = [];
-            } else {
-                currentUserEmail = localStorage.getItem(STORAGE_KEY_CURRENT_USER) || SERVER_USER_EMAIL || '';
+            const authGate = document.getElementById('authGateModal');
+
+            // 1. Kiểm tra session trên Supabase (cho concavachencom.site & PWA)
+            if (window.supabaseClient) {
+                try {
+                    window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                        if (session && session.user) {
+                            applyAuthenticatedSession(session.user);
+                        } else if (isLoggedOut || !SERVER_USER_EMAIL) {
+                            applyUnauthenticatedState();
+                        }
+                    });
+
+                    const { data: { session } } = await window.supabaseClient.auth.getSession();
+                    if (session && session.user && !isLoggedOut) {
+                        applyAuthenticatedSession(session.user);
+                        return;
+                    }
+                } catch(e) {
+                    console.warn('Lỗi kiểm tra session Supabase:', e);
+                }
             }
 
-            isCurrentUserAdmin = (!!currentUserEmail && (SERVER_IS_ADMIN || currentUserEmail.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase()));
-            currentFeedbackBadgeCount = isCurrentUserAdmin ? (SERVER_NEW_FEEDBACK_COUNT || 0) : 0;
+            // 2. Chế độ Fallback: Google Apps Script Web App hoặc Local Storage
+            if (isLoggedOut) {
+                applyUnauthenticatedState();
+                return;
+            }
+
+            currentUserEmail = localStorage.getItem(STORAGE_KEY_CURRENT_USER) || SERVER_USER_EMAIL || '';
+
+            if (currentUserEmail && currentUserEmail.includes('@')) {
+                if (authGate) authGate.classList.add('hidden');
+                isCurrentUserAdmin = (SERVER_IS_ADMIN || currentUserEmail.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase());
+                currentFeedbackBadgeCount = isCurrentUserAdmin ? (SERVER_NEW_FEEDBACK_COUNT || 0) : 0;
+                renderAuthUI();
+                renderProfileUI();
+
+                if (window.google && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(userData => {
+                            if (userData && userData.email) {
+                                currentUserEmail = userData.email;
+                                localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserEmail);
+                                isCurrentUserAdmin = (userData.isAdmin || currentUserEmail.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase());
+                                currentFeedbackBadgeCount = userData.newFeedbackCount || 0;
+                                renderAuthUI();
+                                renderProfileUI();
+                            }
+                        })
+                        .withFailureHandler(err => console.warn('Lỗi đồng bộ thông tin tài khoản:', err))
+                        .getCurrentUser(currentUserEmail);
+                }
+
+                if (window.supabaseClient) {
+                    fetchTasksFromSupabase(currentUserEmail);
+                    initSupabaseRealtime(currentUserEmail);
+                }
+            } else {
+                applyUnauthenticatedState();
+            }
+        }
+
+        function applyAuthenticatedSession(user) {
+            if (!user || !user.email) return;
+            currentUserEmail = user.email.toLowerCase().trim();
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserEmail);
+            localStorage.removeItem('csg_logged_out');
+
+            const meta = user.user_metadata || {};
+            const fullName = meta.full_name || meta.name || currentUserEmail.split('@')[0];
+            const avatarUrl = meta.avatar_url || meta.picture || '';
+
+            const profile = {
+                fullName: fullName,
+                studentId: currentUserEmail,
+                major: 'Sinh viên',
+                avatarInitials: computeAvatarInitials(fullName),
+                avatarUrl: avatarUrl
+            };
+            try {
+                localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
+            } catch(e) {}
+
+            isCurrentUserAdmin = (currentUserEmail.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase());
+            currentFeedbackBadgeCount = 0;
+
+            const authGate = document.getElementById('authGateModal');
+            if (authGate) authGate.classList.add('hidden');
 
             renderAuthUI();
             renderProfileUI();
 
-            if (currentUserEmail && window.google && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(userData => {
-                        if (userData && userData.email) {
-                            currentUserEmail = userData.email;
-                            localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserEmail);
-                            isCurrentUserAdmin = (userData.isAdmin || currentUserEmail.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase());
-                            currentFeedbackBadgeCount = userData.newFeedbackCount || 0;
-                            renderAuthUI();
-                            renderProfileUI();
-                        }
-                    })
-                    .withFailureHandler(err => console.warn('Lỗi đồng bộ thông tin tài khoản:', err))
-                    .getCurrentUser(currentUserEmail);
+            fetchTasksFromSupabase(currentUserEmail);
+            initSupabaseRealtime(currentUserEmail);
+        }
+
+        function applyUnauthenticatedState() {
+            currentUserEmail = '';
+            isCurrentUserAdmin = false;
+            currentFeedbackBadgeCount = 0;
+            allTasksList = [];
+
+            const authGate = document.getElementById('authGateModal');
+            if (authGate) authGate.classList.remove('hidden');
+
+            renderAuthUI();
+            renderProfileUI();
+            renderTasks([]);
+        }
+
+        async function fetchTasksFromSupabase(userEmail) {
+            if (!window.supabaseClient || !userEmail) return;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('tasks')
+                    .select('*')
+                    .eq('owner_email', userEmail)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.warn('Lỗi lấy tasks từ Supabase:', error);
+                    return;
+                }
+
+                if (Array.isArray(data)) {
+                    allTasksList = data.map(r => ({
+                        id: r.id,
+                        task: r.task,
+                        quadrant: r.quadrant || 'inbox',
+                        category: r.category || 'Công việc',
+                        done: !!r.done,
+                        day: (r.day !== null && r.day !== undefined && r.day !== '') ? String(r.day) : '',
+                        deadline: r.deadline || '',
+                        priority: r.priority || 'medium',
+                        time: r.time || '',
+                        duration: r.duration || 30,
+                        subtasks: Array.isArray(r.subtasks) ? r.subtasks : (typeof r.subtasks === 'string' ? JSON.parse(r.subtasks || '[]') : []),
+                        is_fap: !!r.is_fap,
+                        ownerEmail: r.owner_email
+                    }));
+
+                    try {
+                        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+                    } catch(e) {}
+
+                    renderTasks(allTasksList);
+                    if (typeof renderDashboard === 'function') renderDashboard();
+                    if (typeof renderFapScheduleTable === 'function') renderFapScheduleTable();
+                    if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+                }
+            } catch(e) {
+                console.warn('Lỗi truy vấn tasks:', e);
             }
         }
+
+        function initSupabaseRealtime(userEmail) {
+            if (!window.supabaseClient || !userEmail) return;
+            try {
+                if (window._supabaseTasksChannel) {
+                    window.supabaseClient.removeChannel(window._supabaseTasksChannel);
+                }
+
+                window._supabaseTasksChannel = window.supabaseClient
+                    .channel('realtime_tasks_' + userEmail.replace(/[^a-zA-Z0-9]/g, '_'))
+                    .on('postgres_changes', {
+                        event: '*',
+                        schema: 'public',
+                        table: 'tasks',
+                        filter: `owner_email=eq.${userEmail}`
+                    }, (payload) => {
+                        handleRealtimeTaskEvent(payload);
+                    })
+                    .subscribe();
+            } catch(e) {
+                console.warn('Lỗi khởi tạo Realtime:', e);
+            }
+        }
+
+        function handleRealtimeTaskEvent(payload) {
+            if (!payload || !payload.eventType) return;
+            const eventType = payload.eventType;
+            const newRow = payload.new;
+            const oldRow = payload.old;
+
+            if (eventType === 'INSERT' && newRow) {
+                const existingIdx = allTasksList.findIndex(t => String(t.id) === String(newRow.id));
+                const mapped = {
+                    id: newRow.id,
+                    task: newRow.task,
+                    quadrant: newRow.quadrant || 'inbox',
+                    category: newRow.category || 'Công việc',
+                    done: !!newRow.done,
+                    day: (newRow.day !== null && newRow.day !== undefined && newRow.day !== '') ? String(newRow.day) : '',
+                    deadline: newRow.deadline || '',
+                    priority: newRow.priority || 'medium',
+                    time: newRow.time || '',
+                    duration: newRow.duration || 30,
+                    subtasks: Array.isArray(newRow.subtasks) ? newRow.subtasks : (typeof newRow.subtasks === 'string' ? JSON.parse(newRow.subtasks || '[]') : []),
+                    is_fap: !!newRow.is_fap,
+                    ownerEmail: newRow.owner_email
+                };
+                if (existingIdx >= 0) {
+                    allTasksList[existingIdx] = mapped;
+                } else {
+                    allTasksList.unshift(mapped);
+                }
+            } else if (eventType === 'UPDATE' && newRow) {
+                const existingIdx = allTasksList.findIndex(t => String(t.id) === String(newRow.id));
+                if (existingIdx >= 0) {
+                    allTasksList[existingIdx] = {
+                        ...allTasksList[existingIdx],
+                        task: newRow.task,
+                        quadrant: newRow.quadrant || allTasksList[existingIdx].quadrant,
+                        category: newRow.category || allTasksList[existingIdx].category,
+                        done: !!newRow.done,
+                        day: (newRow.day !== null && newRow.day !== undefined && newRow.day !== '') ? String(newRow.day) : '',
+                        deadline: newRow.deadline || '',
+                        priority: newRow.priority || allTasksList[existingIdx].priority,
+                        time: newRow.time || '',
+                        duration: newRow.duration || allTasksList[existingIdx].duration,
+                        subtasks: Array.isArray(newRow.subtasks) ? newRow.subtasks : (typeof newRow.subtasks === 'string' ? JSON.parse(newRow.subtasks || '[]') : [])
+                    };
+                }
+            } else if (eventType === 'DELETE' && oldRow) {
+                allTasksList = allTasksList.filter(t => String(t.id) !== String(oldRow.id));
+            }
+
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            renderTasks(allTasksList);
+            if (typeof renderDashboard === 'function') renderDashboard();
+            if (typeof renderFapScheduleTable === 'function') renderFapScheduleTable();
+            if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+        }
+
 
         function renderAuthUI() {
             const isLoggedOut = (localStorage.getItem('csg_logged_out') === 'true');
@@ -3336,8 +3643,44 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
             if (modal) modal.classList.add('hidden');
         }
 
-        function handleGoogleSignIn() {
+        async function handleGoogleSignIn() {
             localStorage.removeItem('csg_logged_out');
+
+            const gateBtn = document.getElementById('btnAuthGateSignIn');
+            if (gateBtn) {
+                gateBtn.disabled = true;
+                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang chuyển hướng Google...</span>`;
+            }
+
+            // 1. Chạy trên Supabase OAuth (Custom domain concavachencom.site & Vercel)
+            if (window.supabaseClient) {
+                try {
+                    const redirectUrl = window.location.origin;
+                    const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: redirectUrl,
+                            queryParams: {
+                                access_type: 'offline',
+                                prompt: 'select_account'
+                            }
+                        }
+                    });
+                    if (error) {
+                        console.error('Lỗi Supabase OAuth:', error);
+                        showToast('Lỗi đăng nhập Google: ' + error.message, '❌');
+                        if (gateBtn) {
+                            gateBtn.disabled = false;
+                            gateBtn.innerHTML = `<span>Tiếp tục với Google</span>`;
+                        }
+                    }
+                    return;
+                } catch (e) {
+                    console.warn('Lỗi kết nối OAuth Supabase:', e);
+                }
+            }
+
+            // 2. Chế độ Fallback Google Apps Script
             const targetUrl = 'https://accounts.google.com/AccountChooser?continue=' + encodeURIComponent(WEB_APP_URL);
             try {
                 if (window.top && window.top !== window.self) {
@@ -3360,8 +3703,11 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
             renderAuthUI();
             showToast(`Chào mừng bạn quay trở lại, ${currentUserEmail}!`, '🎉');
 
-            // Tải lại dữ liệu công việc của tài khoản này từ Google Sheets
-            if (window.google && google.script && google.script.run) {
+            // Tải lại dữ liệu công việc của tài khoản này từ Google Sheets hoặc Supabase
+            if (window.supabaseClient) {
+                fetchTasksFromSupabase(currentUserEmail);
+                initSupabaseRealtime(currentUserEmail);
+            } else if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(tasks => {
                         allTasksList = tasks || [];
@@ -3389,9 +3735,9 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
             }
         }
 
-        function logoutUser() {
-            if (confirm(`Bạn có chắc chắn muốn đăng xuất tài khoản? Dữ liệu công việc trên Google Sheets vẫn được lưu an toàn 100%.`)) {
-                // 1. Chỉ xoá sạch bộ nhớ tạm trên web (Dữ liệu trên Google Sheet được bảo toàn 100%)
+        async function logoutUser() {
+            if (confirm(`Bạn có chắc chắn muốn đăng xuất tài khoản? Dữ liệu công việc trên Đám mây & Google Sheets vẫn được lưu an toàn 100%.`)) {
+                // 1. Xoá sạch bộ nhớ tạm trên web
                 localStorage.setItem('csg_logged_out', 'true');
                 localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
                 localStorage.removeItem(STORAGE_KEY_TASKS);
@@ -3402,12 +3748,25 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
                 localStorage.removeItem('csg_cached_fap');
                 sessionStorage.clear();
 
-                // 2. Làm sạch biến trong bộ nhớ RAM
+                // 2. Đăng xuất khỏi Supabase nếu có
+                if (window.supabaseClient) {
+                    try {
+                        if (window._supabaseTasksChannel) {
+                            window.supabaseClient.removeChannel(window._supabaseTasksChannel);
+                            window._supabaseTasksChannel = null;
+                        }
+                        await window.supabaseClient.auth.signOut();
+                    } catch(e) {
+                        console.warn('Supabase signOut error:', e);
+                    }
+                }
+
+                // 3. Làm sạch biến trong bộ nhớ RAM
                 currentUserEmail = '';
                 isCurrentUserAdmin = false;
                 allTasksList = [];
 
-                // 3. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
+                // 4. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
                 closeAuthModal();
                 closeProfileDropdown();
                 renderProfileUI();
@@ -3416,6 +3775,9 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHN
                 if (activeView === 'dashboard') renderDashboard();
                 else if (activeView === 'matrix') renderFapScheduleTable();
                 else if (activeView === 'freetime') renderFreeTimeSchedule();
+
+                const authGate = document.getElementById('authGateModal');
+                if (authGate) authGate.classList.remove('hidden');
 
                 showToast('Đã đăng xuất tài khoản. Đang ở chế độ Khách.', '👋');
             }
@@ -4106,7 +4468,18 @@ function loadAdminStats() {
             if (!task) return;
 
             task.done = !task.done;
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
             renderTasks(allTasksList);
+
+            // Đồng bộ Supabase & Hai chiều Google Sheets
+            if (typeof saveTaskToSupabase === 'function') {
+                saveTaskToSupabase(task);
+            }
+            if (typeof sendBackgroundGasSync === 'function') {
+                sendBackgroundGasSync('syncFromWeb', { task: task });
+            }
 
             if (window.google && google.script && google.script.run) {
                 google.script.run
@@ -5518,6 +5891,50 @@ function loadAdminStats() {
         }
 
         // =====================================================================
+        // TIỆN ÍCH LƯU & XÓA CÔNG VIỆC SUPABASE (CLOUD FIRST + REALTIME)
+        // =====================================================================
+        async function saveTaskToSupabase(taskObj) {
+            if (!window.supabaseClient) return;
+            try {
+                const subtasksData = Array.isArray(taskObj.subtasks) 
+                    ? taskObj.subtasks 
+                    : (typeof taskObj.subtasks === 'string' ? JSON.parse(taskObj.subtasks || '[]') : []);
+
+                const row = {
+                    id: String(taskObj.id),
+                    task: taskObj.task,
+                    category: taskObj.category || 'Công việc',
+                    subtasks: subtasksData,
+                    quadrant: taskObj.quadrant || 'inbox',
+                    day: (taskObj.day !== undefined && taskObj.day !== null && taskObj.day !== '') ? String(taskObj.day) : null,
+                    time: taskObj.time || null,
+                    duration: parseInt(taskObj.duration) || 30,
+                    done: !!taskObj.done,
+                    deadline: taskObj.deadline || null,
+                    priority: taskObj.priority || 'medium',
+                    owner_email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
+                    is_fap: String(taskObj.id).startsWith('fap_'),
+                    updated_at: new Date().toISOString()
+                };
+
+                const { error } = await window.supabaseClient.from('tasks').upsert(row, { onConflict: 'id' });
+                if (error) console.warn('Lỗi Supabase upsert:', error);
+            } catch (e) {
+                console.warn('Lỗi lưu task lên Supabase:', e);
+            }
+        }
+
+        async function deleteTaskFromSupabase(taskId) {
+            if (!window.supabaseClient) return;
+            try {
+                const { error } = await window.supabaseClient.from('tasks').delete().eq('id', String(taskId));
+                if (error) console.warn('Lỗi Supabase delete:', error);
+            } catch (e) {
+                console.warn('Lỗi xóa task trên Supabase:', e);
+            }
+        }
+
+        // =====================================================================
         // THÊM CÔNG VIỆC (Hỗ trợ Deadline, Priority, Duration & Đồng bộ an toàn)
         // =====================================================================
         function addTask(event) {
@@ -5560,7 +5977,14 @@ function loadAdminStats() {
                 priority: priority
             };
             allTasksList.unshift(tempTask);
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
             renderTasks(allTasksList);
+
+            // Đồng bộ tức thời lên Supabase & gửi bản sao ngầm sang Google Sheets
+            saveTaskToSupabase(tempTask);
+            sendBackgroundGasSync('syncFromWeb', { task: tempTask });
 
             if (window.google && google.script && google.script.run) {
                 google.script.run
@@ -5784,9 +6208,17 @@ function loadAdminStats() {
                     task.time = '';
                 }
 
+                try {
+                    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+                } catch(e) {}
+
                 renderTasks(allTasksList);
                 renderDashboard();
                 renderFreeTimeSchedule();
+
+                // Đồng bộ tức thời lên Supabase & gửi bản sao ngầm sang Google Sheets
+                saveTaskToSupabase(task);
+                sendBackgroundGasSync('syncFromWeb', { task: task });
 
                 if (window.google && google.script && google.script.run) {
                     google.script.run
@@ -6133,7 +6565,11 @@ function loadAdminStats() {
             // Cập nhật giao diện tức thì (0ms)
             renderTasks(allTasksList);
             if (typeof renderDashboard === 'function') renderDashboard();
-            if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+            // Lưu lên Supabase & Hai chiều Google Sheets
+            matrixTasks.forEach(t => {
+                saveTaskToSupabase(t);
+                sendBackgroundGasSync('syncFromWeb', { task: t });
+            });
 
             // Hiển thị tiến trình đẩy lên
             if (progressEl) {
@@ -6401,6 +6837,10 @@ function loadAdminStats() {
             renderDashboard();
             renderTasks(allTasksList);
 
+            // Đồng bộ Supabase & Hai chiều Google Sheets
+            saveTaskToSupabase(task);
+            sendBackgroundGasSync('syncFromWeb', { task: task });
+
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withFailureHandler(err => showToast('Lỗi lưu việc con: ' + err, '⚠️'))
@@ -6429,6 +6869,10 @@ function loadAdminStats() {
             renderDashboard();
             renderTasks(allTasksList);
 
+            // Đồng bộ Supabase & Hai chiều Google Sheets
+            saveTaskToSupabase(task);
+            sendBackgroundGasSync('syncFromWeb', { task: task });
+
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withFailureHandler(err => showToast('Lỗi cập nhật việc con: ' + err, '⚠️'))
@@ -6451,6 +6895,10 @@ function loadAdminStats() {
             }
             renderDashboard();
             renderTasks(allTasksList);
+
+            // Đồng bộ Supabase & Hai chiều Google Sheets
+            saveTaskToSupabase(task);
+            sendBackgroundGasSync('syncFromWeb', { task: task });
 
             if (window.google && google.script && google.script.run) {
                 google.script.run
@@ -6508,6 +6956,11 @@ function loadAdminStats() {
             document.querySelector(`[data-task-id="${targetId}"]`)?.remove();
             updateInboxCount();
             renderDashboard();
+
+            // Xóa tức thời trên Supabase & Hai chiều Google Sheets
+            deleteTaskFromSupabase(targetId);
+            sendBackgroundGasSync('deleteFromWeb', { taskId: targetId });
+
             if (window.google && google.script && google.script.run) {
                 google.script.run.deleteTask(targetId, currentUserEmail);
             }

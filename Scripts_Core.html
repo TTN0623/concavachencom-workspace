@@ -1,6 +1,42 @@
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHNsqN1ZeigSn3nkRJzbsIc1EJoAX3emgBxHXGxYiVGBAtD4sUEag/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHNsqN1ZeigSn3nkRJzbsIc1EJoAX3emgBxHXGxYiVGBAtD4sUEag/exec';
         const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/19kIoDPMrrdQCc1y9ZdG7bSU9kCn9MY3eoDzGNQOOek8/edit';
+
+        // =====================================================================
+        // SUPABASE CLIENT & TWO-WAY SYNC ARCHITECTURE
+        // =====================================================================
+        const SUPABASE_URL = 'https://kqkvsucqkhqsuxrimhez.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
+
+        if (!window.supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
+            try {
+                window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (e) {
+                console.warn('Supabase client init error:', e);
+            }
+        }
+
+        /**
+         * Gửi tín hiệu đồng bộ hai chiều ngầm sang Google Sheets (GAS doPost)
+         * Đảm bảo tính liên tục, không bao giờ bị lỗi CORS hay giật lag giao diện
+         */
+        function sendBackgroundGasSync(action, payload) {
+            try {
+                if (window.google && google.script && google.script.run) {
+                    return;
+                }
+                if (typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+                    fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: action, ...payload })
+                    }).catch(e => console.warn('Background GAS sync error:', e));
+                }
+            } catch (e) {
+                console.warn('sendBackgroundGasSync failed:', e);
+            }
+        }
 
         // =====================================================================
         // STORAGE KEYS - Tập trung tất cả key localStorage vào 1 chỗ
