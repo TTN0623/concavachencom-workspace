@@ -515,3 +515,123 @@ function saveFapEventsToSheet(events) {
 function syncFapEvents(events) {
   return saveFapEventsToSheet(events);
 }
+
+/**
+ * Đẩy một nhiệm vụ lên Supabase (Upsert)
+ */
+function syncTaskToSupabase(taskObj) {
+  if (!APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_KEY || !taskObj || !taskObj.id) return false;
+  try {
+    const payload = {
+      id: String(taskObj.id),
+      owner_email: taskObj.ownerEmail || APP_CONFIG.ADMIN_EMAIL,
+      task: taskObj.task || '',
+      quadrant: taskObj.quadrant || 'inbox',
+      category: taskObj.category || 'Công việc',
+      done: !!taskObj.done,
+      day: taskObj.day || null,
+      deadline: taskObj.deadline || null,
+      priority: taskObj.priority || 'trung-binh',
+      time: taskObj.time || null,
+      duration: parseInt(taskObj.duration) || 30,
+      subtasks: typeof taskObj.subtasks === 'string' ? JSON.parse(taskObj.subtasks || '[]') : (taskObj.subtasks || []),
+      is_fap: String(taskObj.id).startsWith('fap_')
+    };
+
+    const url = APP_CONFIG.SUPABASE_URL + '/rest/v1/tasks?on_conflict=id';
+    const options = {
+      method: 'post',
+      headers: {
+        'apikey': APP_CONFIG.SUPABASE_KEY,
+        'Authorization': 'Bearer ' + APP_CONFIG.SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    const res = UrlFetchApp.fetch(url, options);
+    return res.getResponseCode() >= 200 && res.getResponseCode() < 300;
+  } catch (err) {
+    Logger.log("syncTaskToSupabase error: " + err.message);
+    return false;
+  }
+}
+
+/**
+ * Xóa một nhiệm vụ trên Supabase
+ */
+function deleteTaskFromSupabase(taskId) {
+  if (!APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_KEY || !taskId) return false;
+  try {
+    const url = APP_CONFIG.SUPABASE_URL + '/rest/v1/tasks?id=eq.' + encodeURIComponent(taskId);
+    const options = {
+      method: 'delete',
+      headers: {
+        'apikey': APP_CONFIG.SUPABASE_KEY,
+        'Authorization': 'Bearer ' + APP_CONFIG.SUPABASE_KEY
+      },
+      muteHttpExceptions: true
+    };
+    const res = UrlFetchApp.fetch(url, options);
+    return res.getResponseCode() >= 200 && res.getResponseCode() < 300;
+  } catch (err) {
+    Logger.log("deleteTaskFromSupabase error: " + err.message);
+    return false;
+  }
+}
+
+/**
+ * Đồng bộ toàn bộ dữ liệu từ Sheet sang Supabase
+ * Có thể gọi thủ công từ Menu Sheets hoặc tự động
+ */
+function syncAllSheetTasksToSupabase() {
+  const sheet = setupSheet();
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return { success: true, count: 0 };
+
+  const batch = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[0]) continue;
+    let subtasks = [];
+    try {
+      if (r[15]) subtasks = typeof r[15] === 'string' ? JSON.parse(r[15]) : r[15];
+    } catch(e) {}
+
+    batch.push({
+      id: String(r[0]),
+      task: String(r[1] || ''),
+      quadrant: String(r[2] || 'inbox'),
+      done: !!r[5],
+      day: r[6] ? String(r[6]) : null,
+      deadline: r[7] ? String(r[7]) : null,
+      priority: String(r[8] || 'trung-binh'),
+      time: r[10] ? String(r[10]) : null,
+      duration: parseInt(r[11]) || 30,
+      owner_email: String(r[12] || APP_CONFIG.ADMIN_EMAIL),
+      category: String(r[14] || 'Công việc'),
+      subtasks: subtasks,
+      is_fap: String(r[0]).startsWith('fap_')
+    });
+  }
+
+  if (batch.length === 0) return { success: true, count: 0 };
+
+  const url = APP_CONFIG.SUPABASE_URL + '/rest/v1/tasks?on_conflict=id';
+  const options = {
+    method: 'post',
+    headers: {
+      'apikey': APP_CONFIG.SUPABASE_KEY,
+      'Authorization': 'Bearer ' + APP_CONFIG.SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    payload: JSON.stringify(batch),
+    muteHttpExceptions: true
+  };
+  const res = UrlFetchApp.fetch(url, options);
+  const success = res.getResponseCode() >= 200 && res.getResponseCode() < 300;
+  Logger.log("syncAllSheetTasksToSupabase: " + batch.length + " tasks, status: " + res.getResponseCode());
+  return { success: success, count: batch.length, status: res.getResponseCode() };
+}

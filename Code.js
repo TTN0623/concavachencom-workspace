@@ -114,6 +114,21 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Nhận webhook đồng bộ công việc từ concavachencom.site sang Google Sheet
+    if (payload.action === 'syncFromWeb' && payload.task) {
+      const t = payload.task;
+      const res = updateTask(t.id, t, t.ownerEmail || APP_CONFIG.ADMIN_EMAIL);
+      return ContentService.createTextOutput(JSON.stringify(res))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Nhận webhook xóa công việc từ concavachencom.site sang Google Sheet
+    if (payload.action === 'deleteFromWeb' && payload.taskId) {
+      const res = deleteTask(payload.taskId, payload.ownerEmail || APP_CONFIG.ADMIN_EMAIL);
+      return ContentService.createTextOutput(JSON.stringify(res))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     return ContentService.createTextOutput(JSON.stringify({ 
       success: true, 
       message: 'Received' 
@@ -125,4 +140,17 @@ function doPost(e) {
       error: err.message 
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+/**
+ * Tự động tạo Menu trên Google Sheet khi mở file để đồng bộ 1-click
+ */
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu('🐟 Cá Cơm Workspace')
+      .addItem('🔄 Đồng bộ tất cả Sheet sang Web (Supabase)', 'syncAllSheetTasksToSupabase')
+      .addItem('📅 Cấp quyền Google Calendar', 'aaa_CapQuyen_Calendar')
+      .addToUi();
+  } catch(e) {}
 }
