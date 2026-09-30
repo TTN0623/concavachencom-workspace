@@ -35,6 +35,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2159,11 +2160,13 @@
                 </div>
             </div>
 
-            <!-- Single Google Button -->
+            <!-- Google Sign In Container (GIS Native & Custom Button) -->
+            <div id="googleSignInBtnBox" class="w-full flex justify-center mb-2 overflow-hidden rounded-xl"></div>
+
             <button type="button" 
                     id="btnAuthGateSignIn"
                     onclick="handleGoogleSignIn()" 
-                    class="w-full flex items-center justify-center gap-3 py-3.5 px-5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-white font-bold text-sm rounded-xl border border-slate-300 dark:border-slate-700 shadow-md hover:shadow-lg transition-all cursor-pointer">
+                    class="w-full flex items-center justify-center gap-3 py-3 px-5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-white font-bold text-sm rounded-xl border border-slate-300 dark:border-slate-700 shadow-md hover:shadow-lg transition-all cursor-pointer">
                 <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -2352,6 +2355,7 @@
     <script>
         window.SUPABASE_URL = 'https://kqkvsucqkhqsuxrimhez.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
+        window.GOOGLE_CLIENT_ID = '868007254558-mg1mav2ucm3e911eoi951gc3al9v1vb6.apps.googleusercontent.com';
         window.supabaseClient = (window.supabase && typeof window.supabase.createClient === 'function')
             ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
             : null;
@@ -2373,6 +2377,7 @@
         // =====================================================================
         window.SUPABASE_URL = window.SUPABASE_URL || 'https://kqkvsucqkhqsuxrimhez.supabase.co';
         window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2';
+        window.GOOGLE_CLIENT_ID = '868007254558-mg1mav2ucm3e911eoi951gc3al9v1vb6.apps.googleusercontent.com';
 
         if (!window.supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
             try {
@@ -3211,6 +3216,12 @@
             const isLoggedOut = (localStorage.getItem('csg_logged_out') === 'true');
             const authGate = document.getElementById('authGateModal');
 
+            // Khởi tạo Google Identity Services trực tiếp trên concavachencom.site
+            if (typeof initGoogleIdentityServices === 'function') {
+                initGoogleIdentityServices();
+                setTimeout(initGoogleIdentityServices, 800);
+            }
+
             // 1. Kiểm tra xem URL có chứa token/code từ Google OAuth redirect không
             const url = new URL(window.location.href);
             const oauthCode = url.searchParams.get('code');
@@ -3692,16 +3703,136 @@
             if (modal) modal.classList.add('hidden');
         }
 
+        /**
+         * Khởi tạo Google Identity Services (GIS - Sign in with Google trực tiếp trên concavachencom.site)
+         * Giúp đăng nhập bằng Pop-up Google hiển thị trực tiếp domain concavachencom.site
+         */
+        function initGoogleIdentityServices() {
+            if (window.google && google.accounts && google.accounts.id && window.GOOGLE_CLIENT_ID) {
+                try {
+                    google.accounts.id.initialize({
+                        client_id: window.GOOGLE_CLIENT_ID,
+                        callback: handleGoogleCredentialResponse,
+                        auto_select: false,
+                        cancel_on_tap_outside: true,
+                        itp_support: true
+                    });
+
+                    // Render nút Google chính hãng chuẩn Google Design
+                    const btnContainer = document.getElementById('googleSignInBtnBox');
+                    if (btnContainer && !btnContainer.hasChildNodes()) {
+                        google.accounts.id.renderButton(btnContainer, {
+                            theme: 'outline',
+                            size: 'large',
+                            type: 'standard',
+                            shape: 'rectangular',
+                            text: 'continue_with',
+                            width: 320,
+                            logo_alignment: 'left'
+                        });
+                        // Ẩn nút custom khi nút chính hãng Google đã được vẽ thành công
+                        const customBtn = document.getElementById('btnAuthGateSignIn');
+                        if (customBtn) customBtn.classList.add('hidden');
+                    }
+                } catch(e) {
+                    console.warn('Lỗi initGoogleIdentityServices:', e);
+                }
+            }
+        }
+
+        /**
+         * Tiếp nhận Google JWT ID Token từ Google Identity Services
+         * Gửi ID Token vào Supabase qua signInWithIdToken
+         */
+        async function handleGoogleCredentialResponse(response) {
+            console.log('Nhận được Google Credential Token:', response);
+            if (!response || !response.credential) return;
+
+            const idToken = response.credential;
+            const gateBtn = document.getElementById('btnAuthGateSignIn');
+            if (gateBtn) {
+                gateBtn.disabled = true;
+                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang đăng nhập Cá Cơm...</span>`;
+            }
+
+            if (window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient.auth.signInWithIdToken({
+                        provider: 'google',
+                        token: idToken
+                    });
+
+                    if (error) {
+                        console.warn('Supabase signInWithIdToken error, fallback sang giải mã token:', error);
+                        decodeAndApplyGoogleToken(idToken);
+                        return;
+                    }
+
+                    if (data && data.session && data.session.user) {
+                        applyAuthenticatedSession(data.session.user);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Lỗi khi gọi signInWithIdToken:', e);
+                }
+            }
+
+            decodeAndApplyGoogleToken(idToken);
+        }
+
+        function decodeAndApplyGoogleToken(idToken) {
+            try {
+                const parts = idToken.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    if (payload && payload.email) {
+                        const userObj = {
+                            email: payload.email,
+                            user_metadata: {
+                                full_name: payload.name || payload.given_name || payload.email.split('@')[0],
+                                avatar_url: payload.picture || '',
+                                picture: payload.picture || ''
+                            }
+                        };
+                        applyAuthenticatedSession(userObj);
+                    }
+                }
+            } catch(e) {
+                console.warn('Lỗi giải mã token Google:', e);
+            }
+        }
+
         async function handleGoogleSignIn() {
             localStorage.removeItem('csg_logged_out');
 
             const gateBtn = document.getElementById('btnAuthGateSignIn');
             if (gateBtn) {
                 gateBtn.disabled = true;
-                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang chuyển hướng Google...</span>`;
+                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang mở Google...</span>`;
             }
 
-            // 1. Chạy trên Supabase OAuth (Custom domain concavachencom.site & Vercel)
+            // 1. Ưu tiên: Kích hoạt Google One Tap / Prompt trực tiếp trên concavachencom.site
+            if (window.google && google.accounts && google.accounts.id && window.GOOGLE_CLIENT_ID) {
+                try {
+                    initGoogleIdentityServices();
+                    google.accounts.id.prompt((notification) => {
+                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                            console.log('Google prompt không hiển thị hoặc bị bỏ qua, chuyển sang OAuth redirect...');
+                            fallbackSupabaseOAuth();
+                        }
+                    });
+                    return;
+                } catch (e) {
+                    console.warn('Lỗi gọi google.accounts.id.prompt:', e);
+                }
+            }
+
+            // 2. Chế độ Fallback Supabase OAuth
+            fallbackSupabaseOAuth();
+        }
+
+        async function fallbackSupabaseOAuth() {
+            const gateBtn = document.getElementById('btnAuthGateSignIn');
             if (window.supabaseClient) {
                 try {
                     const redirectUrl = window.location.origin;
@@ -3734,7 +3865,7 @@
                 }
             }
 
-            // 2. Chế độ Fallback Google Apps Script
+            // 3. Chế độ Fallback Google Apps Script
             const targetUrl = 'https://accounts.google.com/AccountChooser?continue=' + encodeURIComponent(WEB_APP_URL);
             try {
                 if (window.top && window.top !== window.self) {

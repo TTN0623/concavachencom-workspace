@@ -33,6 +33,7 @@ function build() {
     <script>
         window.SUPABASE_URL = '${SUPABASE_CONFIG.URL}';
         window.SUPABASE_ANON_KEY = '${SUPABASE_CONFIG.KEY}';
+        window.GOOGLE_CLIENT_ID = '868007254558-mg1mav2ucm3e911eoi951gc3al9v1vb6.apps.googleusercontent.com';
         window.supabaseClient = (window.supabase && typeof window.supabase.createClient === 'function')
             ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
             : null;
