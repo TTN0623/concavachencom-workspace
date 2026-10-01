@@ -7,17 +7,17 @@
     <meta name="theme-color" content="#0054a6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Cá Cơm">
+    <meta name="apple-mobile-web-app-title" content="Cá Cơm & Chén Cơm">
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/task--v1.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/color/192/task--v1.png">
-    <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22C%C3%A1%20C%C6%A1m%20Workspace%22%2C%22short_name%22%3A%22C%C3%A1%20C%C6%A1m%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230054a6%22%2C%22theme_color%22%3A%22%230054a6%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fimg.icons8.com%2Fcolor%2F192%2Ftask--v1.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fimg.icons8.com%2Fcolor%2F512%2Ftask--v1.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22C%C3%A1%20C%C6%A1m%20v%C3%A0%20Ch%C3%A9n%20C%C6%A1m%22%2C%22short_name%22%3A%22C%C3%A1%20C%C6%A1m%20%26%20Ch%C3%A9n%20C%C6%A1m%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230054a6%22%2C%22theme_color%22%3A%22%230054a6%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fimg.icons8.com%2Fcolor%2F192%2Ftask--v1.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fimg.icons8.com%2Fcolor%2F512%2Ftask--v1.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
 
     <!-- Thẻ chống Cache trình duyệt và Sandbox Iframe -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Cá Cơm Workspace - Quản lý công việc & Thời khóa biểu</title>
+    <title>Cá Cơm và Chén Cơm - Quản lý công việc & Thời khóa biểu</title>
     
     <!-- CSS & Thư viện hỗ trợ -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -65,7 +65,7 @@
                 </div>
                 <div class="hidden sm:block h-6 w-[1px] bg-slate-200 mx-1"></div>
                 <span class="hidden md:inline-flex text-[11px] font-bold text-[#0054a6] bg-blue-50 px-2 py-0.5 rounded border border-blue-200 tracking-wide uppercase shrink-0">
-                    CÁ CƠM WORKSPACE
+                    CÁ CƠM VÀ CHÉN CƠM
                 </span>
             </div>
         </div>
@@ -134,7 +134,7 @@
             </button>
 
             <!-- Cài đặt PWA lên điện thoại / Desktop -->
-            <button type="button" onclick="openPwaModal()" class="px-2 md:px-2.5 py-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shrink-0 border border-blue-200 dark:border-blue-900/50" title="Cài đặt Cá Cơm Workspace lên điện thoại (PWA)">
+            <button type="button" onclick="openPwaModal()" class="px-2 md:px-2.5 py-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shrink-0 border border-blue-200 dark:border-blue-900/50" title="Cài đặt Cá Cơm và Chén Cơm lên điện thoại (PWA)">
                 <span>📲</span>
                 <span class="hidden sm:inline">Cài App</span>
             </button>
@@ -270,7 +270,7 @@
 
             <!-- Footer Sidebar: Bản quyền & Badge Phiên bản -->
             <div class="p-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-600 text-[11px] tracking-wide uppercase">CÁ CƠM WORKSPACE</span>
+                <span class="font-bold text-slate-600 text-[11px] tracking-wide uppercase">CÁ CƠM VÀ CHÉN CƠM</span>
                 <span class="inline-block px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-[#0054a6] border border-blue-200 rounded-full font-bold text-[10px] cursor-pointer transition-colors" id="appVersionBadge" title="Bấm để tải lại bản mới nhất (xóa cache)" onclick="applyVersionUpdate()">v1.6.5</span>
             </div>
         </aside>

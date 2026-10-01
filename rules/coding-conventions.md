@@ -1,4 +1,4 @@
-# Coding Conventions — Cá Cơm Workspace (ALWAYS ON)
+# Coding Conventions — Cá Cơm và Chén Cơm (ALWAYS ON)
 
 ## 1. Cấu Trúc Dự Án (Directory Structure)
 ```

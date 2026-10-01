@@ -1,8 +1,8 @@
-# Design System — Cá Cơm Workspace (ALWAYS ON)
+# Design System — Cá Cơm và Chén Cơm (ALWAYS ON)
 
 ## 1. Bản Sắc Thiết Kế (Design Identity)
-- **Tên sản phẩm**: Cá Cơm Workspace
-- **Đối tượng**: Sinh viên Đại học FPT & người dùng cá nhân
+- **Tên sản phẩm**: Cá Cơm và Chén Cơm
+- **Đối tượng**: Học sinh, sinh viên, người dùng cá nhân; đối tượng phụ: Sinh viên Đại học FPT.
 - **Phong cách chủ đạo**: Modern, Clean, Minimalist, Năng động, Không rườm rà. Tránh hiệu ứng chuyển màu (gradient) hoặc hoạt ảnh (animation) quá lố gây nặng máy.
 - **Hỗ trợ giao diện**: Hỗ trợ 100% Dark Mode (`.dark`) và Light Mode đồng bộ mượt mà qua class Tailwind.
 

@@ -1,4 +1,4 @@
-# API & Data Conventions — Cá Cơm Workspace
+# API & Data Conventions — Cá Cơm và Chén Cơm
 
 ## 1. Kiến Trúc Dữ Liệu Hai Chiều (Bidirectional Hybrid Architecture)
 Hệ thống sử dụng mô hình kết hợp song song:

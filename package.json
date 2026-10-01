@@ -1,7 +1,7 @@
 {
   "name": "concavachencom-workspace",
   "version": "1.7.0",
-  "description": "Cá Cơm Workspace - Quản lý công việc, thời khóa biểu & Ma trận Eisenhower",
+  "description": "Cá Cơm và Chén Cơm - Quản lý công việc, thời khóa biểu & Ma trận Eisenhower",
   "scripts": {
     "build": "node build.js",
     "push:gas": "npx @google/clasp push -f",
