@@ -5439,6 +5439,9 @@ async function loadAdminStats() {
             renderDashboard();
             renderFreeTimeSchedule();
 
+            if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(task);
+            if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: task });
+
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withFailureHandler(err => showToast('Lỗi lưu trạng thái: ' + err, '⚠️'))
@@ -5463,6 +5466,9 @@ async function loadAdminStats() {
             renderFapScheduleTable();
             renderDashboard();
             renderFreeTimeSchedule();
+
+            if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(task);
+            if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: task });
 
             if (window.google && google.script && google.script.run) {
                 google.script.run
@@ -6311,19 +6317,45 @@ async function loadAdminStats() {
                 duration: taskDuration,
                 deadline: deadline,
                 priority: quadrant === 'donow' ? 'high' : 'medium',
-                done: false
+                done: false,
+                ownerEmail: currentUserEmail || ADMIN_PRIMARY_EMAIL
             };
 
             allTasksList.push(newTaskObj);
-            renderDashboard();
-            renderTasks(allTasksList);
             closeDayAddModal();
+
+            // 1. Cập nhật localStorage ngay lập tức
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            // 2. Lưu trữ tức thì và kiên cố lên Supabase Cloud
+            if (typeof saveTaskToSupabase === 'function') {
+                saveTaskToSupabase(newTaskObj);
+            }
+            // 3. Gửi đồng bộ ngầm hai chiều sang Google Sheets
+            if (typeof sendBackgroundGasSync === 'function') {
+                sendBackgroundGasSync('syncFromWeb', { task: newTaskObj });
+            }
+
+            // 4. Render đồng bộ tất cả màn hình
+            if (typeof syncAndRenderAllViews === 'function') {
+                syncAndRenderAllViews(newTaskObj);
+            } else {
+                renderDashboard();
+                renderTasks(allTasksList);
+                if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+            }
 
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(serverTask => {
                         if (serverTask && serverTask.id) {
                             newTaskObj.id = serverTask.id;
+                            try {
+                                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+                            } catch(e) {}
+                            if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(newTaskObj);
                         }
                     })
                     .addTask(title, {
@@ -6699,7 +6731,7 @@ async function loadAdminStats() {
                         done: !!taskObj.done,
                         deadline: taskObj.deadline || null,
                         priority: taskObj.priority || 'medium',
-                        owner_email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
+                        owner_email: taskObj.ownerEmail || currentUserEmail || ADMIN_PRIMARY_EMAIL,
                         is_fap: String(taskObj.id).startsWith('fap_'),
                         updated_at: new Date().toISOString()
                     };
@@ -8244,14 +8276,17 @@ async function loadAdminStats() {
                     id: 'cal_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                     task: ev.title + (ev.location ? ` (${ev.location})` : ''),
                     quadrant: 'donow',
+                    category: 'Công việc',
                     day: dayIdx,
                     time: ev.time || '',
                     duration: calDuration,
                     done: false,
-                    source: 'calendar'
+                    source: 'calendar',
+                    ownerEmail: currentUserEmail || ADMIN_PRIMARY_EMAIL
                 };
                 allTasksList.push(taskData);
                 if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskData);
+                if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: taskData });
 
                 if (window.google && google.script && google.script.run) {
                     google.script.run.addTask(taskData.task, {
@@ -8515,7 +8550,7 @@ const TOTAL_WEEKS = 6;
                             if (endM > startM) duration = endM - startM;
                         }
 
-                        allTasksList.push({
+                        const newFapTask = {
                             id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                             task: `[${ev.summary || ev.subjectCode}] ${ev.location ? 'P.' + ev.location : ''} (${rawTime})`,
                             quadrant: 'donow',
@@ -8525,8 +8560,12 @@ const TOTAL_WEEKS = 6;
                             duration: duration,
                             done: false,
                             source: 'fap',
-                            is_fap: true
-                        });
+                            is_fap: true,
+                            ownerEmail: currentUserEmail || ADMIN_PRIMARY_EMAIL
+                        };
+                        allTasksList.push(newFapTask);
+                        if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(newFapTask);
+                        if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: newFapTask });
                     });
                     if (typeof syncAndRenderAllViews === 'function') {
                         syncAndRenderAllViews();
@@ -8629,7 +8668,7 @@ const TOTAL_WEEKS = 6;
                     if (endM > startM) duration = endM - startM;
                 }
 
-                allTasksList.push({
+                const newFapTask = {
                     id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                     task: `[${ev.subjectCode}] ${ev.roomNo ? 'P.' + ev.roomNo : ''} (${rawTime})`,
                     quadrant: 'donow',
@@ -8639,8 +8678,12 @@ const TOTAL_WEEKS = 6;
                     duration: duration,
                     done: false,
                     source: 'fap',
-                    is_fap: true
-                });
+                    is_fap: true,
+                    ownerEmail: currentUserEmail || ADMIN_PRIMARY_EMAIL
+                };
+                allTasksList.push(newFapTask);
+                if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(newFapTask);
+                if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: newFapTask });
             });
             try {
                 localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));

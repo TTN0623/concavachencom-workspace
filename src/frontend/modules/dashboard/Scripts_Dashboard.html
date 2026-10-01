@@ -775,6 +775,9 @@
             renderDashboard();
             renderFreeTimeSchedule();
 
+            if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(task);
+            if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: task });
+
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withFailureHandler(err => showToast('Lỗi lưu trạng thái: ' + err, '⚠️'))
@@ -799,6 +802,9 @@
             renderFapScheduleTable();
             renderDashboard();
             renderFreeTimeSchedule();
+
+            if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(task);
+            if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: task });
 
             if (window.google && google.script && google.script.run) {
                 google.script.run

@@ -341,14 +341,17 @@
                     id: 'cal_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                     task: ev.title + (ev.location ? ` (${ev.location})` : ''),
                     quadrant: 'donow',
+                    category: 'Công việc',
                     day: dayIdx,
                     time: ev.time || '',
                     duration: calDuration,
                     done: false,
-                    source: 'calendar'
+                    source: 'calendar',
+                    ownerEmail: currentUserEmail || ADMIN_PRIMARY_EMAIL
                 };
                 allTasksList.push(taskData);
                 if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskData);
+                if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: taskData });
 
                 if (window.google && google.script && google.script.run) {
                     google.script.run.addTask(taskData.task, {
@@ -612,7 +615,7 @@ const TOTAL_WEEKS = 6;
                             if (endM > startM) duration = endM - startM;
                         }
 
-                        allTasksList.push({
+                        const newFapTask = {
                             id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                             task: `[${ev.summary || ev.subjectCode}] ${ev.location ? 'P.' + ev.location : ''} (${rawTime})`,
                             quadrant: 'donow',
@@ -622,8 +625,12 @@ const TOTAL_WEEKS = 6;
                             duration: duration,
                             done: false,
                             source: 'fap',
-                            is_fap: true
-                        });
+                            is_fap: true,
+                            ownerEmail: currentUserEmail || ADMIN_PRIMARY_EMAIL
+                        };
+                        allTasksList.push(newFapTask);
+                        if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(newFapTask);
+                        if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: newFapTask });
                     });
                     if (typeof syncAndRenderAllViews === 'function') {
                         syncAndRenderAllViews();
@@ -726,7 +733,7 @@ const TOTAL_WEEKS = 6;
                     if (endM > startM) duration = endM - startM;
                 }
 
-                allTasksList.push({
+                const newFapTask = {
                     id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                     task: `[${ev.subjectCode}] ${ev.roomNo ? 'P.' + ev.roomNo : ''} (${rawTime})`,
                     quadrant: 'donow',
@@ -736,8 +743,12 @@ const TOTAL_WEEKS = 6;
                     duration: duration,
                     done: false,
                     source: 'fap',
-                    is_fap: true
-                });
+                    is_fap: true,
+                    ownerEmail: currentUserEmail || ADMIN_PRIMARY_EMAIL
+                };
+                allTasksList.push(newFapTask);
+                if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(newFapTask);
+                if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: newFapTask });
             });
             try {
                 localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
