@@ -90,8 +90,30 @@ function build() {
   // 4. Ghi file public/index.html
   const distPath = path.join(PUBLIC_DIR, 'index.html');
   fs.writeFileSync(distPath, indexHtml, 'utf8');
-
   console.log(`✅ Build thành công: ${distPath} (${(indexHtml.length / 1024).toFixed(1)} KB)`);
+
+  // 5. Tự động sinh public/robots.txt cho Googlebot & Search Engines
+  const robotsContent = `User-agent: *
+Allow: /
+
+Sitemap: https://concavachencom.site/sitemap.xml
+`;
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'robots.txt'), robotsContent, 'utf8');
+  console.log('✅ Đã tạo: public/robots.txt');
+
+  // 6. Tự động sinh public/sitemap.xml cho Google Search Console
+  const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://concavachencom.site/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), sitemapContent, 'utf8');
+  console.log('✅ Đã tạo: public/sitemap.xml');
 }
 
 build();

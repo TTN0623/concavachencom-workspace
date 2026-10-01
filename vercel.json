@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node build.js",
+  "buildCommand": "node scripts/build.js",
   "outputDirectory": "public",
   "framework": null
 }
