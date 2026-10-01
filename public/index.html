@@ -3941,13 +3941,14 @@
         };
 
         let googleTokenClient = null;
+        let googleCalendarTokenClient = null;
 
         function initGoogleTokenClient() {
             if (window.google && google.accounts && google.accounts.oauth2 && window.GOOGLE_CLIENT_ID) {
                 try {
                     googleTokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: window.GOOGLE_CLIENT_ID,
-                        scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+                        scope: 'openid email profile',
                         callback: async (tokenResponse) => {
                             if (tokenResponse && tokenResponse.access_token) {
                                 window.googleAccessToken = tokenResponse.access_token;
@@ -3972,6 +3973,21 @@
                 }
             }
         }
+
+        function getGoogleCalendarTokenClient() {
+            if (window.google && google.accounts && google.accounts.oauth2 && window.GOOGLE_CLIENT_ID) {
+                if (!googleCalendarTokenClient) {
+                    googleCalendarTokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: window.GOOGLE_CLIENT_ID,
+                        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+                        callback: () => {}
+                    });
+                }
+                return googleCalendarTokenClient;
+            }
+            return null;
+        }
+        window.getGoogleCalendarTokenClient = getGoogleCalendarTokenClient;
 
         async function handleGoogleAccessToken(accessToken) {
             const gateBtn = document.getElementById('btnAuthGateSignIn');
@@ -4178,6 +4194,7 @@
                 localStorage.removeItem('csg_cached_fap');
                 sessionStorage.clear();
                 window.googleAccessToken = null;
+                window.googleCalendarToken = null;
 
                 // 3. Làm sạch biến trong bộ nhớ RAM
                 currentUserEmail = '';
@@ -7698,23 +7715,23 @@ async function loadAdminStats() {
             const endIso = sunday.toISOString();
 
             // 1. Chế độ Standalone trên web concavachencom.site (gọi trực tiếp Google Calendar REST API v3)
-            let token = window.googleAccessToken || sessionStorage.getItem('csg_google_access_token');
+            let token = window.googleCalendarToken || sessionStorage.getItem('csg_google_calendar_token');
 
             if (!token && window.google && google.accounts && google.accounts.oauth2) {
                 // Nếu chưa có token trong phiên, yêu cầu cấp quyền ngay
-                if (!googleTokenClient) initGoogleTokenClient();
-                if (googleTokenClient) {
-                    googleTokenClient.callback = async (tokenResponse) => {
+                const calClient = (typeof getGoogleCalendarTokenClient === 'function') ? getGoogleCalendarTokenClient() : null;
+                if (calClient) {
+                    calClient.callback = async (tokenResponse) => {
                         if (tokenResponse && tokenResponse.access_token) {
-                            window.googleAccessToken = tokenResponse.access_token;
-                            try { sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token); } catch(e) {}
+                            window.googleCalendarToken = tokenResponse.access_token;
+                            try { sessionStorage.setItem('csg_google_calendar_token', tokenResponse.access_token); } catch(e) {}
                             await fetchGoogleCalendarEventsRest(tokenResponse.access_token, startIso, endIso, monday, sunday);
                         } else {
                             if (icon) icon.innerText = '📅';
                             showToast('Đã hủy yêu cầu truy cập Google Calendar.', '⚠️');
                         }
                     };
-                    googleTokenClient.requestAccessToken({ prompt: '' });
+                    calClient.requestAccessToken({ prompt: '' });
                     return;
                 }
             }
@@ -7859,21 +7876,19 @@ async function loadAdminStats() {
             } catch (err) {
                 if (err.message === 'AUTH_EXPIRED') {
                     // Token hết hạn hoặc thiếu scope -> yêu cầu cấp lại quyền
-                    sessionStorage.removeItem('csg_google_access_token');
-                    window.googleAccessToken = null;
-                    if (window.google && google.accounts && google.accounts.oauth2) {
-                        if (!googleTokenClient) initGoogleTokenClient();
-                        if (googleTokenClient) {
-                            googleTokenClient.callback = async (tokenResponse) => {
-                                if (tokenResponse && tokenResponse.access_token) {
-                                    window.googleAccessToken = tokenResponse.access_token;
-                                    try { sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token); } catch(e) {}
-                                    await fetchGoogleCalendarEventsRest(tokenResponse.access_token, startIso, endIso, monday, sunday);
-                                }
-                            };
-                            googleTokenClient.requestAccessToken({ prompt: 'consent' });
-                            return;
-                        }
+                    sessionStorage.removeItem('csg_google_calendar_token');
+                    window.googleCalendarToken = null;
+                    const calClient = (typeof getGoogleCalendarTokenClient === 'function') ? getGoogleCalendarTokenClient() : null;
+                    if (calClient) {
+                        calClient.callback = async (tokenResponse) => {
+                            if (tokenResponse && tokenResponse.access_token) {
+                                window.googleCalendarToken = tokenResponse.access_token;
+                                try { sessionStorage.setItem('csg_google_calendar_token', tokenResponse.access_token); } catch(e) {}
+                                await fetchGoogleCalendarEventsRest(tokenResponse.access_token, startIso, endIso, monday, sunday);
+                            }
+                        };
+                        calClient.requestAccessToken({ prompt: 'consent' });
+                        return;
                     }
                 }
                 console.error('Lỗi fetch Google Calendar API:', err);
@@ -7884,21 +7899,21 @@ async function loadAdminStats() {
         }
 
         function requestCalendarScopeAndSync() {
-            if (window.google && google.accounts && google.accounts.oauth2) {
-                if (!googleTokenClient) initGoogleTokenClient();
-                if (googleTokenClient) {
-                    googleTokenClient.callback = async (tokenResponse) => {
-                        if (tokenResponse && tokenResponse.access_token) {
-                            window.googleAccessToken = tokenResponse.access_token;
-                            try { sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token); } catch(e) {}
-                            syncGoogleCalendar();
-                        } else {
-                            showToast('Đã hủy cấp quyền Google Calendar.', '⚠️');
-                        }
-                    };
-                    googleTokenClient.requestAccessToken({ prompt: 'consent' });
-                    return;
-                }
+            sessionStorage.removeItem('csg_google_calendar_token');
+            window.googleCalendarToken = null;
+            const calClient = (typeof getGoogleCalendarTokenClient === 'function') ? getGoogleCalendarTokenClient() : null;
+            if (calClient) {
+                calClient.callback = async (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        window.googleCalendarToken = tokenResponse.access_token;
+                        try { sessionStorage.setItem('csg_google_calendar_token', tokenResponse.access_token); } catch(e) {}
+                        syncGoogleCalendar();
+                    } else {
+                        showToast('Đã hủy cấp quyền Google Calendar.', '⚠️');
+                    }
+                };
+                calClient.requestAccessToken({ prompt: 'consent' });
+                return;
             }
             syncGoogleCalendar();
         }

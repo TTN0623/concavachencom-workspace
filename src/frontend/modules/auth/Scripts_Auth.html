@@ -879,13 +879,14 @@
         };
 
         let googleTokenClient = null;
+        let googleCalendarTokenClient = null;
 
         function initGoogleTokenClient() {
             if (window.google && google.accounts && google.accounts.oauth2 && window.GOOGLE_CLIENT_ID) {
                 try {
                     googleTokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: window.GOOGLE_CLIENT_ID,
-                        scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+                        scope: 'openid email profile',
                         callback: async (tokenResponse) => {
                             if (tokenResponse && tokenResponse.access_token) {
                                 window.googleAccessToken = tokenResponse.access_token;
@@ -910,6 +911,21 @@
                 }
             }
         }
+
+        function getGoogleCalendarTokenClient() {
+            if (window.google && google.accounts && google.accounts.oauth2 && window.GOOGLE_CLIENT_ID) {
+                if (!googleCalendarTokenClient) {
+                    googleCalendarTokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: window.GOOGLE_CLIENT_ID,
+                        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+                        callback: () => {}
+                    });
+                }
+                return googleCalendarTokenClient;
+            }
+            return null;
+        }
+        window.getGoogleCalendarTokenClient = getGoogleCalendarTokenClient;
 
         async function handleGoogleAccessToken(accessToken) {
             const gateBtn = document.getElementById('btnAuthGateSignIn');
@@ -1116,6 +1132,7 @@
                 localStorage.removeItem('csg_cached_fap');
                 sessionStorage.clear();
                 window.googleAccessToken = null;
+                window.googleCalendarToken = null;
 
                 // 3. Làm sạch biến trong bộ nhớ RAM
                 currentUserEmail = '';
