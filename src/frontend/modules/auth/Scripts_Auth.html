@@ -298,9 +298,9 @@
                     // Lắng nghe sự kiện đăng nhập / đăng xuất
                     window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
                         console.log('Supabase Auth Event:', event, session?.user?.email);
-                        if (session && session.user) {
+                        if (session && session.user && localStorage.getItem('csg_logged_out') !== 'true') {
                             applyAuthenticatedSession(session.user);
-                        } else if (event === 'SIGNED_OUT') {
+                        } else if (event === 'SIGNED_OUT' || localStorage.getItem('csg_logged_out') === 'true') {
                             applyUnauthenticatedState();
                         }
                     });
@@ -414,6 +414,7 @@
                 authGate.style.display = 'none';
                 authGate.classList.add('hidden');
             }
+            resetAuthGateBtn();
 
             renderAuthUI();
             renderProfileUI();
@@ -455,6 +456,7 @@
                 authGate.style.display = 'flex';
                 authGate.classList.remove('hidden');
             }
+            resetAuthGateBtn();
 
             renderAuthUI();
             renderProfileUI();
@@ -836,6 +838,7 @@
 
                     if (data && data.session && data.session.user) {
                         applyAuthenticatedSession(data.session.user);
+                        resetAuthGateBtn();
                         return;
                     }
                 } catch (e) {
@@ -844,6 +847,7 @@
             }
 
             decodeAndApplyGoogleToken(idToken);
+            resetAuthGateBtn();
         }
 
         function decodeAndApplyGoogleToken(idToken) {
@@ -945,6 +949,7 @@
                             if (error) console.warn('Lỗi upsert bảng users:', error);
                         }).catch(err => console.warn('Supabase users upsert:', err));
                     }
+                    resetAuthGateBtn();
                     return;
                 }
             } catch(e) {
@@ -965,7 +970,7 @@
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                     </svg>
-                    <span>Tiếp tục với Google</span>
+                    <span>Đăng nhập với Google</span>
                 `;
             }
         }
@@ -1097,7 +1102,10 @@
 
         async function logoutUser() {
             if (confirm(`Bạn có chắc chắn muốn đăng xuất tài khoản? Dữ liệu công việc trên Đám mây & Google Sheets vẫn được lưu an toàn 100%.`)) {
-                // 1. Xoá sạch bộ nhớ tạm trên web
+                // 1. Reset ngay trạng thái nút đăng nhập cửa kiểm soát
+                resetAuthGateBtn();
+
+                // 2. Xoá sạch bộ nhớ tạm trên web
                 localStorage.setItem('csg_logged_out', 'true');
                 localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
                 localStorage.removeItem(STORAGE_KEY_TASKS);
@@ -1107,33 +1115,14 @@
                 localStorage.removeItem('csg_admin_filter');
                 localStorage.removeItem('csg_cached_fap');
                 sessionStorage.clear();
-
-                // 2. Đăng xuất khỏi Supabase nếu có
-                if (window.supabaseClient) {
-                    try {
-                        if (window._supabaseTasksChannel) {
-                            window.supabaseClient.removeChannel(window._supabaseTasksChannel);
-                            window._supabaseTasksChannel = null;
-                        }
-                        await window.supabaseClient.auth.signOut();
-                    } catch(e) {
-                        console.warn('Supabase signOut error:', e);
-                    }
-                }
+                window.googleAccessToken = null;
 
                 // 3. Làm sạch biến trong bộ nhớ RAM
                 currentUserEmail = '';
                 isCurrentUserAdmin = false;
                 allTasksList = [];
 
-                // 4. Reset Google GIS auto select để lần sau luôn hiện màn hình chọn tài khoản / Đăng nhập Google
-                if (window.google && google.accounts && google.accounts.id) {
-                    try {
-                        google.accounts.id.disableAutoSelect();
-                    } catch(e) {}
-                }
-
-                // 5. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
+                // 4. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
                 closeAuthModal();
                 closeProfileDropdown();
                 renderProfileUI();
@@ -1144,11 +1133,35 @@
                 else if (activeView === 'freetime') renderFreeTimeSchedule();
 
                 const authGate = document.getElementById('authGateModal');
-                if (authGate) authGate.classList.remove('hidden');
+                if (authGate) {
+                    authGate.style.display = 'flex';
+                    authGate.classList.remove('hidden');
+                }
+                resetAuthGateBtn();
 
-                showToast('Đã đăng xuất tài khoản. Đang ở chế độ Khách.', '👋');
+                showToast('Đã đăng xuất tài khoản.', '👋');
 
-                // 6. Điều hướng về URL chuẩn không chứa query/hash thừa
+                // 5. Đăng xuất khỏi Supabase chạy ngầm (không block UI người dùng)
+                if (window.supabaseClient) {
+                    try {
+                        if (window._supabaseTasksChannel) {
+                            window.supabaseClient.removeChannel(window._supabaseTasksChannel);
+                            window._supabaseTasksChannel = null;
+                        }
+                        window.supabaseClient.auth.signOut().catch(e => console.warn('Supabase signOut error:', e));
+                    } catch(e) {
+                        console.warn('Supabase signOut error:', e);
+                    }
+                }
+
+                // 6. Reset Google GIS auto select để lần sau luôn hiện màn hình chọn tài khoản / Đăng nhập Google
+                if (window.google && google.accounts && google.accounts.id) {
+                    try {
+                        google.accounts.id.disableAutoSelect();
+                    } catch(e) {}
+                }
+
+                // 7. Điều hướng về URL chuẩn không chứa query/hash thừa
                 if (window.location.hostname.includes('concavachencom.site')) {
                     if (window.location.pathname !== '/' || window.location.search || window.location.hash) {
                         window.location.href = 'https://concavachencom.site';
