@@ -458,7 +458,7 @@
                         id: r.id,
                         task: r.task,
                         quadrant: r.quadrant || 'inbox',
-                        category: r.category || 'Công việc',
+                        category: normalizeCategory(r.category, r.task, !!r.is_fap),
                         done: !!r.done,
                         day: (r.day !== null && r.day !== undefined && r.day !== '') ? String(r.day) : '',
                         deadline: r.deadline || '',
@@ -519,7 +519,7 @@
                     id: newRow.id,
                     task: newRow.task,
                     quadrant: newRow.quadrant || 'inbox',
-                    category: newRow.category || 'Công việc',
+                    category: normalizeCategory(newRow.category, newRow.task, !!newRow.is_fap),
                     done: !!newRow.done,
                     day: (newRow.day !== null && newRow.day !== undefined && newRow.day !== '') ? String(newRow.day) : '',
                     deadline: newRow.deadline || '',
@@ -785,7 +785,7 @@
                             size: 'large',
                             type: 'standard',
                             shape: 'rectangular',
-                            text: 'continue_with',
+                            text: 'signin_with',
                             width: 320,
                             logo_alignment: 'left'
                         });
@@ -811,7 +811,7 @@
             const gateBtn = document.getElementById('btnAuthGateSignIn');
             if (gateBtn) {
                 gateBtn.disabled = true;
-                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang đăng nhập Cá Cơm...</span>`;
+                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang đăng nhập Con Cá và Chén Cơm...</span>`;
             }
 
             if (window.supabaseClient) {
@@ -1112,7 +1112,14 @@
                 isCurrentUserAdmin = false;
                 allTasksList = [];
 
-                // 4. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
+                // 4. Reset Google GIS auto select để lần sau luôn hiện màn hình chọn tài khoản / Đăng nhập Google
+                if (window.google && google.accounts && google.accounts.id) {
+                    try {
+                        google.accounts.id.disableAutoSelect();
+                    } catch(e) {}
+                }
+
+                // 5. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
                 closeAuthModal();
                 closeProfileDropdown();
                 renderProfileUI();
@@ -1126,6 +1133,13 @@
                 if (authGate) authGate.classList.remove('hidden');
 
                 showToast('Đã đăng xuất tài khoản. Đang ở chế độ Khách.', '👋');
+
+                // 6. Điều hướng về URL chuẩn không chứa query/hash thừa
+                if (window.location.hostname.includes('concavachencom.site')) {
+                    if (window.location.pathname !== '/' || window.location.search || window.location.hash) {
+                        window.location.href = 'https://concavachencom.site';
+                    }
+                }
             }
         }
 

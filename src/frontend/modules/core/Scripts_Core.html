@@ -125,17 +125,25 @@
             { key: 'Cá nhân', label: 'Cá nhân', icon: '🌱', bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' }
         ];
 
-        function normalizeCategory(category, taskTitle = '') {
+        function normalizeCategory(category, taskTitle = '', isFap = false) {
+            const title = String(taskTitle || '').trim().toLowerCase();
             const cat = String(category || '').trim().toLowerCase();
+
+            // 1. Kiểm tra dấu hiệu lịch học / môn học / FAP (Ưu tiên số 1: Luôn là Học tập)
+            if (isFap || /^\[[a-z0-9_\-\s]+\]/i.test(taskTitle) || title.includes('gv:') || title.includes('giảng viên:') || title.includes('phòng:') || title.includes('fap')) {
+                return 'Học tập';
+            }
+            if (title.startsWith('[') || title.includes('lab') || title.includes('ôn tập') || title.includes('thi') || title.includes('học') || title.includes('bài tập') || /^[a-z]{2,4}\d{2,4}/i.test(title)) {
+                return 'Học tập';
+            }
+
+            // 2. Kiểm tra nếu người dùng chọn phân loại cụ thể
             if (cat.includes('học') || cat.includes('hoc') || cat.includes('study')) return 'Học tập';
             if (cat.includes('việc') || cat.includes('viec') || cat.includes('work') || cat.includes('job')) return 'Công việc';
             if (cat.includes('nhân') || cat.includes('nhan') || cat.includes('personal')) return 'Cá nhân';
             if (/^[a-z]{2,4}\d{2,4}/i.test(cat)) return 'Học tập';
 
-            const title = String(taskTitle || '').toLowerCase();
-            if (title.startsWith('[') || title.includes('lab') || title.includes('ôn tập') || title.includes('thi') || title.includes('học') || title.includes('bài tập') || title.includes('fap')) {
-                return 'Học tập';
-            }
+            // 3. Phân loại theo ngữ cảnh công việc
             if (title.includes('hợp đồng') || title.includes('dự án') || title.includes('báo cáo') || title.includes('khách hàng') || title.includes('công ty') || title.includes('studio') || title.includes('code') || title.includes('fix')) {
                 return 'Công việc';
             }
@@ -149,7 +157,10 @@
 
         function getTaskCategory(task) {
             if (!task) return 'Học tập';
-            return normalizeCategory(task.category, task.task);
+            if (task.source === 'fap' || task.source === 'calendar' || task.is_fap || (task.id && String(task.id).startsWith('fap_'))) {
+                return 'Học tập';
+            }
+            return normalizeCategory(task.category, task.task, !!task.is_fap);
         }
 
         function parseTaskSubtasks(subtasks) {
@@ -377,18 +388,24 @@
         }
 
         // =====================================================================
-        // SIDEBAR: Toggle + Overlay đóng khi click ngoài trên mobile
+        // SIDEBAR: Toggle Desktop & Mobile + Overlay
         // =====================================================================
         function toggleSidebar() {
             const sb = document.getElementById('sidebarMenu');
             if (!sb) return;
-            const isHidden = sb.classList.contains('hidden');
-            if (isHidden) {
-                sb.classList.remove('hidden');
-                showSidebarOverlay();
+            if (window.innerWidth >= 768) {
+                // Trên màn hình Desktop (md): toggle ẩn/hiện class md:hidden
+                sb.classList.toggle('md:hidden');
             } else {
-                sb.classList.add('hidden');
-                hideSidebarOverlay();
+                // Trên Mobile (< md): toggle class hidden và lớp phủ overlay
+                const isHidden = sb.classList.contains('hidden');
+                if (isHidden) {
+                    sb.classList.remove('hidden');
+                    showSidebarOverlay();
+                } else {
+                    sb.classList.add('hidden');
+                    hideSidebarOverlay();
+                }
             }
         }
 
@@ -573,4 +590,27 @@
                 default: return 'border-l-slate-400';
             }
         };
+
+        // =====================================================================
+        // ĐỒNG BỘ TOÀN DIỆN MỌI GIAO DIỆN & PERSISTENCE (SINGLE SOURCE OF TRUTH)
+        // =====================================================================
+        function syncAndRenderAllViews(taskObj = null) {
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            // 1. Cập nhật các giao diện con
+            if (typeof renderTasks === 'function') renderTasks(allTasksList);
+            if (typeof renderDashboard === 'function') renderDashboard();
+            if (typeof renderFapScheduleTable === 'function') renderFapScheduleTable();
+            if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+            if (typeof renderCategoryFilters === 'function') renderCategoryFilters();
+            if (typeof loadAndRenderNotifications === 'function') loadAndRenderNotifications();
+
+            // 2. Lưu trữ lên Supabase và Google Sheets
+            if (taskObj) {
+                if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskObj);
+                if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: taskObj });
+            }
+        }
 </script>

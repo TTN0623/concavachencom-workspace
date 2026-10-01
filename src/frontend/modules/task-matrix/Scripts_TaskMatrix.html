@@ -5,12 +5,13 @@
         // =====================================================================
         function parseTaskDetails(rawTaskText, fallbackTime = '') {
             if (!rawTaskText || typeof rawTaskText !== 'string') {
-                return { cleanTitle: '', time: fallbackTime || '', room: '', lecturer: '', hasMeta: false };
+                return { cleanTitle: '', time: fallbackTime || '', room: '', lecturer: '', duration: 0, hasMeta: false };
             }
             let text = rawTaskText.trim();
             let extractedTime = fallbackTime || '';
             let extractedRoom = '';
             let extractedLecturer = '';
+            let extractedDuration = 0;
 
             // 1. Trích xuất thời gian trong ngoặc: (07:00 - 09:15) hoặc (7:00 – 9:15)
             const timeRegex = /\((\d{1,2}:\d{2}\s*[-–—]\s*\d{1,2}:\d{2})\)/;
@@ -44,7 +45,17 @@
                 }
             }
 
-            // 4. Dọn dẹp ký tự nối (- : –) và khoảng trắng dư thừa ở đầu và cuối chuỗi
+            // 4. Tính toán thời lượng (duration tính theo phút) từ chuỗi thời gian
+            if (extractedTime) {
+                const tm = extractedTime.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+                if (tm) {
+                    const startM = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+                    const endM = parseInt(tm[3], 10) * 60 + parseInt(tm[4], 10);
+                    if (endM > startM) extractedDuration = endM - startM;
+                }
+            }
+
+            // 5. Dọn dẹp ký tự nối (- : –) và khoảng trắng dư thừa ở đầu và cuối chuỗi
             text = text.replace(/^[-–—\s:]+|[-–—\s:]+$/g, '').replace(/\s+/g, ' ').trim();
             const hasMeta = !!(extractedRoom || extractedLecturer || extractedTime);
 
@@ -53,6 +64,7 @@
                 time: extractedTime,
                 room: extractedRoom,
                 lecturer: extractedLecturer,
+                duration: extractedDuration,
                 hasMeta: hasMeta
             };
         }
@@ -791,23 +803,40 @@
             editingSubtasks = JSON.parse(JSON.stringify(parseTaskSubtasks(task.subtasks)));
             renderEditSubtasksList();
 
-            // Duration
-            const dur = task.duration ? parseInt(task.duration, 10) : 60;
+            // Duration & Time calculation
+            const parsed = parseTaskDetails(task.task, task.time);
+            const dur = (task.duration && parseInt(task.duration, 10) > 0) 
+                ? parseInt(task.duration, 10) 
+                : (parsed.duration > 0 ? parsed.duration : 60);
+
             if (durationInput) {
                 durationInput.value = dur;
                 updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
             }
 
-            // Time & Start Time
+            // Time, Start Time & End Time
             let startTimeStr = '';
-            if (task.time) {
-                const m = task.time.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+            let endTimeStr = '';
+            const effectiveTime = task.time || parsed.time || '';
+            if (effectiveTime) {
+                const m = effectiveTime.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
                 if (m) {
-                    startTimeStr = m[1];
+                    startTimeStr = m[1].padStart(5, '0');
+                    endTimeStr = m[2].padStart(5, '0');
+                } else {
+                    const single = effectiveTime.match(/(\d{1,2}:\d{2})/);
+                    if (single) startTimeStr = single[1].padStart(5, '0');
                 }
             }
             populateTimeSelectOptions('editTaskStartTime', startTimeStr);
-            updateEditCalculatedTime();
+            const endInput = document.getElementById('editTaskEndTime');
+            if (endInput && endTimeStr) {
+                endInput.value = endTimeStr;
+                const previewEl = document.getElementById('editCalculatedTimePreview');
+                if (previewEl) previewEl.innerText = `⏰ ${startTimeStr} - ${endTimeStr} (${formatDurationText(dur)})`;
+            } else {
+                updateEditCalculatedTime();
+            }
 
             document.getElementById('editModal')?.classList.remove('hidden');
             setTimeout(() => {
@@ -903,13 +932,15 @@
                     localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
                 } catch(e) {}
 
-                renderTasks(allTasksList);
-                renderDashboard();
-                renderFreeTimeSchedule();
-
-                // Đồng bộ tức thời lên Supabase & gửi bản sao ngầm sang Google Sheets
-                saveTaskToSupabase(task);
-                sendBackgroundGasSync('syncFromWeb', { task: task });
+                if (typeof syncAndRenderAllViews === 'function') {
+                    syncAndRenderAllViews(task);
+                } else {
+                    renderTasks(allTasksList);
+                    renderDashboard();
+                    renderFreeTimeSchedule();
+                    saveTaskToSupabase(task);
+                    sendBackgroundGasSync('syncFromWeb', { task: task });
+                }
 
                 if (window.google && google.script && google.script.run) {
                     google.script.run
@@ -1383,9 +1414,23 @@
                 dayTextEl.innerText = `📅 ${dayName}`;
             }
 
-            // Time, Room, Lecturer, Status
+            // Time, Duration, Room, Lecturer, Status
             const timeEl = document.getElementById('detailTime');
             if (timeEl) timeEl.innerText = parsed.time || 'Chưa đặt';
+
+            const durEl = document.getElementById('detailDuration');
+            if (durEl) {
+                const durationMins = task.duration || parsed.duration || 0;
+                if (durationMins > 0) {
+                    const h = Math.floor(durationMins / 60);
+                    const m = durationMins % 60;
+                    const hText = h > 0 ? `${h}h ` : '';
+                    const mText = m > 0 ? `${m}p` : '';
+                    durEl.innerText = `${durationMins} phút (${(hText + mText).trim()})`;
+                } else {
+                    durEl.innerText = 'Chưa xác định';
+                }
+            }
 
             const roomEl = document.getElementById('detailRoom');
             if (roomEl) roomEl.innerText = parsed.room || 'Không có';
@@ -1437,11 +1482,11 @@
                     : `<span>✅</span> Đánh dấu hoàn thành`;
             }
 
-            // Category badge
+            // Category badge (ẩn nếu là lịch học để không bị lặp badge)
             const cat = getTaskCategory(task);
             const catBadge = document.getElementById('detailCategoryBadge');
             if (catBadge) {
-                if (cat) {
+                if (!isCalendar && cat) {
                     const col = getCategoryColor(cat);
                     catBadge.innerHTML = `<span>${col.icon}</span> <span>${escapeHtml(cat)}</span>`;
                     catBadge.className = `inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}`;

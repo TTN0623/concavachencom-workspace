@@ -15,7 +15,7 @@
                 deferredPwaPrompt.prompt();
                 deferredPwaPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
-                        showToast('Đã cài đặt Cá Cơm Workspace thành công!', '🎉');
+                        showToast('Đã cài đặt Con Cá và Chén Cơm thành công!', '🎉');
                         closePwaModal();
                     }
                     deferredPwaPrompt = null;
@@ -468,8 +468,8 @@
                 serverAnnouncementsList = [
                     {
                         id: 'ann_welcome',
-                        title: 'Chào mừng bạn đến với Cá Cơm Workspace v1.6.5',
-                        content: 'Cá Cơm Workspace đã được nâng cấp toàn diện:\n• Hỗ trợ cài đặt PWA lên điện thoại (Add to Home Screen)\n• Phân loại chuẩn 3 danh mục: Học tập, Công việc, Cá nhân\n• Quản lý checklist việc con (Sub-tasks)\n• Trung tâm thông báo & Báo cáo ngày thông minh\n\nChúc bạn có một ngày làm việc và học tập thật hiệu quả!',
+                        title: 'Chào mừng bạn đến với Con Cá và Chén Cơm v1.7.0',
+                        content: 'Con Cá và Chén Cơm đã được nâng cấp toàn diện:\n• Nhận diện thương hiệu mới Con Cá và Chén Cơm\n• Hỗ trợ cài đặt PWA lên điện thoại (Add to Home Screen)\n• Phân loại chuẩn 3 danh mục: Học tập, Công việc, Cá nhân\n• Quản lý checklist việc con (Sub-tasks)\n• Đồng bộ xuyên suốt Thời khóa biểu, Ma trận và Lịch rảnh\n\nChúc bạn có một ngày làm việc và học tập thật hiệu quả!',
                         createdAt: new Date().toISOString(),
                         author: 'Nguyễn Trọng Tài (Admin)'
                     }

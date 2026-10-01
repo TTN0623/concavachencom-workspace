@@ -180,7 +180,7 @@
                             ${dayTasks.map(t => {
                                 const isChecked = !!t.done;
                                 const isCancelled = (t.status === 'cancelled');
-                                const isCalendar = (t.source === 'fap' || t.source === 'calendar' || (t.id && String(t.id).startsWith('fap_')));
+                                const isCalendar = (t.source === 'fap' || t.source === 'calendar' || (t.id && String(t.id).startsWith('fap_')) || isFapClass(t));
                                 const badgeColor = isCancelled
                                     ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800'
                                     : (isCalendar 
@@ -188,7 +188,7 @@
                                         : (t.quadrant === 'donow' 
                                             ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/60 dark:text-red-300 dark:border-red-800' 
                                             : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/60 dark:text-amber-300 dark:border-amber-800'));
-                                const badgeLabel = isCancelled ? '🚫 Đã huỷ' : (isCalendar ? '🎓 Lịch học' : (t.quadrant === 'donow' ? '🔴 Làm ngay' : '🟡 Kế hoạch'));
+                                const badgeLabel = isCancelled ? '🚫 Đã huỷ' : (isCalendar ? '🎓 Lịch học FPT' : (t.quadrant === 'donow' ? '🔴 Làm ngay' : '🟡 Kế hoạch'));
                                 
                                 // Bóc tách thông tin sạch qua parseTaskDetails: tiêu đề không lặp lại thời gian hay GV
                                 const parsed = parseTaskDetails(t.task, t.time);
@@ -198,12 +198,14 @@
                                 if (parsed.room) metaParts.push(`<span class="text-[10px] text-slate-500 font-medium">📍 ${parsed.room}</span>`);
                                 if (parsed.lecturer) metaParts.push(`<span class="text-[10px] text-slate-500 font-medium">👤 GV: ${parsed.lecturer}</span>`);
                                 const extraMeta = metaParts.length > 0 ? `<div class="flex items-center gap-2 flex-wrap mt-0.5">${metaParts.join('<span class="text-slate-300">•</span>')}</div>` : '';
+                                
                                 const timeHtml = parsed.time ? `<span class="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 font-mono font-semibold flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">⏰ ${parsed.time}</span>` : '';
+                                const doneBadge = isChecked ? `<span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200">✅ Đã xong</span>` : '';
 
-                                // Phase 2: Category tag badge
+                                // Category tag badge (chỉ hiển thị cho công việc không phải lịch học để tránh trùng lặp)
                                 const cat = getTaskCategory(t);
                                 let categoryTimetableHtml = '';
-                                if (cat) {
+                                if (!isCalendar && cat) {
                                     const col = getCategoryColor(cat);
                                     categoryTimetableHtml = `<span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}"><span>${col.icon}</span>${escapeHtml(cat)}</span>`;
                                 }

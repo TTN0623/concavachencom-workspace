@@ -17,7 +17,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Cá Cơm và Chén Cơm - Quản lý công việc & Thời khóa biểu</title>
+    <title>Con Cá và Chén Cơm - Quản lý công việc & Thời khóa biểu</title>
     
     <!-- CSS & Thư viện hỗ trợ -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -256,19 +256,19 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
 
-            <!-- Logo FPT Education & Trường Đại học FPT -->
-            <div class="flex items-center gap-2 md:gap-3">
-                <div class="flex flex-col shrink-0">
-                    <div class="flex items-center gap-1.5 leading-none">
-                        <span class="text-sm font-black text-[#ea580c] tracking-tight">FPT</span>
-                        <span class="hidden sm:inline text-[11px] font-bold text-slate-600 uppercase tracking-tight">Education</span>
-                    </div>
-                    <span class="text-[10px] font-extrabold text-[#ea580c] tracking-tight uppercase leading-tight mt-0.5">TRƯỜNG ĐH FPT</span>
+            <!-- Logo & Brand: Con Cá và Chén Cơm -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0054a6] to-blue-500 flex items-center justify-center text-white text-base shadow-sm shrink-0">
+                    🐟
                 </div>
-                <div class="hidden sm:block h-6 w-[1px] bg-slate-200 mx-1"></div>
-                <span class="hidden md:inline-flex text-[11px] font-bold text-[#0054a6] bg-blue-50 px-2 py-0.5 rounded border border-blue-200 tracking-wide uppercase shrink-0">
-                    CÁ CƠM VÀ CHÉN CƠM
-                </span>
+                <div class="flex flex-col shrink-0">
+                    <span class="text-sm md:text-base font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        Con Cá và Chén Cơm
+                    </span>
+                    <span class="text-[10px] font-semibold text-blue-600 dark:text-blue-400 tracking-wider uppercase leading-none">
+                        Smart Workspace
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -336,7 +336,7 @@
             </button>
 
             <!-- Cài đặt PWA lên điện thoại / Desktop -->
-            <button type="button" onclick="openPwaModal()" class="px-2 md:px-2.5 py-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shrink-0 border border-blue-200 dark:border-blue-900/50" title="Cài đặt Cá Cơm và Chén Cơm lên điện thoại (PWA)">
+            <button type="button" onclick="openPwaModal()" class="px-2 md:px-2.5 py-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shrink-0 border border-blue-200 dark:border-blue-900/50" title="Cài đặt Con Cá và Chén Cơm lên điện thoại (PWA)">
                 <span>📲</span>
                 <span class="hidden sm:inline">Cài App</span>
             </button>
@@ -383,22 +383,6 @@
                                 <span class="font-medium">Hồ sơ cá nhân & Mục tiêu</span>
                             </div>
                             <span class="text-[10px] text-slate-400">❯</span>
-                        </button>
-                        
-                        <button type="button" onclick="closeProfileDropdown(); openAuthModal();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer">
-                            <div class="flex items-center gap-2.5">
-                                <span class="text-sm">🔄</span>
-                                <span class="font-medium" id="dropdownAuthLabel">Đổi / Đăng nhập Google</span>
-                            </div>
-                            <span class="text-[10px] text-slate-400">❯</span>
-                        </button>
-
-                        <button type="button" onclick="closeProfileDropdown(); openPwaModal();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer">
-                            <div class="flex items-center gap-2.5">
-                                <span class="text-sm">📲</span>
-                                <span class="font-medium">Cài đặt ứng dụng (PWA)</span>
-                            </div>
-                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900">App</span>
                         </button>
                     </div>
 
@@ -472,8 +456,8 @@
 
             <!-- Footer Sidebar: Bản quyền & Badge Phiên bản -->
             <div class="p-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-600 text-[11px] tracking-wide uppercase">CÁ CƠM VÀ CHÉN CƠM</span>
-                <span class="inline-block px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-[#0054a6] border border-blue-200 rounded-full font-bold text-[10px] cursor-pointer transition-colors" id="appVersionBadge" title="Bấm để tải lại bản mới nhất (xóa cache)" onclick="applyVersionUpdate()">v1.6.5</span>
+                <span class="font-bold text-slate-600 text-[11px] tracking-wide uppercase">CON CÁ VÀ CHÉN CƠM</span>
+                <span class="inline-block px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-[#0054a6] border border-blue-200 rounded-full font-bold text-[10px] cursor-pointer transition-colors" id="appVersionBadge" title="Bấm để tải lại bản mới nhất (xóa cache)" onclick="applyVersionUpdate()">v1.7.0</span>
             </div>
         </aside>
 
@@ -923,11 +907,11 @@
                                         </select>
                                     </div>
 
-                                    <!-- 5. Thời gian hoàn thành (Duration) -->
+                                    <!-- 5. Thời lượng ước tính (Duration) -->
                                     <div class="bg-blue-50/50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-blue-100 dark:border-slate-700 flex flex-col gap-1.5">
                                         <div class="flex items-center justify-between">
                                             <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                                                <span>⏱️</span> Thời gian hoàn thành:
+                                                <span>⏱️</span> Thời lượng ước tính (Duration):
                                             </span>
                                             <span id="taskDurationLabel" class="text-[11px] font-black text-[#0054a6] dark:text-blue-400 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded shadow-2xs">60 phút (1 giờ)</span>
                                         </div>
@@ -1591,8 +1575,16 @@
                     <div class="flex items-start gap-2">
                         <span class="text-sm">⏰</span>
                         <div>
-                            <span class="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold block">Thời gian</span>
+                            <span class="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold block">Khung giờ thực hiện</span>
                             <span id="detailTime" class="font-semibold text-slate-700 dark:text-slate-200 font-mono">Chưa đặt</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-2">
+                        <span class="text-sm">⏱️</span>
+                        <div>
+                            <span class="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold block">Thời lượng (Duration)</span>
+                            <span id="detailDuration" class="font-semibold text-[#0054a6] dark:text-blue-400 font-mono">Không xác định</span>
                         </div>
                     </div>
 
@@ -1718,7 +1710,7 @@
 
             <!-- Modal Footer -->
             <div class="p-3.5 bg-slate-50/80 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <span class="text-xs text-slate-400 font-medium">Cá Cơm Workspace</span>
+                <span class="text-xs text-slate-400 font-medium">Con Cá và Chén Cơm</span>
                 <div class="flex items-center gap-2">
                     <button type="button" id="notifDetailActionBtn" class="hidden px-4 py-1.5 bg-[#0054a6] hover:bg-[#004080] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"></button>
                     <button type="button" onclick="closeNotificationDetailModal()" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer">Đóng</button>
@@ -2139,26 +2131,10 @@
                 🐟
             </div>
             
-            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Cá Cơm và Chén Cơm</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Con Cá và Chén Cơm</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 mb-6 leading-relaxed">
                 Hệ thống Quản lý công việc & Thời khóa biểu thông minh cho học sinh, sinh viên và người dùng cá nhân.
             </p>
-
-            <!-- Feature Pills -->
-            <div class="my-6 p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-2 text-left">
-                <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <span class="text-base">📊</span>
-                    <span><strong>Ma trận Eisenhower 4 ô:</strong> Phân loại việc ưu tiên</span>
-                </div>
-                <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <span class="text-base">📅</span>
-                    <span><strong>Thời khóa biểu FAP:</strong> Tự động đồng bộ lịch học</span>
-                </div>
-                <div class="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <span class="text-base">🔒</span>
-                    <span><strong>Bảo mật riêng tư 100%:</strong> Dữ liệu mã hóa đám mây</span>
-                </div>
-            </div>
 
             <!-- Google Sign In Container (GIS Native & Custom Button) -->
             <div id="googleSignInBtnBox" class="w-full flex justify-center mb-2 overflow-hidden rounded-xl"></div>
@@ -2173,11 +2149,11 @@
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <span>Tiếp tục với Google</span>
+                <span>Đăng nhập với Google</span>
             </button>
 
             <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-4">
-                Bằng việc tiếp tục, bạn đồng ý với Điều khoản & Chính sách quyền riêng tư của Cá Cơm và Chén Cơm.
+                Bằng việc tiếp tục, bạn đồng ý với Điều khoản & Chính sách quyền riêng tư của Con Cá và Chén Cơm.
             </p>
         </div>
     </div>
@@ -2267,7 +2243,7 @@
                         📱
                     </div>
                     <div>
-                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Cài đặt Cá Cơm và Chén Cơm</h3>
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Cài đặt Con Cá và Chén Cơm</h3>
                         <p class="text-[11px] text-slate-500 dark:text-slate-400">Dùng như ứng dụng di động thực thụ</p>
                     </div>
                 </div>
@@ -2495,17 +2471,25 @@
             { key: 'Cá nhân', label: 'Cá nhân', icon: '🌱', bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' }
         ];
 
-        function normalizeCategory(category, taskTitle = '') {
+        function normalizeCategory(category, taskTitle = '', isFap = false) {
+            const title = String(taskTitle || '').trim().toLowerCase();
             const cat = String(category || '').trim().toLowerCase();
+
+            // 1. Kiểm tra dấu hiệu lịch học / môn học / FAP (Ưu tiên số 1: Luôn là Học tập)
+            if (isFap || /^\[[a-z0-9_\-\s]+\]/i.test(taskTitle) || title.includes('gv:') || title.includes('giảng viên:') || title.includes('phòng:') || title.includes('fap')) {
+                return 'Học tập';
+            }
+            if (title.startsWith('[') || title.includes('lab') || title.includes('ôn tập') || title.includes('thi') || title.includes('học') || title.includes('bài tập') || /^[a-z]{2,4}\d{2,4}/i.test(title)) {
+                return 'Học tập';
+            }
+
+            // 2. Kiểm tra nếu người dùng chọn phân loại cụ thể
             if (cat.includes('học') || cat.includes('hoc') || cat.includes('study')) return 'Học tập';
             if (cat.includes('việc') || cat.includes('viec') || cat.includes('work') || cat.includes('job')) return 'Công việc';
             if (cat.includes('nhân') || cat.includes('nhan') || cat.includes('personal')) return 'Cá nhân';
             if (/^[a-z]{2,4}\d{2,4}/i.test(cat)) return 'Học tập';
 
-            const title = String(taskTitle || '').toLowerCase();
-            if (title.startsWith('[') || title.includes('lab') || title.includes('ôn tập') || title.includes('thi') || title.includes('học') || title.includes('bài tập') || title.includes('fap')) {
-                return 'Học tập';
-            }
+            // 3. Phân loại theo ngữ cảnh công việc
             if (title.includes('hợp đồng') || title.includes('dự án') || title.includes('báo cáo') || title.includes('khách hàng') || title.includes('công ty') || title.includes('studio') || title.includes('code') || title.includes('fix')) {
                 return 'Công việc';
             }
@@ -2519,7 +2503,10 @@
 
         function getTaskCategory(task) {
             if (!task) return 'Học tập';
-            return normalizeCategory(task.category, task.task);
+            if (task.source === 'fap' || task.source === 'calendar' || task.is_fap || (task.id && String(task.id).startsWith('fap_'))) {
+                return 'Học tập';
+            }
+            return normalizeCategory(task.category, task.task, !!task.is_fap);
         }
 
         function parseTaskSubtasks(subtasks) {
@@ -2747,18 +2734,24 @@
         }
 
         // =====================================================================
-        // SIDEBAR: Toggle + Overlay đóng khi click ngoài trên mobile
+        // SIDEBAR: Toggle Desktop & Mobile + Overlay
         // =====================================================================
         function toggleSidebar() {
             const sb = document.getElementById('sidebarMenu');
             if (!sb) return;
-            const isHidden = sb.classList.contains('hidden');
-            if (isHidden) {
-                sb.classList.remove('hidden');
-                showSidebarOverlay();
+            if (window.innerWidth >= 768) {
+                // Trên màn hình Desktop (md): toggle ẩn/hiện class md:hidden
+                sb.classList.toggle('md:hidden');
             } else {
-                sb.classList.add('hidden');
-                hideSidebarOverlay();
+                // Trên Mobile (< md): toggle class hidden và lớp phủ overlay
+                const isHidden = sb.classList.contains('hidden');
+                if (isHidden) {
+                    sb.classList.remove('hidden');
+                    showSidebarOverlay();
+                } else {
+                    sb.classList.add('hidden');
+                    hideSidebarOverlay();
+                }
             }
         }
 
@@ -2943,6 +2936,29 @@
                 default: return 'border-l-slate-400';
             }
         };
+
+        // =====================================================================
+        // ĐỒNG BỘ TOÀN DIỆN MỌI GIAO DIỆN & PERSISTENCE (SINGLE SOURCE OF TRUTH)
+        // =====================================================================
+        function syncAndRenderAllViews(taskObj = null) {
+            try {
+                localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
+            } catch(e) {}
+
+            // 1. Cập nhật các giao diện con
+            if (typeof renderTasks === 'function') renderTasks(allTasksList);
+            if (typeof renderDashboard === 'function') renderDashboard();
+            if (typeof renderFapScheduleTable === 'function') renderFapScheduleTable();
+            if (typeof renderFreeTimeSchedule === 'function') renderFreeTimeSchedule();
+            if (typeof renderCategoryFilters === 'function') renderCategoryFilters();
+            if (typeof loadAndRenderNotifications === 'function') loadAndRenderNotifications();
+
+            // 2. Lưu trữ lên Supabase và Google Sheets
+            if (taskObj) {
+                if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskObj);
+                if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: taskObj });
+            }
+        }
 </script>
 
     <script>
@@ -3405,7 +3421,7 @@
                         id: r.id,
                         task: r.task,
                         quadrant: r.quadrant || 'inbox',
-                        category: r.category || 'Công việc',
+                        category: normalizeCategory(r.category, r.task, !!r.is_fap),
                         done: !!r.done,
                         day: (r.day !== null && r.day !== undefined && r.day !== '') ? String(r.day) : '',
                         deadline: r.deadline || '',
@@ -3466,7 +3482,7 @@
                     id: newRow.id,
                     task: newRow.task,
                     quadrant: newRow.quadrant || 'inbox',
-                    category: newRow.category || 'Công việc',
+                    category: normalizeCategory(newRow.category, newRow.task, !!newRow.is_fap),
                     done: !!newRow.done,
                     day: (newRow.day !== null && newRow.day !== undefined && newRow.day !== '') ? String(newRow.day) : '',
                     deadline: newRow.deadline || '',
@@ -3732,7 +3748,7 @@
                             size: 'large',
                             type: 'standard',
                             shape: 'rectangular',
-                            text: 'continue_with',
+                            text: 'signin_with',
                             width: 320,
                             logo_alignment: 'left'
                         });
@@ -3758,7 +3774,7 @@
             const gateBtn = document.getElementById('btnAuthGateSignIn');
             if (gateBtn) {
                 gateBtn.disabled = true;
-                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang đăng nhập Cá Cơm...</span>`;
+                gateBtn.innerHTML = `<span class="animate-spin inline-block">🔄</span><span>Đang đăng nhập Con Cá và Chén Cơm...</span>`;
             }
 
             if (window.supabaseClient) {
@@ -4059,7 +4075,14 @@
                 isCurrentUserAdmin = false;
                 allTasksList = [];
 
-                // 4. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
+                // 4. Reset Google GIS auto select để lần sau luôn hiện màn hình chọn tài khoản / Đăng nhập Google
+                if (window.google && google.accounts && google.accounts.id) {
+                    try {
+                        google.accounts.id.disableAutoSelect();
+                    } catch(e) {}
+                }
+
+                // 5. Cập nhật ngay toàn bộ giao diện sang trạng thái Khách sạch sẽ (0ms delay)
                 closeAuthModal();
                 closeProfileDropdown();
                 renderProfileUI();
@@ -4073,6 +4096,13 @@
                 if (authGate) authGate.classList.remove('hidden');
 
                 showToast('Đã đăng xuất tài khoản. Đang ở chế độ Khách.', '👋');
+
+                // 6. Điều hướng về URL chuẩn không chứa query/hash thừa
+                if (window.location.hostname.includes('concavachencom.site')) {
+                    if (window.location.pathname !== '/' || window.location.search || window.location.hash) {
+                        window.location.href = 'https://concavachencom.site';
+                    }
+                }
             }
         }
 
@@ -4080,7 +4110,7 @@
 </script>
 
     <script>
-function loadAdminStats() {
+async function loadAdminStats() {
             if (!isCurrentUserAdmin) {
                 showToast('Chỉ Admin trtainguyen2306@gmail.com mới có quyền xem trang này!', '⚠️');
                 switchView('dashboard');
@@ -4092,6 +4122,7 @@ function loadAdminStats() {
             if (usersTableBody) usersTableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400"><div class="inline-block animate-spin mr-2">⏳</div> Đang tải danh sách người dùng...</td></tr>`;
             if (feedbackTableBody) feedbackTableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400"><div class="inline-block animate-spin mr-2">⏳</div> Đang tải danh sách phản hồi...</td></tr>`;
 
+            // 1. Chế độ Google Apps Script (nếu chạy trong iframe Apps Script)
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(renderAdminStats)
@@ -4099,7 +4130,112 @@ function loadAdminStats() {
                         showToast('Lỗi tải dữ liệu quản trị: ' + err, '❌');
                     })
                     .getAdminStats(currentUserEmail);
+                return;
             }
+
+            // 2. Chế độ Supabase Client (Chạy trên concavachencom.site độc lập)
+            if (window.supabaseClient) {
+                try {
+                    // Lấy danh sách tài khoản người dùng
+                    let usersList = [];
+                    const { data: usersData } = await window.supabaseClient
+                        .from('users')
+                        .select('*');
+                    
+                    if (Array.isArray(usersData) && usersData.length > 0) {
+                        usersList = usersData.map(u => ({
+                            email: u.email || '',
+                            fullName: u.full_name || u.email,
+                            role: (u.email && u.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase()) ? 'admin' : (u.role || 'user'),
+                            status: u.status || 'active',
+                            createdAt: u.created_at || new Date().toISOString(),
+                            lastLoginAt: u.last_sign_in_at || u.updated_at || u.created_at || new Date().toISOString(),
+                            tasksCount: 0
+                        }));
+                    } else {
+                        usersList = [{
+                            email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
+                            fullName: 'Trọng Tài Nguyễn',
+                            role: 'admin',
+                            status: 'active',
+                            createdAt: new Date().toISOString(),
+                            lastLoginAt: new Date().toISOString(),
+                            tasksCount: allTasksList.length
+                        }];
+                    }
+
+                    // Đếm tổng số công việc
+                    let totalTasksCount = allTasksList.length;
+                    try {
+                        const { count } = await window.supabaseClient
+                            .from('tasks')
+                            .select('*', { count: 'exact', head: true });
+                        if (typeof count === 'number' && count > 0) totalTasksCount = count;
+                    } catch(e) {}
+
+                    usersList.forEach(u => {
+                        if (u.email && u.email.toLowerCase() === currentUserEmail.toLowerCase()) {
+                            u.tasksCount = allTasksList.length;
+                        }
+                    });
+
+                    // Lấy phản hồi & góp ý từ bảng feedbacks
+                    let feedbacksList = [];
+                    let newFeedbackCount = 0;
+                    try {
+                        const { data: fbData } = await window.supabaseClient
+                            .from('feedbacks')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+                        if (Array.isArray(fbData)) {
+                            feedbacksList = fbData.map(f => {
+                                const st = String(f.status || 'new').toLowerCase();
+                                if (st === 'new') newFeedbackCount++;
+                                return {
+                                    id: f.id,
+                                    userEmail: f.user_email || f.email || '',
+                                    category: f.category || 'Góp ý tính năng',
+                                    content: f.content || '',
+                                    createdAt: f.created_at || new Date().toISOString(),
+                                    status: st
+                                };
+                            });
+                        }
+                    } catch(e) {
+                        console.warn('Lấy feedbacks từ Supabase:', e);
+                    }
+
+                    renderAdminStats({
+                        totalUsers: usersList.length,
+                        activeUsers: usersList.filter(u => u.status === 'active').length,
+                        totalTasks: totalTasksCount,
+                        newFeedbackCount: newFeedbackCount,
+                        users: usersList,
+                        feedbacks: feedbacksList
+                    });
+                    return;
+                } catch(supabaseAdminErr) {
+                    console.error('Lỗi loadAdminStats từ Supabase:', supabaseAdminErr);
+                }
+            }
+
+            // 3. Fallback an toàn (không bao giờ treo màn hình chờ của Admin)
+            renderAdminStats({
+                totalUsers: 1,
+                activeUsers: 1,
+                totalTasks: allTasksList.length,
+                newFeedbackCount: 0,
+                users: [{
+                    email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
+                    fullName: 'Trọng Tài Nguyễn',
+                    role: 'admin',
+                    status: 'active',
+                    createdAt: new Date().toISOString(),
+                    lastLoginAt: new Date().toISOString(),
+                    tasksCount: allTasksList.length
+                }],
+                feedbacks: []
+            });
         }
 
         function renderAdminStats(data) {
@@ -4218,7 +4354,7 @@ function loadAdminStats() {
             }
         }
 
-        function handleAdminToggleUser(targetEmail, newStatus) {
+        async function handleAdminToggleUser(targetEmail, newStatus) {
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(res => {
@@ -4227,10 +4363,24 @@ function loadAdminStats() {
                     })
                     .withFailureHandler(err => showToast('Lỗi: ' + err, '❌'))
                     .toggleUserStatus(targetEmail, newStatus, currentUserEmail);
+                return;
+            }
+
+            if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient
+                        .from('users')
+                        .update({ status: newStatus })
+                        .eq('email', targetEmail);
+                    showToast(`Đã chuyển trạng thái tài khoản sang ${newStatus === 'blocked' ? 'Đã khóa' : 'Hoạt động'}`, '🛡️');
+                    loadAdminStats();
+                } catch(e) {
+                    showToast('Lỗi cập nhật người dùng: ' + e.message, '❌');
+                }
             }
         }
 
-        function handleAdminUpdateFeedback(feedbackId, newStatus) {
+        async function handleAdminUpdateFeedback(feedbackId, newStatus) {
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(res => {
@@ -4239,6 +4389,20 @@ function loadAdminStats() {
                     })
                     .withFailureHandler(err => showToast('Lỗi: ' + err, '❌'))
                     .updateFeedbackStatus(feedbackId, newStatus, currentUserEmail);
+                return;
+            }
+
+            if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient
+                        .from('feedbacks')
+                        .update({ status: newStatus })
+                        .eq('id', feedbackId);
+                    showToast('Đã cập nhật trạng thái phản hồi!', '✅');
+                    loadAdminStats();
+                } catch(e) {
+                    showToast('Lỗi cập nhật phản hồi: ' + e.message, '❌');
+                }
             }
         }
 </script>
@@ -4425,7 +4589,7 @@ function loadAdminStats() {
                             ${dayTasks.map(t => {
                                 const isChecked = !!t.done;
                                 const isCancelled = (t.status === 'cancelled');
-                                const isCalendar = (t.source === 'fap' || t.source === 'calendar' || (t.id && String(t.id).startsWith('fap_')));
+                                const isCalendar = (t.source === 'fap' || t.source === 'calendar' || (t.id && String(t.id).startsWith('fap_')) || isFapClass(t));
                                 const badgeColor = isCancelled
                                     ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800'
                                     : (isCalendar 
@@ -4433,7 +4597,7 @@ function loadAdminStats() {
                                         : (t.quadrant === 'donow' 
                                             ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/60 dark:text-red-300 dark:border-red-800' 
                                             : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/60 dark:text-amber-300 dark:border-amber-800'));
-                                const badgeLabel = isCancelled ? '🚫 Đã huỷ' : (isCalendar ? '🎓 Lịch học' : (t.quadrant === 'donow' ? '🔴 Làm ngay' : '🟡 Kế hoạch'));
+                                const badgeLabel = isCancelled ? '🚫 Đã huỷ' : (isCalendar ? '🎓 Lịch học FPT' : (t.quadrant === 'donow' ? '🔴 Làm ngay' : '🟡 Kế hoạch'));
                                 
                                 // Bóc tách thông tin sạch qua parseTaskDetails: tiêu đề không lặp lại thời gian hay GV
                                 const parsed = parseTaskDetails(t.task, t.time);
@@ -4443,12 +4607,14 @@ function loadAdminStats() {
                                 if (parsed.room) metaParts.push(`<span class="text-[10px] text-slate-500 font-medium">📍 ${parsed.room}</span>`);
                                 if (parsed.lecturer) metaParts.push(`<span class="text-[10px] text-slate-500 font-medium">👤 GV: ${parsed.lecturer}</span>`);
                                 const extraMeta = metaParts.length > 0 ? `<div class="flex items-center gap-2 flex-wrap mt-0.5">${metaParts.join('<span class="text-slate-300">•</span>')}</div>` : '';
+                                
                                 const timeHtml = parsed.time ? `<span class="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 font-mono font-semibold flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">⏰ ${parsed.time}</span>` : '';
+                                const doneBadge = isChecked ? `<span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200">✅ Đã xong</span>` : '';
 
-                                // Phase 2: Category tag badge
+                                // Category tag badge (chỉ hiển thị cho công việc không phải lịch học để tránh trùng lặp)
                                 const cat = getTaskCategory(t);
                                 let categoryTimetableHtml = '';
-                                if (cat) {
+                                if (!isCalendar && cat) {
                                     const col = getCategoryColor(cat);
                                     categoryTimetableHtml = `<span class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}"><span>${col.icon}</span>${escapeHtml(cat)}</span>`;
                                 }
@@ -5607,12 +5773,13 @@ function loadAdminStats() {
         // =====================================================================
         function parseTaskDetails(rawTaskText, fallbackTime = '') {
             if (!rawTaskText || typeof rawTaskText !== 'string') {
-                return { cleanTitle: '', time: fallbackTime || '', room: '', lecturer: '', hasMeta: false };
+                return { cleanTitle: '', time: fallbackTime || '', room: '', lecturer: '', duration: 0, hasMeta: false };
             }
             let text = rawTaskText.trim();
             let extractedTime = fallbackTime || '';
             let extractedRoom = '';
             let extractedLecturer = '';
+            let extractedDuration = 0;
 
             // 1. Trích xuất thời gian trong ngoặc: (07:00 - 09:15) hoặc (7:00 – 9:15)
             const timeRegex = /\((\d{1,2}:\d{2}\s*[-–—]\s*\d{1,2}:\d{2})\)/;
@@ -5646,7 +5813,17 @@ function loadAdminStats() {
                 }
             }
 
-            // 4. Dọn dẹp ký tự nối (- : –) và khoảng trắng dư thừa ở đầu và cuối chuỗi
+            // 4. Tính toán thời lượng (duration tính theo phút) từ chuỗi thời gian
+            if (extractedTime) {
+                const tm = extractedTime.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+                if (tm) {
+                    const startM = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+                    const endM = parseInt(tm[3], 10) * 60 + parseInt(tm[4], 10);
+                    if (endM > startM) extractedDuration = endM - startM;
+                }
+            }
+
+            // 5. Dọn dẹp ký tự nối (- : –) và khoảng trắng dư thừa ở đầu và cuối chuỗi
             text = text.replace(/^[-–—\s:]+|[-–—\s:]+$/g, '').replace(/\s+/g, ' ').trim();
             const hasMeta = !!(extractedRoom || extractedLecturer || extractedTime);
 
@@ -5655,6 +5832,7 @@ function loadAdminStats() {
                 time: extractedTime,
                 room: extractedRoom,
                 lecturer: extractedLecturer,
+                duration: extractedDuration,
                 hasMeta: hasMeta
             };
         }
@@ -6393,23 +6571,40 @@ function loadAdminStats() {
             editingSubtasks = JSON.parse(JSON.stringify(parseTaskSubtasks(task.subtasks)));
             renderEditSubtasksList();
 
-            // Duration
-            const dur = task.duration ? parseInt(task.duration, 10) : 60;
+            // Duration & Time calculation
+            const parsed = parseTaskDetails(task.task, task.time);
+            const dur = (task.duration && parseInt(task.duration, 10) > 0) 
+                ? parseInt(task.duration, 10) 
+                : (parsed.duration > 0 ? parsed.duration : 60);
+
             if (durationInput) {
                 durationInput.value = dur;
                 updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
             }
 
-            // Time & Start Time
+            // Time, Start Time & End Time
             let startTimeStr = '';
-            if (task.time) {
-                const m = task.time.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+            let endTimeStr = '';
+            const effectiveTime = task.time || parsed.time || '';
+            if (effectiveTime) {
+                const m = effectiveTime.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
                 if (m) {
-                    startTimeStr = m[1];
+                    startTimeStr = m[1].padStart(5, '0');
+                    endTimeStr = m[2].padStart(5, '0');
+                } else {
+                    const single = effectiveTime.match(/(\d{1,2}:\d{2})/);
+                    if (single) startTimeStr = single[1].padStart(5, '0');
                 }
             }
             populateTimeSelectOptions('editTaskStartTime', startTimeStr);
-            updateEditCalculatedTime();
+            const endInput = document.getElementById('editTaskEndTime');
+            if (endInput && endTimeStr) {
+                endInput.value = endTimeStr;
+                const previewEl = document.getElementById('editCalculatedTimePreview');
+                if (previewEl) previewEl.innerText = `⏰ ${startTimeStr} - ${endTimeStr} (${formatDurationText(dur)})`;
+            } else {
+                updateEditCalculatedTime();
+            }
 
             document.getElementById('editModal')?.classList.remove('hidden');
             setTimeout(() => {
@@ -6505,13 +6700,15 @@ function loadAdminStats() {
                     localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
                 } catch(e) {}
 
-                renderTasks(allTasksList);
-                renderDashboard();
-                renderFreeTimeSchedule();
-
-                // Đồng bộ tức thời lên Supabase & gửi bản sao ngầm sang Google Sheets
-                saveTaskToSupabase(task);
-                sendBackgroundGasSync('syncFromWeb', { task: task });
+                if (typeof syncAndRenderAllViews === 'function') {
+                    syncAndRenderAllViews(task);
+                } else {
+                    renderTasks(allTasksList);
+                    renderDashboard();
+                    renderFreeTimeSchedule();
+                    saveTaskToSupabase(task);
+                    sendBackgroundGasSync('syncFromWeb', { task: task });
+                }
 
                 if (window.google && google.script && google.script.run) {
                     google.script.run
@@ -6985,9 +7182,23 @@ function loadAdminStats() {
                 dayTextEl.innerText = `📅 ${dayName}`;
             }
 
-            // Time, Room, Lecturer, Status
+            // Time, Duration, Room, Lecturer, Status
             const timeEl = document.getElementById('detailTime');
             if (timeEl) timeEl.innerText = parsed.time || 'Chưa đặt';
+
+            const durEl = document.getElementById('detailDuration');
+            if (durEl) {
+                const durationMins = task.duration || parsed.duration || 0;
+                if (durationMins > 0) {
+                    const h = Math.floor(durationMins / 60);
+                    const m = durationMins % 60;
+                    const hText = h > 0 ? `${h}h ` : '';
+                    const mText = m > 0 ? `${m}p` : '';
+                    durEl.innerText = `${durationMins} phút (${(hText + mText).trim()})`;
+                } else {
+                    durEl.innerText = 'Chưa xác định';
+                }
+            }
 
             const roomEl = document.getElementById('detailRoom');
             if (roomEl) roomEl.innerText = parsed.room || 'Không có';
@@ -7039,11 +7250,11 @@ function loadAdminStats() {
                     : `<span>✅</span> Đánh dấu hoàn thành`;
             }
 
-            // Category badge
+            // Category badge (ẩn nếu là lịch học để không bị lặp badge)
             const cat = getTaskCategory(task);
             const catBadge = document.getElementById('detailCategoryBadge');
             if (catBadge) {
-                if (cat) {
+                if (!isCalendar && cat) {
                     const col = getCategoryColor(cat);
                     catBadge.innerHTML = `<span>${col.icon}</span> <span>${escapeHtml(cat)}</span>`;
                     catBadge.className = `inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}`;
@@ -7489,7 +7700,7 @@ function loadAdminStats() {
         // =====================================================================
         // ĐỒNG BỘ LỊCH HỌC TỰ ĐỘNG TỪ FAP FPT
         // =====================================================================
-        const FAP_SYNC_SCRIPT_TEXT = `// FAP MỚI (Weekly Timetable) to Cá Cơm Workspace & Google Calendar
+        const FAP_SYNC_SCRIPT_TEXT = `// FAP MỚI (Weekly Timetable) to Con Cá và Chén Cơm & Google Calendar
 const WORKSPACE_URL = '` + WEB_APP_URL + `';
 const TOTAL_WEEKS = 6;
 
@@ -7602,7 +7813,7 @@ const TOTAL_WEEKS = 6;
         link.click();
     } catch(e) {}
 
-    alert('🎉 Tuyệt vời! Đã cào xong ' + allEvents.length + ' buổi học!\n\n📋 Dữ liệu đã được sao chép vào Clipboard và tải về file LichHoc_FAP_Moi.ics.\n👉 Hãy quay lại tab Cá Cơm Workspace bấm nút: [Dán dữ liệu & Nhập lịch ngay]!');
+    alert('🎉 Tuyệt vời! Đã cào xong ' + allEvents.length + ' buổi học!\\n\\n📋 Dữ liệu đã được sao chép vào Clipboard và tải về file LichHoc_FAP_Moi.ics.\\n👉 Hãy quay lại tab Con Cá và Chén Cơm bấm nút: [Dán dữ liệu & Nhập lịch ngay]!');
 })();`;
 
         function openFapModal() {
@@ -7717,17 +7928,34 @@ const TOTAL_WEEKS = 6;
                         .syncFapEvents(events);
                 } else {
                     events.forEach(ev => {
+                        const rawTime = (ev.time || ev.slotTime || '').replace(/[()]/g, '').trim();
+                        let duration = 90;
+                        const tm = rawTime.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+                        if (tm) {
+                            const startM = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+                            const endM = parseInt(tm[3], 10) * 60 + parseInt(tm[4], 10);
+                            if (endM > startM) duration = endM - startM;
+                        }
+
                         allTasksList.push({
                             id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                            task: `[${ev.summary || ev.subjectCode}] ${ev.location ? 'P.' + ev.location : ''} (${ev.time || ev.slotTime || ''})`,
+                            task: `[${ev.summary || ev.subjectCode}] ${ev.location ? 'P.' + ev.location : ''} (${rawTime})`,
                             quadrant: 'donow',
+                            category: 'Học tập',
                             day: 0,
-                            time: ev.slotTime || '',
+                            time: rawTime,
+                            duration: duration,
                             done: false,
-                            source: 'fap'
+                            source: 'fap',
+                            is_fap: true
                         });
                     });
-                    renderDashboard();
+                    if (typeof syncAndRenderAllViews === 'function') {
+                        syncAndRenderAllViews();
+                    } else {
+                        renderDashboard();
+                        renderTasks(allTasksList);
+                    }
                     if (statusEl) {
                         statusEl.className = 'p-2 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 block';
                         statusEl.innerText = `✅ Đã nạp ${events.length} buổi học vào giao diện!`;
@@ -7813,20 +8041,38 @@ const TOTAL_WEEKS = 6;
                 const d = new Date(ev.date);
                 const dayOfWeek = d.getDay();
                 const dayIndex = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+                const rawTime = ev.slotTime ? ev.slotTime.replace(/[()]/g, '').trim() : '';
+
+                let duration = 90;
+                const tm = rawTime.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+                if (tm) {
+                    const startM = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+                    const endM = parseInt(tm[3], 10) * 60 + parseInt(tm[4], 10);
+                    if (endM > startM) duration = endM - startM;
+                }
+
                 allTasksList.push({
                     id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                    task: `[${ev.subjectCode}] ${ev.roomNo ? 'P.' + ev.roomNo : ''} ${ev.slotTime}`,
+                    task: `[${ev.subjectCode}] ${ev.roomNo ? 'P.' + ev.roomNo : ''} (${rawTime})`,
                     quadrant: 'donow',
+                    category: 'Học tập',
                     day: dayIndex,
-                    time: ev.slotTime ? ev.slotTime.replace(/[()]/g, '') : '',
+                    time: rawTime,
+                    duration: duration,
                     done: false,
-                    source: 'fap'
+                    source: 'fap',
+                    is_fap: true
                 });
             });
             try {
                 localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
             } catch(e) {}
-            renderDashboard();
+            if (typeof syncAndRenderAllViews === 'function') {
+                syncAndRenderAllViews();
+            } else {
+                renderDashboard();
+                renderTasks(allTasksList);
+            }
 
             if (statusEl) {
                 statusEl.className = 'p-3 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 block';
@@ -7930,7 +8176,7 @@ const TOTAL_WEEKS = 6;
                 deferredPwaPrompt.prompt();
                 deferredPwaPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
-                        showToast('Đã cài đặt Cá Cơm Workspace thành công!', '🎉');
+                        showToast('Đã cài đặt Con Cá và Chén Cơm thành công!', '🎉');
                         closePwaModal();
                     }
                     deferredPwaPrompt = null;
@@ -8383,8 +8629,8 @@ const TOTAL_WEEKS = 6;
                 serverAnnouncementsList = [
                     {
                         id: 'ann_welcome',
-                        title: 'Chào mừng bạn đến với Cá Cơm Workspace v1.6.5',
-                        content: 'Cá Cơm Workspace đã được nâng cấp toàn diện:\n• Hỗ trợ cài đặt PWA lên điện thoại (Add to Home Screen)\n• Phân loại chuẩn 3 danh mục: Học tập, Công việc, Cá nhân\n• Quản lý checklist việc con (Sub-tasks)\n• Trung tâm thông báo & Báo cáo ngày thông minh\n\nChúc bạn có một ngày làm việc và học tập thật hiệu quả!',
+                        title: 'Chào mừng bạn đến với Con Cá và Chén Cơm v1.7.0',
+                        content: 'Con Cá và Chén Cơm đã được nâng cấp toàn diện:\n• Nhận diện thương hiệu mới Con Cá và Chén Cơm\n• Hỗ trợ cài đặt PWA lên điện thoại (Add to Home Screen)\n• Phân loại chuẩn 3 danh mục: Học tập, Công việc, Cá nhân\n• Quản lý checklist việc con (Sub-tasks)\n• Đồng bộ xuyên suốt Thời khóa biểu, Ma trận và Lịch rảnh\n\nChúc bạn có một ngày làm việc và học tập thật hiệu quả!',
                         createdAt: new Date().toISOString(),
                         author: 'Nguyễn Trọng Tài (Admin)'
                     }

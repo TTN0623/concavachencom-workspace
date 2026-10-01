@@ -1,5 +1,5 @@
 <script>
-function loadAdminStats() {
+async function loadAdminStats() {
             if (!isCurrentUserAdmin) {
                 showToast('Chỉ Admin trtainguyen2306@gmail.com mới có quyền xem trang này!', '⚠️');
                 switchView('dashboard');
@@ -11,6 +11,7 @@ function loadAdminStats() {
             if (usersTableBody) usersTableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400"><div class="inline-block animate-spin mr-2">⏳</div> Đang tải danh sách người dùng...</td></tr>`;
             if (feedbackTableBody) feedbackTableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400"><div class="inline-block animate-spin mr-2">⏳</div> Đang tải danh sách phản hồi...</td></tr>`;
 
+            // 1. Chế độ Google Apps Script (nếu chạy trong iframe Apps Script)
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(renderAdminStats)
@@ -18,7 +19,112 @@ function loadAdminStats() {
                         showToast('Lỗi tải dữ liệu quản trị: ' + err, '❌');
                     })
                     .getAdminStats(currentUserEmail);
+                return;
             }
+
+            // 2. Chế độ Supabase Client (Chạy trên concavachencom.site độc lập)
+            if (window.supabaseClient) {
+                try {
+                    // Lấy danh sách tài khoản người dùng
+                    let usersList = [];
+                    const { data: usersData } = await window.supabaseClient
+                        .from('users')
+                        .select('*');
+                    
+                    if (Array.isArray(usersData) && usersData.length > 0) {
+                        usersList = usersData.map(u => ({
+                            email: u.email || '',
+                            fullName: u.full_name || u.email,
+                            role: (u.email && u.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase()) ? 'admin' : (u.role || 'user'),
+                            status: u.status || 'active',
+                            createdAt: u.created_at || new Date().toISOString(),
+                            lastLoginAt: u.last_sign_in_at || u.updated_at || u.created_at || new Date().toISOString(),
+                            tasksCount: 0
+                        }));
+                    } else {
+                        usersList = [{
+                            email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
+                            fullName: 'Trọng Tài Nguyễn',
+                            role: 'admin',
+                            status: 'active',
+                            createdAt: new Date().toISOString(),
+                            lastLoginAt: new Date().toISOString(),
+                            tasksCount: allTasksList.length
+                        }];
+                    }
+
+                    // Đếm tổng số công việc
+                    let totalTasksCount = allTasksList.length;
+                    try {
+                        const { count } = await window.supabaseClient
+                            .from('tasks')
+                            .select('*', { count: 'exact', head: true });
+                        if (typeof count === 'number' && count > 0) totalTasksCount = count;
+                    } catch(e) {}
+
+                    usersList.forEach(u => {
+                        if (u.email && u.email.toLowerCase() === currentUserEmail.toLowerCase()) {
+                            u.tasksCount = allTasksList.length;
+                        }
+                    });
+
+                    // Lấy phản hồi & góp ý từ bảng feedbacks
+                    let feedbacksList = [];
+                    let newFeedbackCount = 0;
+                    try {
+                        const { data: fbData } = await window.supabaseClient
+                            .from('feedbacks')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+                        if (Array.isArray(fbData)) {
+                            feedbacksList = fbData.map(f => {
+                                const st = String(f.status || 'new').toLowerCase();
+                                if (st === 'new') newFeedbackCount++;
+                                return {
+                                    id: f.id,
+                                    userEmail: f.user_email || f.email || '',
+                                    category: f.category || 'Góp ý tính năng',
+                                    content: f.content || '',
+                                    createdAt: f.created_at || new Date().toISOString(),
+                                    status: st
+                                };
+                            });
+                        }
+                    } catch(e) {
+                        console.warn('Lấy feedbacks từ Supabase:', e);
+                    }
+
+                    renderAdminStats({
+                        totalUsers: usersList.length,
+                        activeUsers: usersList.filter(u => u.status === 'active').length,
+                        totalTasks: totalTasksCount,
+                        newFeedbackCount: newFeedbackCount,
+                        users: usersList,
+                        feedbacks: feedbacksList
+                    });
+                    return;
+                } catch(supabaseAdminErr) {
+                    console.error('Lỗi loadAdminStats từ Supabase:', supabaseAdminErr);
+                }
+            }
+
+            // 3. Fallback an toàn (không bao giờ treo màn hình chờ của Admin)
+            renderAdminStats({
+                totalUsers: 1,
+                activeUsers: 1,
+                totalTasks: allTasksList.length,
+                newFeedbackCount: 0,
+                users: [{
+                    email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
+                    fullName: 'Trọng Tài Nguyễn',
+                    role: 'admin',
+                    status: 'active',
+                    createdAt: new Date().toISOString(),
+                    lastLoginAt: new Date().toISOString(),
+                    tasksCount: allTasksList.length
+                }],
+                feedbacks: []
+            });
         }
 
         function renderAdminStats(data) {
@@ -137,7 +243,7 @@ function loadAdminStats() {
             }
         }
 
-        function handleAdminToggleUser(targetEmail, newStatus) {
+        async function handleAdminToggleUser(targetEmail, newStatus) {
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(res => {
@@ -146,10 +252,24 @@ function loadAdminStats() {
                     })
                     .withFailureHandler(err => showToast('Lỗi: ' + err, '❌'))
                     .toggleUserStatus(targetEmail, newStatus, currentUserEmail);
+                return;
+            }
+
+            if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient
+                        .from('users')
+                        .update({ status: newStatus })
+                        .eq('email', targetEmail);
+                    showToast(`Đã chuyển trạng thái tài khoản sang ${newStatus === 'blocked' ? 'Đã khóa' : 'Hoạt động'}`, '🛡️');
+                    loadAdminStats();
+                } catch(e) {
+                    showToast('Lỗi cập nhật người dùng: ' + e.message, '❌');
+                }
             }
         }
 
-        function handleAdminUpdateFeedback(feedbackId, newStatus) {
+        async function handleAdminUpdateFeedback(feedbackId, newStatus) {
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(res => {
@@ -158,6 +278,20 @@ function loadAdminStats() {
                     })
                     .withFailureHandler(err => showToast('Lỗi: ' + err, '❌'))
                     .updateFeedbackStatus(feedbackId, newStatus, currentUserEmail);
+                return;
+            }
+
+            if (window.supabaseClient) {
+                try {
+                    await window.supabaseClient
+                        .from('feedbacks')
+                        .update({ status: newStatus })
+                        .eq('id', feedbackId);
+                    showToast('Đã cập nhật trạng thái phản hồi!', '✅');
+                    loadAdminStats();
+                } catch(e) {
+                    showToast('Lỗi cập nhật phản hồi: ' + e.message, '❌');
+                }
             }
         }
 </script>

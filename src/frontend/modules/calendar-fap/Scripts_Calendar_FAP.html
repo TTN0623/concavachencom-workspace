@@ -184,7 +184,7 @@
         // =====================================================================
         // ĐỒNG BỘ LỊCH HỌC TỰ ĐỘNG TỪ FAP FPT
         // =====================================================================
-        const FAP_SYNC_SCRIPT_TEXT = `// FAP MỚI (Weekly Timetable) to Cá Cơm Workspace & Google Calendar
+        const FAP_SYNC_SCRIPT_TEXT = `// FAP MỚI (Weekly Timetable) to Con Cá và Chén Cơm & Google Calendar
 const WORKSPACE_URL = '` + WEB_APP_URL + `';
 const TOTAL_WEEKS = 6;
 
@@ -297,7 +297,7 @@ const TOTAL_WEEKS = 6;
         link.click();
     } catch(e) {}
 
-    alert('🎉 Tuyệt vời! Đã cào xong ' + allEvents.length + ' buổi học!\n\n📋 Dữ liệu đã được sao chép vào Clipboard và tải về file LichHoc_FAP_Moi.ics.\n👉 Hãy quay lại tab Cá Cơm Workspace bấm nút: [Dán dữ liệu & Nhập lịch ngay]!');
+    alert('🎉 Tuyệt vời! Đã cào xong ' + allEvents.length + ' buổi học!\\n\\n📋 Dữ liệu đã được sao chép vào Clipboard và tải về file LichHoc_FAP_Moi.ics.\\n👉 Hãy quay lại tab Con Cá và Chén Cơm bấm nút: [Dán dữ liệu & Nhập lịch ngay]!');
 })();`;
 
         function openFapModal() {
@@ -412,17 +412,34 @@ const TOTAL_WEEKS = 6;
                         .syncFapEvents(events);
                 } else {
                     events.forEach(ev => {
+                        const rawTime = (ev.time || ev.slotTime || '').replace(/[()]/g, '').trim();
+                        let duration = 90;
+                        const tm = rawTime.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+                        if (tm) {
+                            const startM = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+                            const endM = parseInt(tm[3], 10) * 60 + parseInt(tm[4], 10);
+                            if (endM > startM) duration = endM - startM;
+                        }
+
                         allTasksList.push({
                             id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                            task: `[${ev.summary || ev.subjectCode}] ${ev.location ? 'P.' + ev.location : ''} (${ev.time || ev.slotTime || ''})`,
+                            task: `[${ev.summary || ev.subjectCode}] ${ev.location ? 'P.' + ev.location : ''} (${rawTime})`,
                             quadrant: 'donow',
+                            category: 'Học tập',
                             day: 0,
-                            time: ev.slotTime || '',
+                            time: rawTime,
+                            duration: duration,
                             done: false,
-                            source: 'fap'
+                            source: 'fap',
+                            is_fap: true
                         });
                     });
-                    renderDashboard();
+                    if (typeof syncAndRenderAllViews === 'function') {
+                        syncAndRenderAllViews();
+                    } else {
+                        renderDashboard();
+                        renderTasks(allTasksList);
+                    }
                     if (statusEl) {
                         statusEl.className = 'p-2 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 block';
                         statusEl.innerText = `✅ Đã nạp ${events.length} buổi học vào giao diện!`;
@@ -508,20 +525,38 @@ const TOTAL_WEEKS = 6;
                 const d = new Date(ev.date);
                 const dayOfWeek = d.getDay();
                 const dayIndex = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+                const rawTime = ev.slotTime ? ev.slotTime.replace(/[()]/g, '').trim() : '';
+
+                let duration = 90;
+                const tm = rawTime.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+                if (tm) {
+                    const startM = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+                    const endM = parseInt(tm[3], 10) * 60 + parseInt(tm[4], 10);
+                    if (endM > startM) duration = endM - startM;
+                }
+
                 allTasksList.push({
                     id: 'fap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                    task: `[${ev.subjectCode}] ${ev.roomNo ? 'P.' + ev.roomNo : ''} ${ev.slotTime}`,
+                    task: `[${ev.subjectCode}] ${ev.roomNo ? 'P.' + ev.roomNo : ''} (${rawTime})`,
                     quadrant: 'donow',
+                    category: 'Học tập',
                     day: dayIndex,
-                    time: ev.slotTime ? ev.slotTime.replace(/[()]/g, '') : '',
+                    time: rawTime,
+                    duration: duration,
                     done: false,
-                    source: 'fap'
+                    source: 'fap',
+                    is_fap: true
                 });
             });
             try {
                 localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
             } catch(e) {}
-            renderDashboard();
+            if (typeof syncAndRenderAllViews === 'function') {
+                syncAndRenderAllViews();
+            } else {
+                renderDashboard();
+                renderTasks(allTasksList);
+            }
 
             if (statusEl) {
                 statusEl.className = 'p-3 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 block';

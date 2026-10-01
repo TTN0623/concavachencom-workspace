@@ -1,6 +1,6 @@
 // ============================================================================
 // CODE.JS - ROOT CONTROLLER & WEB APP ROUTER
-// CÁ CƠM WORKSPACE
+// CON CÁ VÀ CHÉN CƠM
 // ============================================================================
 
 /**
@@ -110,7 +110,7 @@ function doGet(e) {
   template.newFeedbackCount = (currentUser && currentUser.newFeedbackCount) ? currentUser.newFeedbackCount : 0;
 
   return template.evaluate()
-    .setTitle('Cá Cơm và Chén Cơm - Quản lý công việc & Thời khóa biểu')
+    .setTitle('Con Cá và Chén Cơm - Quản lý công việc & Thời khóa biểu')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -185,7 +185,7 @@ function doPost(e) {
 function onOpen() {
   try {
     SpreadsheetApp.getUi()
-      .createMenu('🐟 Cá Cơm Workspace')
+      .createMenu('🐟 Con Cá và Chén Cơm')
       .addItem('🔄 Đồng bộ tất cả Sheet sang Web (Supabase)', 'syncAllSheetTasksToSupabase')
       .addItem('📅 Cấp quyền Google Calendar', 'aaa_CapQuyen_Calendar')
       .addToUi();
