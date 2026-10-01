@@ -77,8 +77,8 @@
             }
         } catch(e) {}
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://accounts.google.com/gsi/client" async defer onload="if(window.onGoogleGsiLoaded) window.onGoogleGsiLoaded();"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -331,6 +331,23 @@
 
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-800">
+
+    <!-- MÀN HÌNH SPLASH SCREEN CHỐNG MÀN HÌNH TRẮNG KHI LOAD TRANG (ZERO WHITE SCREEN) -->
+    <div id="appInitialSplash" style="position:fixed;inset:0;background:#f8fafc;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;transition:opacity 0.25s ease;">
+        <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#0054a6,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 10px 25px rgba(0,84,166,0.3);margin-bottom:16px;">
+            🐟
+        </div>
+        <div style="font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-0.5px;margin-bottom:6px;">Con Cá và Chén Cơm</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:20px;">Đang tải ứng dụng & dữ liệu...</div>
+        <div style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#0054a6;border-radius:50%;animation:splashSpin 0.7s linear infinite;"></div>
+        <style>
+            @keyframes splashSpin{to{transform:rotate(360deg)}}
+            .dark #appInitialSplash { background: #0f172a !important; }
+            .dark #appInitialSplash div:nth-child(2) { color: #f8fafc !important; }
+            .dark #appInitialSplash div:nth-child(3) { color: #94a3b8 !important; }
+            .dark #appInitialSplash div:nth-child(4) { border-color: #1e293b !important; border-top-color: #38bdf8 !important; }
+        </style>
+    </div>
 
     <!-- =================================================================== -->
     <header class="h-14 md:h-16 bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 px-3 md:px-6 flex items-center justify-between shrink-0 z-40 shadow-xs">
@@ -3037,6 +3054,18 @@
         };
 
         // =====================================================================
+        // TRÌNH THEO DÕI ĐỒNG BỘ ĐẢM BẢO KHÔNG THẤT THOÁT DỮ LIỆU KHI ĐĂNG XUẤT
+        // =====================================================================
+        window._activeSyncPromises = new Set();
+        function trackActiveSync(promise) {
+            if (!promise || typeof promise.then !== 'function') return promise;
+            window._activeSyncPromises.add(promise);
+            promise.finally(() => window._activeSyncPromises.delete(promise));
+            return promise;
+        }
+        window.trackActiveSync = trackActiveSync;
+
+        // =====================================================================
         // ĐỒNG BỘ TOÀN DIỆN MỌI GIAO DIỆN & PERSISTENCE (SINGLE SOURCE OF TRUTH)
         // =====================================================================
         function syncAndRenderAllViews(taskObj = null) {
@@ -3044,7 +3073,7 @@
                 localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
             } catch(e) {}
 
-            // 1. Cập nhật các giao diện con
+            // 1. Cập nhật các giao diện con tức thì
             if (typeof renderTasks === 'function') renderTasks(allTasksList);
             if (typeof renderDashboard === 'function') renderDashboard();
             if (typeof renderFapScheduleTable === 'function') renderFapScheduleTable();
@@ -3052,8 +3081,13 @@
             if (typeof renderCategoryFilters === 'function') renderCategoryFilters();
             if (typeof loadAndRenderNotifications === 'function') loadAndRenderNotifications();
 
-            // 2. Lưu trữ lên Supabase và Google Sheets
-            if (taskObj) {
+            // 2. Lưu trữ tức thì lên Supabase và Google Sheets
+            if (Array.isArray(taskObj)) {
+                taskObj.forEach(t => {
+                    if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(t);
+                    if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: t });
+                });
+            } else if (taskObj) {
                 if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskObj);
                 if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: taskObj });
             }
@@ -6543,44 +6577,52 @@ async function loadAdminStats() {
         // TIỆN ÍCH LƯU & XÓA CÔNG VIỆC SUPABASE (CLOUD FIRST + REALTIME)
         // =====================================================================
         async function saveTaskToSupabase(taskObj) {
-            if (!window.supabaseClient) return;
-            try {
-                const subtasksData = Array.isArray(taskObj.subtasks) 
-                    ? taskObj.subtasks 
-                    : (typeof taskObj.subtasks === 'string' ? JSON.parse(taskObj.subtasks || '[]') : []);
+            if (!window.supabaseClient || !taskObj || !taskObj.id) return;
+            const p = (async () => {
+                try {
+                    const subtasksData = Array.isArray(taskObj.subtasks) 
+                        ? taskObj.subtasks 
+                        : (typeof taskObj.subtasks === 'string' ? JSON.parse(taskObj.subtasks || '[]') : []);
 
-                const row = {
-                    id: String(taskObj.id),
-                    task: taskObj.task,
-                    category: taskObj.category || 'Công việc',
-                    subtasks: subtasksData,
-                    quadrant: taskObj.quadrant || 'inbox',
-                    day: (taskObj.day !== undefined && taskObj.day !== null && taskObj.day !== '') ? String(taskObj.day) : null,
-                    time: taskObj.time || null,
-                    duration: parseInt(taskObj.duration) || 30,
-                    done: !!taskObj.done,
-                    deadline: taskObj.deadline || null,
-                    priority: taskObj.priority || 'medium',
-                    owner_email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
-                    is_fap: String(taskObj.id).startsWith('fap_'),
-                    updated_at: new Date().toISOString()
-                };
+                    const row = {
+                        id: String(taskObj.id),
+                        task: taskObj.task,
+                        category: taskObj.category || 'Công việc',
+                        subtasks: subtasksData,
+                        quadrant: taskObj.quadrant || 'inbox',
+                        day: (taskObj.day !== undefined && taskObj.day !== null && taskObj.day !== '') ? String(taskObj.day) : null,
+                        time: taskObj.time || null,
+                        duration: parseInt(taskObj.duration) || 30,
+                        done: !!taskObj.done,
+                        deadline: taskObj.deadline || null,
+                        priority: taskObj.priority || 'medium',
+                        owner_email: currentUserEmail || ADMIN_PRIMARY_EMAIL,
+                        is_fap: String(taskObj.id).startsWith('fap_'),
+                        updated_at: new Date().toISOString()
+                    };
 
-                const { error } = await window.supabaseClient.from('tasks').upsert(row, { onConflict: 'id' });
-                if (error) console.warn('Lỗi Supabase upsert:', error);
-            } catch (e) {
-                console.warn('Lỗi lưu task lên Supabase:', e);
-            }
+                    const { error } = await window.supabaseClient.from('tasks').upsert(row, { onConflict: 'id' });
+                    if (error) console.warn('Lỗi Supabase upsert:', error);
+                } catch (e) {
+                    console.warn('Lỗi lưu task lên Supabase:', e);
+                }
+            })();
+            if (typeof window.trackActiveSync === 'function') window.trackActiveSync(p);
+            return p;
         }
 
         async function deleteTaskFromSupabase(taskId) {
-            if (!window.supabaseClient) return;
-            try {
-                const { error } = await window.supabaseClient.from('tasks').delete().eq('id', String(taskId));
-                if (error) console.warn('Lỗi Supabase delete:', error);
-            } catch (e) {
-                console.warn('Lỗi xóa task trên Supabase:', e);
-            }
+            if (!window.supabaseClient || !taskId) return;
+            const p = (async () => {
+                try {
+                    const { error } = await window.supabaseClient.from('tasks').delete().eq('id', String(taskId));
+                    if (error) console.warn('Lỗi Supabase delete:', error);
+                } catch (e) {
+                    console.warn('Lỗi xóa task trên Supabase:', e);
+                }
+            })();
+            if (typeof window.trackActiveSync === 'function') window.trackActiveSync(p);
+            return p;
         }
 
         // =====================================================================
@@ -9057,6 +9099,13 @@ const TOTAL_WEEKS = 6;
             initIcsDragDrop();
             fetchServerAnnouncements();
             loadAndRenderNotifications();
+
+            // Mở màn hình ứng dụng mượt mà, gỡ bỏ splash screen
+            const splashEl = document.getElementById('appInitialSplash');
+            if (splashEl) {
+                splashEl.style.opacity = '0';
+                setTimeout(() => splashEl.remove(), 250);
+            }
         });
 
 

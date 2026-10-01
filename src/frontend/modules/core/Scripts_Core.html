@@ -592,6 +592,18 @@
         };
 
         // =====================================================================
+        // TRÌNH THEO DÕI ĐỒNG BỘ ĐẢM BẢO KHÔNG THẤT THOÁT DỮ LIỆU KHI ĐĂNG XUẤT
+        // =====================================================================
+        window._activeSyncPromises = new Set();
+        function trackActiveSync(promise) {
+            if (!promise || typeof promise.then !== 'function') return promise;
+            window._activeSyncPromises.add(promise);
+            promise.finally(() => window._activeSyncPromises.delete(promise));
+            return promise;
+        }
+        window.trackActiveSync = trackActiveSync;
+
+        // =====================================================================
         // ĐỒNG BỘ TOÀN DIỆN MỌI GIAO DIỆN & PERSISTENCE (SINGLE SOURCE OF TRUTH)
         // =====================================================================
         function syncAndRenderAllViews(taskObj = null) {
@@ -599,7 +611,7 @@
                 localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(allTasksList));
             } catch(e) {}
 
-            // 1. Cập nhật các giao diện con
+            // 1. Cập nhật các giao diện con tức thì
             if (typeof renderTasks === 'function') renderTasks(allTasksList);
             if (typeof renderDashboard === 'function') renderDashboard();
             if (typeof renderFapScheduleTable === 'function') renderFapScheduleTable();
@@ -607,8 +619,13 @@
             if (typeof renderCategoryFilters === 'function') renderCategoryFilters();
             if (typeof loadAndRenderNotifications === 'function') loadAndRenderNotifications();
 
-            // 2. Lưu trữ lên Supabase và Google Sheets
-            if (taskObj) {
+            // 2. Lưu trữ tức thì lên Supabase và Google Sheets
+            if (Array.isArray(taskObj)) {
+                taskObj.forEach(t => {
+                    if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(t);
+                    if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: t });
+                });
+            } else if (taskObj) {
                 if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskObj);
                 if (typeof sendBackgroundGasSync === 'function') sendBackgroundGasSync('syncFromWeb', { task: taskObj });
             }

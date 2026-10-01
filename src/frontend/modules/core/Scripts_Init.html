@@ -54,6 +54,13 @@
             initIcsDragDrop();
             fetchServerAnnouncements();
             loadAndRenderNotifications();
+
+            // Mở màn hình ứng dụng mượt mà, gỡ bỏ splash screen
+            const splashEl = document.getElementById('appInitialSplash');
+            if (splashEl) {
+                splashEl.style.opacity = '0';
+                setTimeout(() => splashEl.remove(), 250);
+            }
         });
 
 

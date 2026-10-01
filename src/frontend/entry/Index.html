@@ -77,8 +77,8 @@
             }
         } catch(e) {}
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://accounts.google.com/gsi/client" async defer onload="if(window.onGoogleGsiLoaded) window.onGoogleGsiLoaded();"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,6 +88,23 @@
     <?!= include('Styles'); ?>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-800">
+
+    <!-- MÀN HÌNH SPLASH SCREEN CHỐNG MÀN HÌNH TRẮNG KHI LOAD TRANG (ZERO WHITE SCREEN) -->
+    <div id="appInitialSplash" style="position:fixed;inset:0;background:#f8fafc;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;transition:opacity 0.25s ease;">
+        <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#0054a6,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 10px 25px rgba(0,84,166,0.3);margin-bottom:16px;">
+            🐟
+        </div>
+        <div style="font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-0.5px;margin-bottom:6px;">Con Cá và Chén Cơm</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:20px;">Đang tải ứng dụng & dữ liệu...</div>
+        <div style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#0054a6;border-radius:50%;animation:splashSpin 0.7s linear infinite;"></div>
+        <style>
+            @keyframes splashSpin{to{transform:rotate(360deg)}}
+            .dark #appInitialSplash { background: #0f172a !important; }
+            .dark #appInitialSplash div:nth-child(2) { color: #f8fafc !important; }
+            .dark #appInitialSplash div:nth-child(3) { color: #94a3b8 !important; }
+            .dark #appInitialSplash div:nth-child(4) { border-color: #1e293b !important; border-top-color: #38bdf8 !important; }
+        </style>
+    </div>
 
     <!-- =================================================================== -->
     <header class="h-14 md:h-16 bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 px-3 md:px-6 flex items-center justify-between shrink-0 z-40 shadow-xs">
