@@ -2181,9 +2181,6 @@
                 Hệ thống Quản lý công việc & Thời khóa biểu thông minh cho học sinh, sinh viên và người dùng cá nhân.
             </p>
 
-            <!-- Google Sign In Container (GIS Native & Custom Button) -->
-            <div id="googleSignInBtnBox" class="w-full flex justify-center mb-2 overflow-hidden rounded-xl"></div>
-
             <button type="button" 
                     id="btnAuthGateSignIn"
                     onclick="handleGoogleSignIn()" 
@@ -3426,6 +3423,28 @@
             renderAuthUI();
             renderProfileUI();
 
+            // Tự động đồng bộ / lưu người dùng mới hoặc cập nhật vào bảng users trên Supabase
+            if (window.supabaseClient && currentUserEmail) {
+                const userPayload = {
+                    email: currentUserEmail,
+                    full_name: fullName,
+                    avatar_url: avatarUrl,
+                    status: 'active',
+                    last_login_at: new Date().toISOString()
+                };
+                if (isCurrentUserAdmin) {
+                    userPayload.role = 'admin';
+                }
+                window.supabaseClient
+                    .from('users')
+                    .upsert(userPayload, { onConflict: 'email' })
+                    .then(({ error }) => {
+                        if (error) console.warn('Lỗi upsert bảng users Supabase:', error);
+                        else console.log('✅ Đã lưu/cập nhật người dùng vào bảng users:', currentUserEmail);
+                    })
+                    .catch(e => console.warn('Lỗi upsert users:', e));
+            }
+
             fetchTasksFromSupabase(currentUserEmail);
             initSupabaseRealtime(currentUserEmail);
         }
@@ -3784,23 +3803,8 @@
                         cancel_on_tap_outside: true,
                         itp_support: true
                     });
-
-                    // Render nút Google chính hãng chuẩn Google Design
-                    const btnContainer = document.getElementById('googleSignInBtnBox');
-                    if (btnContainer && !btnContainer.hasChildNodes()) {
-                        google.accounts.id.renderButton(btnContainer, {
-                            theme: 'outline',
-                            size: 'large',
-                            type: 'standard',
-                            shape: 'rectangular',
-                            text: 'signin_with',
-                            width: 320,
-                            logo_alignment: 'left'
-                        });
-                        // Ẩn nút custom khi nút chính hãng Google đã được vẽ thành công
-                        const customBtn = document.getElementById('btnAuthGateSignIn');
-                        if (customBtn) customBtn.classList.add('hidden');
-                    }
+                    // Luôn vô hiệu hóa tự động chọn để người dùng có thể chủ động chọn tài khoản bất kỳ
+                    google.accounts.id.disableAutoSelect();
                 } catch(e) {
                     console.warn('Lỗi initGoogleIdentityServices:', e);
                 }
@@ -3936,8 +3940,11 @@
                             email: userObj.email,
                             full_name: userObj.user_metadata.full_name,
                             avatar_url: userObj.user_metadata.avatar_url,
-                            last_sign_in_at: new Date().toISOString()
-                        }, { onConflict: 'email' }).then(() => {}).catch(err => console.warn('Supabase users upsert:', err));
+                            status: 'active',
+                            last_login_at: new Date().toISOString()
+                        }, { onConflict: 'email' }).then(({ error }) => {
+                            if (error) console.warn('Lỗi upsert bảng users:', error);
+                        }).catch(err => console.warn('Supabase users upsert:', err));
                     }
                     return;
                 }
@@ -4182,11 +4189,13 @@ async function loadAdminStats() {
             if (window.supabaseClient) {
                 try {
                     // Lấy danh sách tài khoản người dùng
-                    let usersList = [];
-                    const { data: usersData } = await window.supabaseClient
+                    const { data: usersData, error: usersErr } = await window.supabaseClient
                         .from('users')
-                        .select('*');
+                        .select('*')
+                        .order('created_at', { ascending: false });
                     
+                    if (usersErr) console.warn('Lỗi tải danh sách users từ Supabase:', usersErr);
+
                     if (Array.isArray(usersData) && usersData.length > 0) {
                         usersList = usersData.map(u => ({
                             email: u.email || '',
@@ -4194,7 +4203,7 @@ async function loadAdminStats() {
                             role: (u.email && u.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase()) ? 'admin' : (u.role || 'user'),
                             status: u.status || 'active',
                             createdAt: u.created_at || new Date().toISOString(),
-                            lastLoginAt: u.last_sign_in_at || u.updated_at || u.created_at || new Date().toISOString(),
+                            lastLoginAt: u.last_login_at || u.last_sign_in_at || u.updated_at || u.created_at || new Date().toISOString(),
                             tasksCount: 0
                         }));
                     } else {

@@ -26,11 +26,13 @@ async function loadAdminStats() {
             if (window.supabaseClient) {
                 try {
                     // Lấy danh sách tài khoản người dùng
-                    let usersList = [];
-                    const { data: usersData } = await window.supabaseClient
+                    const { data: usersData, error: usersErr } = await window.supabaseClient
                         .from('users')
-                        .select('*');
+                        .select('*')
+                        .order('created_at', { ascending: false });
                     
+                    if (usersErr) console.warn('Lỗi tải danh sách users từ Supabase:', usersErr);
+
                     if (Array.isArray(usersData) && usersData.length > 0) {
                         usersList = usersData.map(u => ({
                             email: u.email || '',
@@ -38,7 +40,7 @@ async function loadAdminStats() {
                             role: (u.email && u.email.toLowerCase() === ADMIN_PRIMARY_EMAIL.toLowerCase()) ? 'admin' : (u.role || 'user'),
                             status: u.status || 'active',
                             createdAt: u.created_at || new Date().toISOString(),
-                            lastLoginAt: u.last_sign_in_at || u.updated_at || u.created_at || new Date().toISOString(),
+                            lastLoginAt: u.last_login_at || u.last_sign_in_at || u.updated_at || u.created_at || new Date().toISOString(),
                             tasksCount: 0
                         }));
                     } else {
