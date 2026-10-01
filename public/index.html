@@ -151,6 +151,47 @@
     .list-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
     .list-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+    /* Hộp thư Chưa sắp xếp (Inbox) dạng hàng ngang cuộn trái phải */
+    .inbox-horizontal-container {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        padding: 4px 4px 10px 4px;
+        min-height: 110px;
+        border-radius: 0.75rem;
+    }
+    .inbox-horizontal-container::-webkit-scrollbar {
+        height: 6px;
+    }
+    .inbox-horizontal-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 9999px;
+    }
+    .inbox-horizontal-container::-webkit-scrollbar-thumb {
+        background: #93c5fd;
+        border-radius: 9999px;
+    }
+    .inbox-horizontal-container::-webkit-scrollbar-thumb:hover {
+        background: #3b82f6;
+    }
+    .inbox-horizontal-container .task-card {
+        min-width: 250px;
+        max-width: 280px;
+        flex-shrink: 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .dark .inbox-horizontal-container::-webkit-scrollbar-track {
+        background: #1e293b;
+    }
+    .dark .inbox-horizontal-container::-webkit-scrollbar-thumb {
+        background: #3b82f6;
+    }
+
     /* ================= GIAO DIỆN TỐI (DARK MODE) ================= */
     .dark body { 
         background-color: #0b1120 !important; 
@@ -830,6 +871,37 @@
                                 </div>
                             </div>
 
+                            <!-- MỤC CHƯA SẮP XẾP (INBOX): NẰM PHÍA DƯỚI BỘ LỌC, CHIỀU RỘNG BẰNG BỘ LỌC, THANH CUỘN KÉO TRÁI PHẢI ĐỂ KÉO THẢ VÀO 4 Ô -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs p-3 flex flex-col gap-2 transition-all">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-base">📥</span>
+                                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs tracking-wide">
+                                                Chưa sắp xếp (Inbox)
+                                            </h3>
+                                            <span class="text-[10px] bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold" id="inboxCount">0</span>
+                                        </div>
+                                        <span class="text-[11px] text-slate-400 dark:text-slate-500 font-normal hidden sm:inline">
+                                            &bull; Kéo thả các thẻ việc từ khay này vào 4 ô phân loại Ma trận bên dưới
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" onclick="scrollInbox('left')" title="Cuộn sang trái" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer">
+                                            &larr;
+                                        </button>
+                                        <button type="button" onclick="scrollInbox('right')" title="Cuộn sang phải" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer">
+                                            &rarr;
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- KHAY CÔNG VIỆC CHƯA SẮP XẾP: HÀNG NGANG CUỘN TRÁI PHẢI, THẢ VÀO 4 Ô MA TRẬN -->
+                                <div id="inbox" class="inbox-horizontal-container list-container">
+                                    <div id="loading" class="text-center text-xs text-slate-400 py-6 w-full no-drag">Đang tải dữ liệu từ Google Sheets...</div>
+                                </div>
+                            </div>
+
                             <div class="matrix-grid">
                                 
                                 <!-- Ô 1: DO NOW -->
@@ -986,21 +1058,6 @@
                                     </div>
                                 </form>
                             </div>
-
-                            <!-- Khối Inbox: Không gian thoáng, có scroll, hiển thị rõ ràng -->
-                            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs flex flex-col overflow-hidden min-h-[260px] max-h-[460px]">
-                                <div class="p-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/80 dark:bg-slate-800/50 rounded-t-xl shrink-0">
-                                    <div class="flex items-center gap-1.5">
-                                        <span>📥</span>
-                                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs">Chưa sắp xếp (Inbox)</h3>
-                                    </div>
-                                    <span class="text-[10px] bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold" id="inboxCount">0</span>
-                                </div>
-                                <div class="p-3 flex-1 overflow-y-auto list-container bg-slate-50/40 dark:bg-slate-800/20 min-h-0 space-y-2" id="inbox">
-                                    <div id="loading" class="text-center text-xs text-slate-400 py-6">Đang tải dữ liệu từ Google Sheets...</div>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
 
@@ -5344,6 +5401,7 @@ async function loadAdminStats() {
                     group: 'matrix', 
                     animation: 150,
                     ghostClass: 'sortable-ghost',
+                    filter: '.no-drag',
                     delayOnTouchOnly: true, 
                     delay: 150, 
                     onEnd: function (evt) {
@@ -5369,6 +5427,19 @@ async function loadAdminStats() {
                             updateInboxCount();
                             updateUnscheduledBadge();
 
+                            // Đồng bộ lên Supabase Cloud
+                            if (window.supabaseClient && taskId) {
+                                window.supabaseClient
+                                    .from('tasks')
+                                    .update({ quadrant: toId, updated_at: new Date().toISOString() })
+                                    .eq('id', taskId)
+                                    .then(({ error }) => {
+                                        if (error) console.warn('Lỗi update quadrant Supabase:', error);
+                                        else console.log('✅ Đã đồng bộ phân loại mới lên Supabase:', taskId, toId);
+                                    });
+                            }
+
+                            // Đồng bộ lên Google Sheets (nếu chạy qua GAS)
                             if (window.google && google.script && google.script.run) {
                                 google.script.run.updateTask(taskId, { quadrant: toId, userEmail: currentUserEmail });
                             }
@@ -5993,11 +6064,30 @@ async function loadAdminStats() {
             `;
         }
 
-        // Cập nhật số đếm Inbox
+        // Cập nhật số đếm Inbox & Trạng thái rỗng
         function updateInboxCount() {
-            const count = document.getElementById('inbox')?.querySelectorAll('.task-card').length || 0;
+            const inboxEl = document.getElementById('inbox');
+            const count = inboxEl?.querySelectorAll('.task-card').length || 0;
             const badge = document.getElementById('inboxCount');
             if (badge) badge.innerText = count;
+
+            if (inboxEl) {
+                if (count === 0 && !document.getElementById('loading')) {
+                    if (!inboxEl.querySelector('.inbox-empty-hint')) {
+                        inboxEl.innerHTML = `<div class="inbox-empty-hint w-full py-5 text-center text-xs text-slate-400 dark:text-slate-500 italic no-drag select-none flex items-center justify-center gap-2"><span class="text-base">✨</span> Hiện không có việc chưa sắp xếp. Hãy thêm việc mới từ khung bên phải hoặc kéo việc vào đây!</div>`;
+                    }
+                } else if (count > 0) {
+                    inboxEl.querySelectorAll('.inbox-empty-hint').forEach(e => e.remove());
+                }
+            }
+        }
+
+        // Cuộn ngang danh sách Chưa sắp xếp (Inbox)
+        function scrollInbox(direction) {
+            const el = document.getElementById('inbox');
+            if (!el) return;
+            const scrollDistance = 280;
+            el.scrollBy({ left: direction === 'left' ? -scrollDistance : scrollDistance, behavior: 'smooth' });
         }
 
 

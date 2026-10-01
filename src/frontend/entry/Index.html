@@ -628,6 +628,37 @@
                                 </div>
                             </div>
 
+                            <!-- MỤC CHƯA SẮP XẾP (INBOX): NẰM PHÍA DƯỚI BỘ LỌC, CHIỀU RỘNG BẰNG BỘ LỌC, THANH CUỘN KÉO TRÁI PHẢI ĐỂ KÉO THẢ VÀO 4 Ô -->
+                            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs p-3 flex flex-col gap-2 transition-all">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-base">📥</span>
+                                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs tracking-wide">
+                                                Chưa sắp xếp (Inbox)
+                                            </h3>
+                                            <span class="text-[10px] bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold" id="inboxCount">0</span>
+                                        </div>
+                                        <span class="text-[11px] text-slate-400 dark:text-slate-500 font-normal hidden sm:inline">
+                                            &bull; Kéo thả các thẻ việc từ khay này vào 4 ô phân loại Ma trận bên dưới
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" onclick="scrollInbox('left')" title="Cuộn sang trái" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer">
+                                            &larr;
+                                        </button>
+                                        <button type="button" onclick="scrollInbox('right')" title="Cuộn sang phải" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer">
+                                            &rarr;
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- KHAY CÔNG VIỆC CHƯA SẮP XẾP: HÀNG NGANG CUỘN TRÁI PHẢI, THẢ VÀO 4 Ô MA TRẬN -->
+                                <div id="inbox" class="inbox-horizontal-container list-container">
+                                    <div id="loading" class="text-center text-xs text-slate-400 py-6 w-full no-drag">Đang tải dữ liệu từ Google Sheets...</div>
+                                </div>
+                            </div>
+
                             <div class="matrix-grid">
                                 
                                 <!-- Ô 1: DO NOW -->
@@ -784,21 +815,6 @@
                                     </div>
                                 </form>
                             </div>
-
-                            <!-- Khối Inbox: Không gian thoáng, có scroll, hiển thị rõ ràng -->
-                            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs flex flex-col overflow-hidden min-h-[260px] max-h-[460px]">
-                                <div class="p-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/80 dark:bg-slate-800/50 rounded-t-xl shrink-0">
-                                    <div class="flex items-center gap-1.5">
-                                        <span>📥</span>
-                                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs">Chưa sắp xếp (Inbox)</h3>
-                                    </div>
-                                    <span class="text-[10px] bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold" id="inboxCount">0</span>
-                                </div>
-                                <div class="p-3 flex-1 overflow-y-auto list-container bg-slate-50/40 dark:bg-slate-800/20 min-h-0 space-y-2" id="inbox">
-                                    <div id="loading" class="text-center text-xs text-slate-400 py-6">Đang tải dữ liệu từ Google Sheets...</div>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
 

@@ -881,6 +881,7 @@
                     group: 'matrix', 
                     animation: 150,
                     ghostClass: 'sortable-ghost',
+                    filter: '.no-drag',
                     delayOnTouchOnly: true, 
                     delay: 150, 
                     onEnd: function (evt) {
@@ -906,6 +907,19 @@
                             updateInboxCount();
                             updateUnscheduledBadge();
 
+                            // Đồng bộ lên Supabase Cloud
+                            if (window.supabaseClient && taskId) {
+                                window.supabaseClient
+                                    .from('tasks')
+                                    .update({ quadrant: toId, updated_at: new Date().toISOString() })
+                                    .eq('id', taskId)
+                                    .then(({ error }) => {
+                                        if (error) console.warn('Lỗi update quadrant Supabase:', error);
+                                        else console.log('✅ Đã đồng bộ phân loại mới lên Supabase:', taskId, toId);
+                                    });
+                            }
+
+                            // Đồng bộ lên Google Sheets (nếu chạy qua GAS)
                             if (window.google && google.script && google.script.run) {
                                 google.script.run.updateTask(taskId, { quadrant: toId, userEmail: currentUserEmail });
                             }

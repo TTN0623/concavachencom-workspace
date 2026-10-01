@@ -171,11 +171,30 @@
             `;
         }
 
-        // Cập nhật số đếm Inbox
+        // Cập nhật số đếm Inbox & Trạng thái rỗng
         function updateInboxCount() {
-            const count = document.getElementById('inbox')?.querySelectorAll('.task-card').length || 0;
+            const inboxEl = document.getElementById('inbox');
+            const count = inboxEl?.querySelectorAll('.task-card').length || 0;
             const badge = document.getElementById('inboxCount');
             if (badge) badge.innerText = count;
+
+            if (inboxEl) {
+                if (count === 0 && !document.getElementById('loading')) {
+                    if (!inboxEl.querySelector('.inbox-empty-hint')) {
+                        inboxEl.innerHTML = `<div class="inbox-empty-hint w-full py-5 text-center text-xs text-slate-400 dark:text-slate-500 italic no-drag select-none flex items-center justify-center gap-2"><span class="text-base">✨</span> Hiện không có việc chưa sắp xếp. Hãy thêm việc mới từ khung bên phải hoặc kéo việc vào đây!</div>`;
+                    }
+                } else if (count > 0) {
+                    inboxEl.querySelectorAll('.inbox-empty-hint').forEach(e => e.remove());
+                }
+            }
+        }
+
+        // Cuộn ngang danh sách Chưa sắp xếp (Inbox)
+        function scrollInbox(direction) {
+            const el = document.getElementById('inbox');
+            if (!el) return;
+            const scrollDistance = 280;
+            el.scrollBy({ left: direction === 'left' ? -scrollDistance : scrollDistance, behavior: 'smooth' });
         }
 
 
