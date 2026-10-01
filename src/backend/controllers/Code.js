@@ -6,10 +6,30 @@
 /**
  * Helper hàm nhúng các file HTML con vào template chính
  * Tuân thủ mô hình Modular Web App của Google Apps Script
+ * Hỗ trợ tra cứu thông minh trên cấu trúc thư mục phân cấp
  * @param {string} filename Tên file HTML con (không bao gồm đuôi .html)
  * @returns {string} Nội dung HTML được include
  */
 function include(filename) {
+  var candidatePaths = [
+    filename,
+    'frontend/entry/' + filename,
+    'frontend/styles/' + filename,
+    'frontend/components/' + filename,
+    'frontend/modules/core/' + filename,
+    'frontend/modules/auth/' + filename,
+    'frontend/modules/task-matrix/' + filename,
+    'frontend/modules/calendar-fap/' + filename,
+    'frontend/modules/dashboard/' + filename,
+    'frontend/modules/freetime/' + filename,
+    'frontend/modules/notifications/' + filename,
+    'frontend/modules/admin/' + filename
+  ];
+  for (var i = 0; i < candidatePaths.length; i++) {
+    try {
+      return HtmlService.createHtmlOutputFromFile(candidatePaths[i]).getContent();
+    } catch(e) {}
+  }
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
@@ -77,7 +97,12 @@ function doGet(e) {
   }
 
   // 4. Render Index template cùng dữ liệu preload
-  const template = HtmlService.createTemplateFromFile('Index');
+  var template;
+  try {
+    template = HtmlService.createTemplateFromFile('frontend/entry/Index');
+  } catch(e) {
+    template = HtmlService.createTemplateFromFile('Index');
+  }
   template.serverTasks = serverTasks;
   template.serverVersion = APP_CONFIG.VERSION;
   template.serverUserEmail = currentEmail;
@@ -85,7 +110,7 @@ function doGet(e) {
   template.newFeedbackCount = (currentUser && currentUser.newFeedbackCount) ? currentUser.newFeedbackCount : 0;
 
   return template.evaluate()
-    .setTitle('Cá Cơm Workspace - Quản lý công việc & Thời khóa biểu')
+    .setTitle('Cá Cơm và Chén Cơm - Quản lý công việc & Thời khóa biểu')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

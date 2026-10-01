@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 3000;
-const INDEX_PATH = path.join(__dirname, 'Index.html');
+const ROOT_DIR = path.join(__dirname, '..');
+const PUBLIC_INDEX_PATH = path.join(ROOT_DIR, 'public', 'index.html');
 
 const MOCK_SCRIPT = `
 <script id="gas-local-mock">
@@ -420,18 +421,22 @@ const MOCK_SCRIPT = `
 
 const server = http.createServer((req, res) => {
   if (req.url === '/' || req.url === '/index.html') {
-    fs.readFile(INDEX_PATH, 'utf8', (err, html) => {
+    if (!fs.existsSync(PUBLIC_INDEX_PATH)) {
+      try {
+        require('./build.js');
+      } catch (e) {
+        console.error('Lỗi tự động build:', e);
+      }
+    }
+
+    fs.readFile(PUBLIC_INDEX_PATH, 'utf8', (err, html) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Lỗi nạp file Index.html: ' + err.message);
+        res.end('Lỗi nạp file index.html: ' + err.message);
         return;
       }
-
-      // Clean GAS template tags for local browser environment and inject mock script
-      const processedHtml = html.replace(/<\?!=?[\s\S]*?\?>/g, '[]');
-      const injectedHtml = processedHtml.replace('<script>', MOCK_SCRIPT + '\n    <script>');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(injectedHtml);
+      res.end(html);
     });
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -440,5 +445,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log('CSG Eisenhower Preview Server running at http://localhost:' + PORT);
+  console.log('🚀 Cá Cơm và Chén Cơm Local Server running at http://localhost:' + PORT);
 });

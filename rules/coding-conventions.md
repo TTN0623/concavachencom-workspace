@@ -1,30 +1,50 @@
 # Coding Conventions — Cá Cơm và Chén Cơm (ALWAYS ON)
 
-## 1. Cấu Trúc Dự Án (Directory Structure)
+## 1. Cấu Trúc Dự Án Chuẩn Doanh Nghiệp (Directory Structure)
 ```
 /
-├── Index.html                  # Shell chính của ứng dụng
-├── Styles.html                 # Tokens và tùy biến CSS toàn cục
-├── Modals.html                 # Toàn bộ modal hộp thoại (Auth, Task, Calendar, FAP, Feedback, Profile...)
-├── MobileNav.html              # Thanh điều hướng mobile
-├── Scripts_Core.html           # Khởi tạo trạng thái toàn cục, biến môi trường, tiện ích lõi
-├── Scripts_Auth.html           # Xác thực người dùng, Google Identity Services, Supabase Auth
-├── Scripts_TaskMatrix.html     # Logic ma trận Eisenhower 4 ô, kéo thả SortableJS, CRUD task
-├── Scripts_Dashboard.html      # Thống kê, biểu đồ tiến độ công việc
-├── Scripts_Calendar_FAP.html   # Bộ phân tích và đồng bộ lịch học FAP FPT, Google Calendar
-├── Scripts_Notifications_PWA.html # Web push notification, Service Worker, PWA
-├── Scripts_FreeTime.html       # Tính toán và gợi ý thời gian rảnh rỗi
-├── Scripts_Admin.html          # Quản trị viên, xem feedback, nhật ký
-├── Scripts_Init.html           # DOMContentLoaded bootstrap
-├── Code.js                     # Controller tiếp nhận HTTP doGet/doPost trên Google Apps Script
-├── Database.js                 # ORM / Google Sheets API wrapper
-├── TaskService.js              # Nghiệp vụ xử lý công việc backend
-├── UserService.js              # Nghiệp vụ tài khoản & phân quyền
-├── CalendarService.js          # Google Calendar integration backend
-├── GeminiService.js            # Trợ lý AI tích hợp Gemini API
-├── build.js                    # Script đóng gói SPA standalone cho Vercel / PWA
-├── public/index.html           # File build production tự sinh
-└── rules/                      # Quy tắc chuẩn hệ thống
+├── docs/                        # Tài liệu dự án theo chuẩn 5 file (SRS, Schema, API, Test, Overview)
+├── rules/                       # ALWAYS-ON AI Rules & Guidelines
+│   ├── designsystem.md
+│   ├── coding-conventions.md
+│   └── api-conventions.md
+├── scripts/                     # Build tools, automation & local servers
+│   ├── build.js                 # Production bundle compiler cho Vercel / PWA
+│   ├── server.js                # Local development server (Port 3000)
+│   └── fap_to_workspace.js      # Console scraper utility cho sinh viên FPT
+├── src/                         # Toàn bộ mã nguồn ứng dụng (Source Code)
+│   ├── appsscript.json          # GAS manifest
+│   ├── backend/                 # Tầng xử lý nghiệp vụ Cloud & Serverless
+│   │   ├── config/              # Cấu hình hằng số & môi trường (Config.js)
+│   │   ├── controllers/         # Điều hướng HTTP & RPC (Code.js)
+│   │   ├── database/            # Tầng thao tác Google Sheets & Supabase ORM (Database.js)
+│   │   └── services/            # Tầng Domain Services
+│   │       ├── TaskService.js
+│   │       ├── UserService.js
+│   │       ├── CalendarService.js
+│   │       ├── GeminiService.js
+│   │       ├── AnnouncementService.js
+│   │       └── FeedbackService.js
+│   └── frontend/                # Tầng giao diện người dùng (Client SPA)
+│       ├── entry/               # Shell chính của Web SPA (Index.html)
+│       ├── styles/              # Design System tokens & CSS (Styles.html)
+│       ├── components/          # Thành phần UI dùng chung
+│       │   ├── Modals.html      # Hệ thống hộp thoại (Auth, Task, Profile...)
+│       │   └── MobileNav.html   # Thanh điều hướng di động
+│       └── modules/             # Các module tính năng độc lập (Feature Scripts)
+│           ├── core/            # Scripts_Core.html, Scripts_Init.html
+│           ├── auth/            # Scripts_Auth.html
+│           ├── task-matrix/     # Scripts_TaskMatrix.html
+│           ├── calendar-fap/    # Scripts_Calendar_FAP.html
+│           ├── dashboard/       # Scripts_Dashboard.html
+│           ├── freetime/        # Scripts_FreeTime.html
+│           ├── notifications/   # Scripts_Notifications_PWA.html
+│           └── admin/           # Scripts_Admin.html
+├── public/                      # Bản phân phối tĩnh cho Vercel CDN (public/index.html)
+├── .clasp.json                  # Cấu hình Clasp (rootDir: "src")
+├── .claspignore                 # Lọc file deploy sạch sẽ
+├── package.json                 # Quản lý script khởi động và dependencies
+└── vercel.json                  # Cấu hình định tuyến Vercel
 ```
 
 ## 2. Nguyên Tắc Lập Trình Bắt Buộc

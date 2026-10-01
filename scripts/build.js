@@ -5,24 +5,59 @@
 const fs = require('fs');
 const path = require('path');
 
+const ROOT_DIR = path.join(__dirname, '..');
+const FRONTEND_DIR = path.join(ROOT_DIR, 'src', 'frontend');
+const INDEX_PATH = path.join(FRONTEND_DIR, 'entry', 'Index.html');
+const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
+
 const SUPABASE_CONFIG = {
   URL: 'https://kqkvsucqkhqsuxrimhez.supabase.co',
   KEY: 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2'
 };
 
-function build() {
-  console.log('🚀 Bắt đầu build phiên bản Web Production...');
+/**
+ * Tìm kiếm đệ quy file template component trong thư mục frontend
+ * @param {string} dir Thư mục tìm kiếm
+ * @param {string} filename Tên file cần tìm (không có đuôi .html)
+ * @returns {string|null} Đường dẫn tuyệt đối đến file nếu tìm thấy
+ */
+function findComponentPath(dir, filename) {
+  const target = `${filename}.html`;
+  if (!fs.existsSync(dir)) return null;
 
-  const indexPath = path.join(__dirname, 'Index.html');
-  let indexHtml = fs.readFileSync(indexPath, 'utf8');
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const found = findComponentPath(fullPath, filename);
+      if (found) return found;
+    } else if (entry.isFile() && entry.name.toLowerCase() === target.toLowerCase()) {
+      return fullPath;
+    }
+  }
+  return null;
+}
+
+function build() {
+  console.log('🚀 Bắt đầu build phiên bản Web Production từ kiến trúc src/...');
+
+  if (!fs.existsSync(INDEX_PATH)) {
+    console.error(`❌ Không tìm thấy file Index.html tại: ${INDEX_PATH}`);
+    process.exit(1);
+  }
+
+  let indexHtml = fs.readFileSync(INDEX_PATH, 'utf8');
 
   // 1. Nhúng các file con HTML/CSS/JS (Styles, Modals, MobileNav, Scripts_*)
   indexHtml = indexHtml.replace(/<\?!=\s*include\('([^']+)'\);\s*\?>/g, (match, filename) => {
-    const componentPath = path.join(__dirname, `${filename}.html`);
-    if (fs.existsSync(componentPath)) {
+    // Trích xuất tên file nếu người dùng gọi dạng 'frontend/styles/Styles' hoặc 'Styles'
+    const baseName = path.basename(filename);
+    const componentPath = findComponentPath(FRONTEND_DIR, baseName);
+    
+    if (componentPath && fs.existsSync(componentPath)) {
       return fs.readFileSync(componentPath, 'utf8');
     }
-    console.warn(`⚠️ Không tìm thấy component: ${componentPath}`);
+    console.warn(`⚠️ Không tìm thấy component: ${filename} (đã tìm kiếm trong ${FRONTEND_DIR})`);
     return match;
   });
 
@@ -48,13 +83,12 @@ function build() {
   indexHtml = indexHtml.replace(gasPreloadPattern, standalonePreloadBlock);
 
   // 3. Đảm bảo thư mục public tồn tại
-  const publicDir = path.join(__dirname, 'public');
-  if (!fs.existsSync(publicDir)) {
-    fs.mkdirSync(publicDir, { recursive: true });
+  if (!fs.existsSync(PUBLIC_DIR)) {
+    fs.mkdirSync(PUBLIC_DIR, { recursive: true });
   }
 
   // 4. Ghi file public/index.html
-  const distPath = path.join(publicDir, 'index.html');
+  const distPath = path.join(PUBLIC_DIR, 'index.html');
   fs.writeFileSync(distPath, indexHtml, 'utf8');
 
   console.log(`✅ Build thành công: ${distPath} (${(indexHtml.length / 1024).toFixed(1)} KB)`);
