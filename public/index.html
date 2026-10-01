@@ -361,16 +361,17 @@
             </button>
 
             <!-- Logo & Brand: Con Cá và Chén Cơm -->
-            <div class="flex items-center gap-2.5">
-                <img src="https://concavachencom.site/icon-192.png" alt="Con Cá và Chén Cơm" class="w-8 h-8 rounded-xl object-cover shadow-xs shrink-0" onerror="this.outerHTML='<div class=\'w-8 h-8 rounded-xl bg-[#0054a6] flex items-center justify-center text-white text-base shadow-sm shrink-0\'>🐟</div>'">
-                <div class="flex flex-col shrink-0">
-                    <span class="text-sm md:text-base font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight flex items-center gap-1.5">
-                        Con Cá và Chén Cơm
-                    </span>
-                    <span class="text-[10px] font-semibold text-blue-600 dark:text-blue-400 tracking-wider uppercase leading-none">
-                        Smart Workspace
-                    </span>
-                </div>
+            <div class="flex items-center gap-2">
+                <a href="/" class="flex items-center gap-2 group focus:outline-none" title="Con Cá và Chén Cơm - Smart Workspace">
+                    <!-- Light mode horizontal logo (Navy Text) -->
+                    <img src="https://concavachencom.site/assets/logo-horizontal-sm.png" 
+                         alt="Con Cá và Chén Cơm" 
+                         class="h-8 md:h-9 w-auto object-contain dark:hidden transition-transform duration-200 group-hover:scale-[1.02]">
+                    <!-- Dark mode horizontal logo (White Text) -->
+                    <img src="https://concavachencom.site/assets/logo-horizontal-dark-sm.png" 
+                         alt="Con Cá và Chén Cơm" 
+                         class="h-8 md:h-9 w-auto object-contain hidden dark:block transition-transform duration-200 group-hover:scale-[1.02]">
+                </a>
             </div>
         </div>
 
