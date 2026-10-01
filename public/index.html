@@ -2039,7 +2039,9 @@
                             </div>
                             <div>
                                 <label class="text-[10px] font-semibold text-slate-500 block mb-0.5">Giờ kết thúc:</label>
-                                <input type="text" id="editTaskEndTime" readonly placeholder="Tự động tính" class="w-full border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 rounded-lg p-1.5 text-xs font-mono outline-none">
+                                <select id="editTaskEndTime" onchange="onEditEndTimeChange()" class="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-lg p-1.5 text-xs focus:ring-2 focus:ring-[#0054a6] outline-none font-mono">
+                                    <option value="">-- Chọn giờ kết thúc --</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -6218,7 +6220,11 @@ async function loadAdminStats() {
             let category = categoryInput?.value?.trim() || '';
             category = normalizeCategory(category, title);
 
-            if (categoryInput) categoryInput.value = 'Học tập';
+            let taskDuration = 30;
+            if (time) {
+                const parsed = parseTaskDetails(title, time);
+                if (parsed.duration > 0) taskDuration = parsed.duration;
+            }
 
             const newTaskObj = {
                 id: 'task_' + Date.now(),
@@ -6228,6 +6234,7 @@ async function loadAdminStats() {
                 quadrant: quadrant,
                 day: targetDay,
                 time: time,
+                duration: taskDuration,
                 deadline: deadline,
                 priority: quadrant === 'donow' ? 'high' : 'medium',
                 done: false
@@ -6249,6 +6256,7 @@ async function loadAdminStats() {
                         quadrant: quadrant,
                         day: targetDay,
                         time: time,
+                        duration: taskDuration,
                         deadline: deadline,
                         priority: newTaskObj.priority,
                         category: category,
@@ -6528,12 +6536,23 @@ async function loadAdminStats() {
         function setQuickDeadline(inputId, type) { setQuickDeadlineDirect(inputId, type); }
 
 
-        function populateTimeSelectOptions(selectId, selectedVal = '') {
+        function calculateDurationBetween(startTimeStr, endTimeStr) {
+            if (!startTimeStr || !endTimeStr) return 0;
+            const sParts = startTimeStr.split(':');
+            const eParts = endTimeStr.split(':');
+            if (sParts.length < 2 || eParts.length < 2) return 0;
+            const sMin = parseInt(sParts[0], 10) * 60 + parseInt(sParts[1], 10);
+            const eMin = parseInt(eParts[0], 10) * 60 + parseInt(eParts[1], 10);
+            return eMin > sMin ? (eMin - sMin) : 0;
+        }
+
+        function populateTimeSelectOptions(selectId, selectedVal = '', defaultLabel = '-- Chọn giờ --') {
             const select = document.getElementById(selectId);
             if (!select) return;
-            select.innerHTML = '<option value="">-- Chọn giờ bắt đầu --</option>';
+            select.innerHTML = `<option value="">${defaultLabel}</option>`;
 
-            for (let h = 7; h <= 21; h++) {
+            let found = false;
+            for (let h = 5; h <= 23; h++) {
                 for (let m = 0; m < 60; m += 15) {
                     const hStr = ('0' + h).slice(-2);
                     const mStr = ('0' + m).slice(-2);
@@ -6541,9 +6560,19 @@ async function loadAdminStats() {
                     const opt = document.createElement('option');
                     opt.value = val;
                     opt.textContent = val;
-                    if (val === selectedVal) opt.selected = true;
+                    if (val === selectedVal) {
+                        opt.selected = true;
+                        found = true;
+                    }
                     select.appendChild(opt);
                 }
+            }
+            if (selectedVal && !found) {
+                const opt = document.createElement('option');
+                opt.value = selectedVal;
+                opt.textContent = selectedVal;
+                opt.selected = true;
+                select.appendChild(opt);
             }
         }
 
@@ -6791,17 +6820,6 @@ async function loadAdminStats() {
             editingSubtasks = JSON.parse(JSON.stringify(parseTaskSubtasks(task.subtasks)));
             renderEditSubtasksList();
 
-            // Duration & Time calculation
-            const parsed = parseTaskDetails(task.task, task.time);
-            const dur = (task.duration && parseInt(task.duration, 10) > 0) 
-                ? parseInt(task.duration, 10) 
-                : (parsed.duration > 0 ? parsed.duration : 60);
-
-            if (durationInput) {
-                durationInput.value = dur;
-                updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
-            }
-
             // Time, Start Time & End Time
             let startTimeStr = '';
             let endTimeStr = '';
@@ -6816,14 +6834,40 @@ async function loadAdminStats() {
                     if (single) startTimeStr = single[1].padStart(5, '0');
                 }
             }
-            populateTimeSelectOptions('editTaskStartTime', startTimeStr);
-            const endInput = document.getElementById('editTaskEndTime');
-            if (endInput && endTimeStr) {
-                endInput.value = endTimeStr;
-                const previewEl = document.getElementById('editCalculatedTimePreview');
-                if (previewEl) previewEl.innerText = `⏰ ${startTimeStr} - ${endTimeStr} (${formatDurationText(dur)})`;
-            } else {
-                updateEditCalculatedTime();
+
+            // Duration & Time calculation: Ưu tiên khoảng giờ thực tế nếu có cả start và end
+            let dur = 60;
+            if (startTimeStr && endTimeStr) {
+                const exactDiff = calculateDurationBetween(startTimeStr, endTimeStr);
+                if (exactDiff > 0) {
+                    dur = exactDiff;
+                } else if (task.duration && parseInt(task.duration, 10) > 0) {
+                    dur = parseInt(task.duration, 10);
+                }
+            } else if (task.duration && parseInt(task.duration, 10) > 0) {
+                dur = parseInt(task.duration, 10);
+            } else if (parsed.duration > 0) {
+                dur = parsed.duration;
+            }
+
+            if (durationInput) {
+                if (dur > parseInt(durationInput.max || 300, 10)) {
+                    durationInput.max = Math.max(dur, 480);
+                }
+                durationInput.value = dur;
+                updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
+            }
+
+            populateTimeSelectOptions('editTaskStartTime', startTimeStr, '-- Chọn giờ bắt đầu --');
+            populateTimeSelectOptions('editTaskEndTime', endTimeStr, '-- Chọn giờ kết thúc --');
+
+            const previewEl = document.getElementById('editCalculatedTimePreview');
+            if (previewEl) {
+                if (startTimeStr && endTimeStr) {
+                    previewEl.innerText = `⏰ ${startTimeStr} - ${endTimeStr} (${formatDurationText(dur)})`;
+                } else {
+                    updateEditCalculatedTime();
+                }
             }
 
             document.getElementById('editModal')?.classList.remove('hidden');
@@ -6835,29 +6879,71 @@ async function loadAdminStats() {
 
         function setEditDurationQuick(val) {
             setDurationQuick('editTaskDuration', 'editTaskDurationLabel', val);
-            updateEditCalculatedTime();
+            updateEditDurationAndEndTime();
         }
 
         function updateEditDurationAndEndTime() {
             updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
-            updateEditCalculatedTime();
-        }
-
-        function updateEditCalculatedTime() {
             const startSelect = document.getElementById('editTaskStartTime');
-            const endInput = document.getElementById('editTaskEndTime');
+            const endSelect = document.getElementById('editTaskEndTime');
             const previewEl = document.getElementById('editCalculatedTimePreview');
             const durationSlider = document.getElementById('editTaskDuration');
             const dur = durationSlider ? parseInt(durationSlider.value, 10) : 60;
 
-            if (startSelect && endInput) {
+            if (startSelect && endSelect && startSelect.value) {
+                const newEnd = calculateEndTimeFromStart(startSelect.value, dur);
+                populateTimeSelectOptions('editTaskEndTime', newEnd, '-- Chọn giờ kết thúc --');
+                endSelect.value = newEnd;
+                if (previewEl) previewEl.innerText = `⏰ ${startSelect.value} - ${newEnd} (${formatDurationText(dur)})`;
+            } else if (previewEl) {
+                previewEl.innerText = '';
+            }
+        }
+
+        function onEditEndTimeChange() {
+            const startSelect = document.getElementById('editTaskStartTime');
+            const endSelect = document.getElementById('editTaskEndTime');
+            const previewEl = document.getElementById('editCalculatedTimePreview');
+            const durationSlider = document.getElementById('editTaskDuration');
+
+            if (startSelect && endSelect && startSelect.value && endSelect.value) {
+                const diff = calculateDurationBetween(startSelect.value, endSelect.value);
+                if (diff > 0) {
+                    if (durationSlider) {
+                        if (diff > parseInt(durationSlider.max || 300, 10)) {
+                            durationSlider.max = Math.max(diff, 480);
+                        }
+                        durationSlider.value = diff;
+                        updateDurationDisplay('editTaskDuration', 'editTaskDurationLabel');
+                    }
+                    if (previewEl) previewEl.innerText = `⏰ ${startSelect.value} - ${endSelect.value} (${formatDurationText(diff)})`;
+                } else {
+                    showToast('Giờ kết thúc phải sau giờ bắt đầu!', '⚠️');
+                    const dur = durationSlider ? parseInt(durationSlider.value, 10) : 60;
+                    const validEnd = calculateEndTimeFromStart(startSelect.value, dur);
+                    populateTimeSelectOptions('editTaskEndTime', validEnd, '-- Chọn giờ kết thúc --');
+                    endSelect.value = validEnd;
+                    if (previewEl) previewEl.innerText = `⏰ ${startSelect.value} - ${validEnd} (${formatDurationText(dur)})`;
+                }
+            }
+        }
+
+        function updateEditCalculatedTime() {
+            const startSelect = document.getElementById('editTaskStartTime');
+            const endSelect = document.getElementById('editTaskEndTime');
+            const previewEl = document.getElementById('editCalculatedTimePreview');
+            const durationSlider = document.getElementById('editTaskDuration');
+            const dur = durationSlider ? parseInt(durationSlider.value, 10) : 60;
+
+            if (startSelect && endSelect) {
                 const startVal = startSelect.value;
                 if (startVal) {
                     const endVal = calculateEndTimeFromStart(startVal, dur);
-                    endInput.value = endVal;
+                    populateTimeSelectOptions('editTaskEndTime', endVal, '-- Chọn giờ kết thúc --');
+                    endSelect.value = endVal;
                     if (previewEl) previewEl.innerText = `⏰ ${startVal} - ${endVal} (${formatDurationText(dur)})`;
                 } else {
-                    endInput.value = '';
+                    endSelect.value = '';
                     if (previewEl) previewEl.innerText = '';
                 }
             }
@@ -6912,6 +6998,13 @@ async function loadAdminStats() {
 
                 if (startSelect && startSelect.value && endInput && endInput.value) {
                     task.time = `${startSelect.value} - ${endInput.value}`;
+                    const exactDur = calculateDurationBetween(startSelect.value, endInput.value);
+                    if (exactDur > 0) task.duration = exactDur;
+                } else if (startSelect && startSelect.value) {
+                    const dur = durationInput ? parseInt(durationInput.value, 10) : 60;
+                    const computedEnd = calculateEndTimeFromStart(startSelect.value, dur);
+                    task.time = `${startSelect.value} - ${computedEnd}`;
+                    task.duration = dur;
                 } else if (task.day === '') {
                     task.time = '';
                 }
@@ -8068,22 +8161,30 @@ async function loadAdminStats() {
 
             selectedEvents.forEach(ev => {
                 const dayIdx = (ev.dayIndex !== undefined) ? ev.dayIndex : 0;
+                let calDuration = 60;
+                if (ev.time) {
+                    const parsed = parseTaskDetails(ev.title, ev.time);
+                    if (parsed.duration > 0) calDuration = parsed.duration;
+                }
                 const taskData = {
                     id: 'cal_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                     task: ev.title + (ev.location ? ` (${ev.location})` : ''),
                     quadrant: 'donow',
                     day: dayIdx,
                     time: ev.time || '',
+                    duration: calDuration,
                     done: false,
                     source: 'calendar'
                 };
                 allTasksList.push(taskData);
+                if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskData);
 
                 if (window.google && google.script && google.script.run) {
                     google.script.run.addTask(taskData.task, {
                         quadrant: 'donow',
                         day: dayIdx,
                         time: taskData.time,
+                        duration: calDuration,
                         done: false,
                         userEmail: currentUserEmail
                     });

@@ -332,22 +332,30 @@
 
             selectedEvents.forEach(ev => {
                 const dayIdx = (ev.dayIndex !== undefined) ? ev.dayIndex : 0;
+                let calDuration = 60;
+                if (ev.time) {
+                    const parsed = parseTaskDetails(ev.title, ev.time);
+                    if (parsed.duration > 0) calDuration = parsed.duration;
+                }
                 const taskData = {
                     id: 'cal_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                     task: ev.title + (ev.location ? ` (${ev.location})` : ''),
                     quadrant: 'donow',
                     day: dayIdx,
                     time: ev.time || '',
+                    duration: calDuration,
                     done: false,
                     source: 'calendar'
                 };
                 allTasksList.push(taskData);
+                if (typeof saveTaskToSupabase === 'function') saveTaskToSupabase(taskData);
 
                 if (window.google && google.script && google.script.run) {
                     google.script.run.addTask(taskData.task, {
                         quadrant: 'donow',
                         day: dayIdx,
                         time: taskData.time,
+                        duration: calDuration,
                         done: false,
                         userEmail: currentUserEmail
                     });
