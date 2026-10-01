@@ -69,13 +69,119 @@
         async function fetchGoogleCalendarEventsRest(token, startIso, endIso, monday, sunday) {
             const icon = document.getElementById('calendarSyncIcon');
             try {
-                const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(startIso)}&timeMax=${encodeURIComponent(endIso)}&singleEvents=true&orderBy=startTime`;
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                // 1. Quét danh sách TẤT CẢ các bộ lịch người dùng sở hữu (Lịch học, Personal, Work...)
+                let targetCalendars = [{ id: 'primary', summary: 'Google Calendar Chính' }];
+                try {
+                    const calListRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (calListRes.status === 401 || calListRes.status === 403) {
+                        throw new Error('AUTH_EXPIRED');
+                    }
+                    if (calListRes.ok) {
+                        const calListData = await calListRes.json();
+                        if (Array.isArray(calListData.items) && calListData.items.length > 0) {
+                            // Lọc các bộ lịch có tick hiển thị
+                            targetCalendars = calListData.items.map(c => ({
+                                id: c.id,
+                                summary: c.summaryOverride || c.summary || 'Google Calendar',
+                                selected: c.selected !== false
+                            }));
+                        }
+                    }
+                } catch(e) {
+                    if (e.message === 'AUTH_EXPIRED') throw e;
+                    console.warn('Lấy calendarList gặp lỗi, dùng primary fallback:', e);
+                }
+
+                // 2. Lấy sự kiện song song từ TẤT CẢ các bộ lịch tìm thấy
+                const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+                const allEvents = [];
+                const seenKeys = new Set();
+                const scannedNames = [];
+
+                await Promise.all(targetCalendars.map(async (cal) => {
+                    try {
+                        const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${encodeURIComponent(startIso)}&timeMax=${encodeURIComponent(endIso)}&singleEvents=true&orderBy=startTime`;
+                        const res = await fetch(url, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (res.status === 401 || res.status === 403) {
+                            throw new Error('AUTH_EXPIRED');
+                        }
+
+                        if (!res.ok) return;
+
+                        const data = await res.json();
+                        scannedNames.push(cal.summary);
+
+                        const items = data.items || [];
+                        items.forEach(item => {
+                            if (item.status === 'cancelled') return;
+
+                            const isAllDay = !item.start?.dateTime && !!item.start?.date;
+                            let startTimeDate, endTimeDate;
+
+                            if (isAllDay) {
+                                startTimeDate = new Date(item.start.date + 'T00:00:00');
+                                endTimeDate = new Date((item.end?.date || item.start.date) + 'T00:00:00');
+                            } else {
+                                startTimeDate = new Date(item.start.dateTime);
+                                endTimeDate = new Date(item.end?.dateTime || item.start.dateTime);
+                            }
+
+                            const dayOfWeek = startTimeDate.getDay();
+                            const dayIndex = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+                            const eventDateStr = ('0' + startTimeDate.getDate()).slice(-2) + '/' + ('0' + (startTimeDate.getMonth() + 1)).slice(-2);
+
+                            let timeStr = 'Cả ngày';
+                            if (!isAllDay) {
+                                const formatTime = d => ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+                                timeStr = formatTime(startTimeDate) + ' - ' + formatTime(endTimeDate);
+                            }
+
+                            const uniqueKey = item.id + '_' + startTimeDate.getTime();
+                            if (!seenKeys.has(uniqueKey)) {
+                                seenKeys.add(uniqueKey);
+                                allEvents.push({
+                                    id: 'cal_' + item.id,
+                                    title: item.summary || '(Không có tiêu đề)',
+                                    calendarName: cal.summary,
+                                    dayIndex: dayIndex,
+                                    dayName: dayNames[dayOfWeek],
+                                    dateStr: eventDateStr,
+                                    time: timeStr,
+                                    startTime: startTimeDate.toISOString(),
+                                    endTime: endTimeDate.toISOString(),
+                                    location: item.location || '',
+                                    isAllDay: isAllDay
+                                });
+                            }
+                        });
+                    } catch(calErr) {
+                        if (calErr.message === 'AUTH_EXPIRED') throw calErr;
+                        console.warn(`Lỗi khi quét lịch ${cal.summary}:`, calErr);
+                    }
+                }));
+
+                // Sắp xếp sự kiện theo ngày trong tuần và giờ bắt đầu
+                allEvents.sort((a, b) => {
+                    if (a.dayIndex !== b.dayIndex) return a.dayIndex - b.dayIndex;
+                    return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
                 });
 
-                if (res.status === 401 || res.status === 403) {
-                    // Token hết hạn hoặc chưa cấp quyền Calendar -> xin lại quyền
+                if (icon) icon.innerText = '📅';
+                showCalendarModal({
+                    events: allEvents,
+                    email: currentUserEmail,
+                    calendarCount: scannedNames.length,
+                    calendars: scannedNames,
+                    dateRange: ('0' + monday.getDate()).slice(-2) + '/' + ('0' + (monday.getMonth() + 1)).slice(-2) + ' - ' + ('0' + sunday.getDate()).slice(-2) + '/' + ('0' + (sunday.getMonth() + 1)).slice(-2)
+                });
+            } catch (err) {
+                if (err.message === 'AUTH_EXPIRED') {
+                    // Token hết hạn hoặc thiếu scope -> yêu cầu cấp lại quyền
                     sessionStorage.removeItem('csg_google_access_token');
                     window.googleAccessToken = null;
                     if (window.google && google.accounts && google.accounts.oauth2) {
@@ -93,63 +199,6 @@
                         }
                     }
                 }
-
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error?.message || `Lỗi API Google (${res.status})`);
-                }
-
-                const data = await res.json();
-                const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-                const allEvents = [];
-
-                const items = data.items || [];
-                items.forEach(item => {
-                    const isAllDay = !item.start?.dateTime && !!item.start?.date;
-                    let startTimeDate, endTimeDate;
-
-                    if (isAllDay) {
-                        startTimeDate = new Date(item.start.date + 'T00:00:00');
-                        endTimeDate = new Date((item.end?.date || item.start.date) + 'T00:00:00');
-                    } else {
-                        startTimeDate = new Date(item.start.dateTime);
-                        endTimeDate = new Date(item.end?.dateTime || item.start.dateTime);
-                    }
-
-                    const dayOfWeek = startTimeDate.getDay();
-                    const dayIndex = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-                    const eventDateStr = ('0' + startTimeDate.getDate()).slice(-2) + '/' + ('0' + (startTimeDate.getMonth() + 1)).slice(-2);
-
-                    let timeStr = 'Cả ngày';
-                    if (!isAllDay) {
-                        const formatTime = d => ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-                        timeStr = formatTime(startTimeDate) + ' - ' + formatTime(endTimeDate);
-                    }
-
-                    allEvents.push({
-                        id: 'cal_' + (item.id || Date.now()),
-                        title: item.summary || '(Không có tiêu đề)',
-                        calendarName: 'Google Calendar Chính',
-                        dayIndex: dayIndex,
-                        dayName: dayNames[dayOfWeek],
-                        dateStr: eventDateStr,
-                        time: timeStr,
-                        startTime: startTimeDate.toISOString(),
-                        endTime: endTimeDate.toISOString(),
-                        location: item.location || '',
-                        isAllDay: isAllDay
-                    });
-                });
-
-                if (icon) icon.innerText = '📅';
-                showCalendarModal({
-                    events: allEvents,
-                    email: currentUserEmail,
-                    calendarCount: 1,
-                    calendars: ['Google Calendar Chính'],
-                    dateRange: ('0' + monday.getDate()).slice(-2) + '/' + ('0' + (monday.getMonth() + 1)).slice(-2) + ' - ' + ('0' + sunday.getDate()).slice(-2) + '/' + ('0' + (sunday.getMonth() + 1)).slice(-2)
-                });
-            } catch (err) {
                 console.error('Lỗi fetch Google Calendar API:', err);
                 if (icon) icon.innerText = '📅';
                 showToast('Không thể đọc Google Calendar: ' + err.message, '⚠️');

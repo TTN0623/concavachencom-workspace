@@ -881,7 +881,7 @@
                 try {
                     googleTokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: window.GOOGLE_CLIENT_ID,
-                        scope: 'openid email profile https://www.googleapis.com/auth/calendar.events.readonly',
+                        scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
                         callback: async (tokenResponse) => {
                             if (tokenResponse && tokenResponse.access_token) {
                                 window.googleAccessToken = tokenResponse.access_token;
