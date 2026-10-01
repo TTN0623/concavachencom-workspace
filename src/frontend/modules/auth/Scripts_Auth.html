@@ -881,9 +881,13 @@
                 try {
                     googleTokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: window.GOOGLE_CLIENT_ID,
-                        scope: 'email profile openid',
+                        scope: 'openid email profile https://www.googleapis.com/auth/calendar.events.readonly',
                         callback: async (tokenResponse) => {
                             if (tokenResponse && tokenResponse.access_token) {
+                                window.googleAccessToken = tokenResponse.access_token;
+                                try {
+                                    sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token);
+                                } catch(e) {}
                                 await handleGoogleAccessToken(tokenResponse.access_token);
                             } else if (tokenResponse && tokenResponse.error) {
                                 console.warn('Google Token Client error:', tokenResponse.error);

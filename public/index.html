@@ -3943,9 +3943,13 @@
                 try {
                     googleTokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: window.GOOGLE_CLIENT_ID,
-                        scope: 'email profile openid',
+                        scope: 'openid email profile https://www.googleapis.com/auth/calendar.events.readonly',
                         callback: async (tokenResponse) => {
                             if (tokenResponse && tokenResponse.access_token) {
+                                window.googleAccessToken = tokenResponse.access_token;
+                                try {
+                                    sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token);
+                                } catch(e) {}
                                 await handleGoogleAccessToken(tokenResponse.access_token);
                             } else if (tokenResponse && tokenResponse.error) {
                                 console.warn('Google Token Client error:', tokenResponse.error);
@@ -7662,14 +7666,52 @@ async function loadAdminStats() {
 // =====================================================================
         // ĐỒNG BỘ GOOGLE CALENDAR
         // =====================================================================
-        function syncGoogleCalendar() {
+        // =====================================================================
+        // ĐỒNG BỘ GOOGLE CALENDAR (HỖ TRỢ CẢ WEB STANDALONE VÀ APPS SCRIPT)
+        // =====================================================================
+        async function syncGoogleCalendar() {
             const icon = document.getElementById('calendarSyncIcon');
             if (icon) icon.innerText = '⏳';
             showToast('Đang quét toàn bộ Google Calendar của bạn...', '🔄');
 
             const days = getWeekDays(currentWeekOffset);
-            const startIso = (days && days[0] && days[0].fullDate) ? days[0].fullDate.toISOString() : new Date().toISOString();
+            let monday = (days && days[0] && days[0].fullDate) ? new Date(days[0].fullDate) : new Date();
+            monday.setHours(0, 0, 0, 0);
+            let sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
 
+            const startIso = monday.toISOString();
+            const endIso = sunday.toISOString();
+
+            // 1. Chế độ Standalone trên web concavachencom.site (gọi trực tiếp Google Calendar REST API v3)
+            let token = window.googleAccessToken || sessionStorage.getItem('csg_google_access_token');
+
+            if (!token && window.google && google.accounts && google.accounts.oauth2) {
+                // Nếu chưa có token trong phiên, yêu cầu cấp quyền ngay
+                if (!googleTokenClient) initGoogleTokenClient();
+                if (googleTokenClient) {
+                    googleTokenClient.callback = async (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            window.googleAccessToken = tokenResponse.access_token;
+                            try { sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token); } catch(e) {}
+                            await fetchGoogleCalendarEventsRest(tokenResponse.access_token, startIso, endIso, monday, sunday);
+                        } else {
+                            if (icon) icon.innerText = '📅';
+                            showToast('Đã hủy yêu cầu truy cập Google Calendar.', '⚠️');
+                        }
+                    };
+                    googleTokenClient.requestAccessToken({ prompt: '' });
+                    return;
+                }
+            }
+
+            if (token) {
+                await fetchGoogleCalendarEventsRest(token, startIso, endIso, monday, sunday);
+                return;
+            }
+
+            // 2. Chế độ Google Apps Script (nếu mở trong iframe Apps Script)
             if (window.google && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler(events => {
@@ -7681,7 +7723,122 @@ async function loadAdminStats() {
                         showToast('Không thể đọc Calendar: ' + err, '⚠️');
                     })
                     .getCalendarEvents(startIso);
+                return;
             }
+
+            if (icon) icon.innerText = '📅';
+            showToast('Vui lòng đăng nhập với Google để đồng bộ Google Calendar!', '⚠️');
+        }
+
+        async function fetchGoogleCalendarEventsRest(token, startIso, endIso, monday, sunday) {
+            const icon = document.getElementById('calendarSyncIcon');
+            try {
+                const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(startIso)}&timeMax=${encodeURIComponent(endIso)}&singleEvents=true&orderBy=startTime`;
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    // Token hết hạn hoặc chưa cấp quyền Calendar -> xin lại quyền
+                    sessionStorage.removeItem('csg_google_access_token');
+                    window.googleAccessToken = null;
+                    if (window.google && google.accounts && google.accounts.oauth2) {
+                        if (!googleTokenClient) initGoogleTokenClient();
+                        if (googleTokenClient) {
+                            googleTokenClient.callback = async (tokenResponse) => {
+                                if (tokenResponse && tokenResponse.access_token) {
+                                    window.googleAccessToken = tokenResponse.access_token;
+                                    try { sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token); } catch(e) {}
+                                    await fetchGoogleCalendarEventsRest(tokenResponse.access_token, startIso, endIso, monday, sunday);
+                                }
+                            };
+                            googleTokenClient.requestAccessToken({ prompt: 'consent' });
+                            return;
+                        }
+                    }
+                }
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error?.message || `Lỗi API Google (${res.status})`);
+                }
+
+                const data = await res.json();
+                const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+                const allEvents = [];
+
+                const items = data.items || [];
+                items.forEach(item => {
+                    const isAllDay = !item.start?.dateTime && !!item.start?.date;
+                    let startTimeDate, endTimeDate;
+
+                    if (isAllDay) {
+                        startTimeDate = new Date(item.start.date + 'T00:00:00');
+                        endTimeDate = new Date((item.end?.date || item.start.date) + 'T00:00:00');
+                    } else {
+                        startTimeDate = new Date(item.start.dateTime);
+                        endTimeDate = new Date(item.end?.dateTime || item.start.dateTime);
+                    }
+
+                    const dayOfWeek = startTimeDate.getDay();
+                    const dayIndex = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+                    const eventDateStr = ('0' + startTimeDate.getDate()).slice(-2) + '/' + ('0' + (startTimeDate.getMonth() + 1)).slice(-2);
+
+                    let timeStr = 'Cả ngày';
+                    if (!isAllDay) {
+                        const formatTime = d => ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+                        timeStr = formatTime(startTimeDate) + ' - ' + formatTime(endTimeDate);
+                    }
+
+                    allEvents.push({
+                        id: 'cal_' + (item.id || Date.now()),
+                        title: item.summary || '(Không có tiêu đề)',
+                        calendarName: 'Google Calendar Chính',
+                        dayIndex: dayIndex,
+                        dayName: dayNames[dayOfWeek],
+                        dateStr: eventDateStr,
+                        time: timeStr,
+                        startTime: startTimeDate.toISOString(),
+                        endTime: endTimeDate.toISOString(),
+                        location: item.location || '',
+                        isAllDay: isAllDay
+                    });
+                });
+
+                if (icon) icon.innerText = '📅';
+                showCalendarModal({
+                    events: allEvents,
+                    email: currentUserEmail,
+                    calendarCount: 1,
+                    calendars: ['Google Calendar Chính'],
+                    dateRange: ('0' + monday.getDate()).slice(-2) + '/' + ('0' + (monday.getMonth() + 1)).slice(-2) + ' - ' + ('0' + sunday.getDate()).slice(-2) + '/' + ('0' + (sunday.getMonth() + 1)).slice(-2)
+                });
+            } catch (err) {
+                console.error('Lỗi fetch Google Calendar API:', err);
+                if (icon) icon.innerText = '📅';
+                showToast('Không thể đọc Google Calendar: ' + err.message, '⚠️');
+                showCalendarModal({ error: err.message });
+            }
+        }
+
+        function requestCalendarScopeAndSync() {
+            if (window.google && google.accounts && google.accounts.oauth2) {
+                if (!googleTokenClient) initGoogleTokenClient();
+                if (googleTokenClient) {
+                    googleTokenClient.callback = async (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            window.googleAccessToken = tokenResponse.access_token;
+                            try { sessionStorage.setItem('csg_google_access_token', tokenResponse.access_token); } catch(e) {}
+                            syncGoogleCalendar();
+                        } else {
+                            showToast('Đã hủy cấp quyền Google Calendar.', '⚠️');
+                        }
+                    };
+                    googleTokenClient.requestAccessToken({ prompt: 'consent' });
+                    return;
+                }
+            }
+            syncGoogleCalendar();
         }
 
         function showCalendarModal(res) {
@@ -7701,39 +7858,22 @@ async function loadAdminStats() {
             listEl.innerHTML = '';
 
             if (debugInfo && debugInfo.error) {
-                const isAuthError = /permission|authorization|auth/i.test(debugInfo.error);
+                const isAuthError = /permission|authorization|auth|401|403/i.test(debugInfo.error);
                 listEl.innerHTML = `
                     <div class="p-4 rounded-xl ${isAuthError ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800' : 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900'} text-xs flex flex-col gap-3">
                         <div class="flex items-center gap-2 font-bold text-sm text-amber-800 dark:text-amber-300">
-                            <span>🔐</span> Cần cấp quyền truy cập Google Calendar (Chỉ 1 lần duy nhất)
+                            <span>🔐</span> Cần cấp quyền truy cập Google Calendar
                         </div>
                         <p class="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                            Google Apps Script yêu cầu chủ tài khoản bấm xác nhận cấp quyền (OAuth) để cho phép đọc lịch Google Calendar. Hãy làm theo 3 bước nhanh bên dưới:
+                            Để bảo vệ tính riêng tư, Google yêu cầu bạn cho phép ứng dụng đọc các sự kiện trên Google Calendar của bạn. Bấm nút bên dưới để cấp quyền nhanh chỉ với 1 cú nhấp chuột:
                         </p>
-                        <div class="bg-white/80 dark:bg-slate-900/80 p-3 rounded-lg border border-amber-200 dark:border-amber-800/60 flex flex-col gap-2 text-slate-700 dark:text-slate-300">
-                            <div class="flex items-start gap-2">
-                                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] flex-none">1</span>
-                                <div>Bấm nút <strong>"Mở Google Apps Script"</strong> bên dưới để vào trang chỉnh sửa mã.</div>
-                            </div>
-                            <div class="flex items-start gap-2">
-                                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] flex-none">2</span>
-                                <div>Tại thanh công cụ phía trên, ô chọn hàm đang có sẵn: chọn <strong>grantCalendarPermissions</strong> rồi bấm nút <strong>▶️ Chạy (Run)</strong>.</div>
-                            </div>
-                            <div class="flex items-start gap-2">
-                                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] flex-none">3</span>
-                                <div>Bấm <strong>Xem xét quyền (Review permissions)</strong> &rarr; Chọn tài khoản Google của bạn &rarr; Bấm <strong>Nâng cao (Advanced)</strong> &rarr; Bấm <strong>Đi tới... (Không an toàn)</strong> &rarr; Bấm <strong>Cho phép (Allow)</strong>.</div>
-                            </div>
-                        </div>
                         <div class="flex items-center gap-2 pt-1">
-                            <a href="https://script.google.com/d/1_JVWCv_QnjJaRQ6Om2-ajOF4333q8jJhao5r_6C_i6oKgqFyi-U1G-Di/edit" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 bg-[#0054a6] hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-all text-xs">
-                                <span>🔗</span> Mở Google Apps Script để cấp quyền
-                            </a>
-                            <button onclick="openCalendarSyncModal()" class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-medium rounded-lg transition-all text-xs">
-                                <span>🔄</span> Thử lại ngay
+                            <button onclick="requestCalendarScopeAndSync()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0054a6] hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-all text-xs cursor-pointer">
+                                <span>🔑</span> Bấm vào đây để Cấp quyền Google Calendar
                             </button>
                         </div>
                         <div class="text-[10px] text-slate-500 dark:text-slate-400 border-t border-amber-200/60 dark:border-amber-900/60 pt-2 font-mono">
-                            Chi tiết lỗi kỹ thuật: ${debugInfo.error}
+                            Chi tiết: ${debugInfo.error}
                         </div>
                     </div>
                 `;
