@@ -170,7 +170,80 @@ function getAdminStats(clientEmail) {
 }
 
 /**
- * Khóa / Mở khóa tài khoản người dùng (Admin only)
+ * Xóa vĩnh viễn toàn bộ dữ liệu của người dùng (Admin only):
+ * - Xóa tất cả tasks thuộc về người dùng trong tasksSheet
+ * - Xóa dòng người dùng trong usersSheet
+ * - Xóa tất cả feedbacks của người dùng trong feedbackSheet
+ * Khi người dùng đăng nhập lại, họ sẽ bắt đầu như một người dùng mới hoàn toàn.
+ * @param {string} targetEmail
+ * @param {string} clientEmail
+ * @returns {Object}
+ */
+function deleteUserData(targetEmail, clientEmail) {
+  const email = getEffectiveUserEmail(clientEmail);
+  if (email !== APP_CONFIG.ADMIN_EMAIL.toLowerCase()) {
+    throw new Error("Từ chối truy cập: Chỉ Super Admin mới có quyền xóa tài khoản người dùng!");
+  }
+
+  if (!targetEmail) {
+    throw new Error("Vui lòng cung cấp email người dùng cần xóa!");
+  }
+
+  const cleanTarget = targetEmail.trim().toLowerCase();
+  if (cleanTarget === APP_CONFIG.ADMIN_EMAIL.toLowerCase()) {
+    throw new Error("Không thể xóa tài khoản của Super Admin chính!");
+  }
+
+  const db = setupDatabase();
+
+  // 1. Xóa toàn bộ tasks của người dùng trong tasksSheet (Duyệt ngược từ dưới lên)
+  let deletedTasksCount = 0;
+  const tasksSheet = db.tasksSheet;
+  const tasksData = tasksSheet.getDataRange().getValues();
+  for (let i = tasksData.length - 1; i >= 1; i--) {
+    const rowOwner = String(tasksData[i][12] || '').trim().toLowerCase();
+    if (rowOwner === cleanTarget) {
+      tasksSheet.deleteRow(i + 1);
+      deletedTasksCount++;
+    }
+  }
+
+  // 2. Xóa dòng người dùng trong usersSheet
+  let userDeleted = false;
+  const usersSheet = db.usersSheet;
+  const usersData = usersSheet.getDataRange().getValues();
+  for (let i = usersData.length - 1; i >= 1; i--) {
+    const rowEmail = String(usersData[i][0] || '').trim().toLowerCase();
+    if (rowEmail === cleanTarget) {
+      usersSheet.deleteRow(i + 1);
+      userDeleted = true;
+    }
+  }
+
+  // 3. Xóa feedbacks của người dùng trong feedbackSheet
+  let deletedFbCount = 0;
+  if (db.feedbackSheet) {
+    const fbData = db.feedbackSheet.getDataRange().getValues();
+    for (let i = fbData.length - 1; i >= 1; i--) {
+      const fbEmail = String(fbData[i][1] || '').trim().toLowerCase();
+      if (fbEmail === cleanTarget) {
+        db.feedbackSheet.deleteRow(i + 1);
+        deletedFbCount++;
+      }
+    }
+  }
+
+  return { 
+    success: true, 
+    message: `Đã xóa vĩnh viễn tài khoản ${targetEmail} (gồm ${deletedTasksCount} công việc). Khi đăng nhập lại sẽ là người dùng mới.`,
+    deletedTasksCount: deletedTasksCount,
+    userDeleted: userDeleted,
+    deletedFbCount: deletedFbCount
+  };
+}
+
+/**
+ * Khóa / Mở khóa tài khoản người dùng (Admin only - Fallback cũ)
  * @param {string} targetEmail
  * @param {string} newStatus
  * @param {string} clientEmail

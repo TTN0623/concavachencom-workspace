@@ -166,6 +166,13 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Nhận webhook xóa toàn bộ dữ liệu tài khoản người dùng từ concavachencom.site
+    if (payload.action === 'deleteUser' && payload.targetEmail) {
+      const res = deleteUserData(payload.targetEmail, payload.adminEmail || APP_CONFIG.ADMIN_EMAIL);
+      return ContentService.createTextOutput(JSON.stringify(res))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     return ContentService.createTextOutput(JSON.stringify({ 
       success: true, 
       message: 'Received' 
