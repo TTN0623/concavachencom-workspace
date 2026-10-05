@@ -67,6 +67,12 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  /* Bắt buộc trình duyệt tôn trọng đúng width=device-width của viewport meta,
+     tránh việc nội dung tràn (marquee...) khiến layout viewport bị nới rộng ra
+     và đẩy các phần tử khác (nút bấm trong modal...) ra ngoài vùng hiển thị thật
+     trên điện thoại. */
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
