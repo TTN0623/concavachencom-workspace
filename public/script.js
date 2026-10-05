@@ -1,4 +1,4 @@
-// Con Cá và Chén Cơm - Interactive scripts
+// Con Cá và Chén Cơm - Landing Page Scripts
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile Nav Toggle
   const mobileToggle = document.getElementById('mobileToggle');
@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Smooth appearance for numbers/stats or interactive cards if desired
-  const cards = document.querySelectorAll('.benefit-card, .problem-card, .step-card, .feature-box, .testimonial-card');
+  // Smooth appearance for cards
+  const cards = document.querySelectorAll('.benefit-card, .real-benefit-card, .problem-card, .step-card, .feature-box, .testimonial-card');
   
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries) => {
@@ -55,14 +55,127 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }, {
       threshold: 0.1,
-      rootMargin: '0px 0px -40px 0px'
+      rootMargin: '0px 0px -30px 0px'
     });
 
     cards.forEach(card => {
       card.style.opacity = '0';
-      card.style.transform = 'translateY(20px)';
-      card.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+      card.style.transform = 'translateY(16px)';
+      card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
       observer.observe(card);
     });
   }
+
+  // Keyboard shortcut: Escape to close modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeRegisterModal();
+    }
+  });
 });
+
+/**
+ * Mở modal Đăng ký dùng thử sớm
+ */
+function openRegisterModal() {
+  const modal = document.getElementById('registerModal');
+  if (!modal) return;
+
+  // Reset form & state view
+  const formBox = document.getElementById('modalFormContent');
+  const successBox = document.getElementById('modalSuccessContent');
+  const form = document.getElementById('leadRegisterForm');
+
+  if (formBox) formBox.style.display = 'block';
+  if (successBox) successBox.style.display = 'none';
+  if (form) form.reset();
+
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  // Focus on first input
+  setTimeout(() => {
+    const firstInput = document.getElementById('leadFullName');
+    if (firstInput) firstInput.focus();
+  }, 100);
+}
+
+/**
+ * Đóng modal Đăng ký dùng thử sớm
+ */
+function closeRegisterModal() {
+  const modal = document.getElementById('registerModal');
+  if (!modal) return;
+
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+/**
+ * Xử lý submit Form Đăng Ký
+ * Lưu thông tin vào localStorage (concavachencom_leads) để kết nối backend ở bước sau
+ */
+function handleRegisterSubmit(event) {
+  event.preventDefault();
+
+  const fullnameInput = document.getElementById('leadFullName');
+  const emailInput = document.getElementById('leadEmail');
+  const studentIdInput = document.getElementById('leadStudentId');
+  const submitBtn = document.getElementById('btnSubmitLead');
+
+  const fullname = fullnameInput ? fullnameInput.value.trim() : '';
+  const email = emailInput ? emailInput.value.trim() : '';
+  const studentId = studentIdInput ? studentIdInput.value.trim() : '';
+
+  if (!fullname || !email) {
+    alert('Vui lòng nhập Họ tên và Email.');
+    return;
+  }
+
+  // Disable button while processing
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Đang lưu thông tin...</span>';
+  }
+
+  // Payload lead
+  const leadData = {
+    fullname: fullname,
+    email: email,
+    studentId: studentId || 'Không cung cấp',
+    createdAt: new Date().toISOString(),
+    sourceUrl: window.location.href,
+    userAgent: navigator.userAgent
+  };
+
+  try {
+    const STORAGE_KEY = 'concavachencom_leads';
+    const rawExisting = localStorage.getItem(STORAGE_KEY);
+    const leadsList = rawExisting ? JSON.parse(rawExisting) : [];
+    leadsList.push(leadData);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(leadsList));
+    console.log('✅ Lead saved locally to localStorage["concavachencom_leads"]:', leadData);
+  } catch (err) {
+    console.warn('Lỗi khi lưu vào localStorage:', err);
+  }
+
+  setTimeout(() => {
+    // Reset button
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<span>Gửi đăng ký ngay</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+    }
+
+    // Hiển thị màn hình thành công
+    const formBox = document.getElementById('modalFormContent');
+    const successBox = document.getElementById('modalSuccessContent');
+    const nameHolder = document.getElementById('successUserName');
+
+    if (nameHolder) nameHolder.textContent = fullname;
+    if (formBox) formBox.style.display = 'none';
+    if (successBox) successBox.style.display = 'block';
+  }, 350);
+}

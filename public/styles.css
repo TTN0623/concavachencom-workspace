@@ -245,17 +245,16 @@ a {
   box-shadow: var(--shadow-sm);
 }
 
-/* ---------------- NAVIGATION ---------------- */
 .navbar {
   position: sticky;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  background-color: rgba(247, 245, 238, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(13, 92, 48, 0.08);
+  background-color: rgba(248, 250, 252, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(21, 71, 166, 0.1);
   transition: all var(--transition-fast);
 }
 
@@ -2119,3 +2118,568 @@ a {
     text-align: center;
   }
 }
+
+/* ===================================================================
+   6 REAL BENEFITS GRID (DẠNG THẺ CÓ ICON)
+   =================================================================== */
+.benefits-grid-6col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+  .benefits-grid-6col {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .benefits-grid-6col {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.real-benefit-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 30px 24px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.real-benefit-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1547A6, #3B82F6);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.real-benefit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-blue-border);
+}
+
+.real-benefit-card:hover::before {
+  opacity: 1;
+}
+
+.real-benefit-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary-blue-light) 0%, #DBEAFE 100%);
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(21, 71, 166, 0.12);
+}
+
+.real-benefit-title {
+  font-size: 1.18rem;
+  color: var(--text-dark);
+  font-weight: 700;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+
+.real-benefit-desc {
+  font-size: 0.94rem;
+  color: var(--text-body);
+  line-height: 1.6;
+  margin-bottom: 18px;
+  flex-grow: 1;
+}
+
+.real-benefit-tag {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  background: var(--primary-blue-light);
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+}
+
+/* ===================================================================
+   PRICING SECTION: MIỄN PHÍ 100% CHO SINH VIÊN
+   =================================================================== */
+.pricing-section {
+  background: linear-gradient(180deg, var(--bg-page) 0%, #EFF6FF 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.pricing-card-spotlight {
+  max-width: 840px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border: 2px solid var(--primary-blue-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 50px -10px rgba(21, 71, 166, 0.16);
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .pricing-card-spotlight {
+    padding: 28px 20px;
+  }
+}
+
+.pricing-badge-free {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  margin-bottom: 20px;
+}
+
+.pricing-headline {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+}
+
+.pricing-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.price-free-text {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--primary-blue);
+  line-height: 1;
+}
+
+.price-sub-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pricing-desc {
+  font-size: 1.05rem;
+  color: var(--text-body);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.pricing-features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 36px;
+  padding: 24px;
+  background: var(--bg-page);
+  border-radius: var(--radius-md);
+  border: 1px solid #E2E8F0;
+}
+
+@media (max-width: 640px) {
+  .pricing-features-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+}
+
+.pricing-feat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.pricing-feat-check {
+  color: #10B981;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.pricing-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ===================================================================
+   REGISTRATION FORM MODAL (POPUP ĐĂNG KÝ DÙNG THỬ SỚM)
+   =================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(1, 25, 99, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-container {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 25px 70px -12px rgba(1, 25, 99, 0.35);
+  border: 1px solid rgba(21, 71, 166, 0.15);
+  padding: 36px 32px;
+  transform: translateY(20px) scale(0.96);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+@media (max-width: 480px) {
+  .modal-container {
+    padding: 28px 20px;
+  }
+}
+
+.modal-overlay.active .modal-container {
+  transform: translateY(0) scale(1);
+}
+
+.modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #F1F5F9;
+  color: #64748B;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: #E2E8F0;
+  color: var(--text-dark);
+  transform: scale(1.08);
+}
+
+.modal-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  background: var(--primary-blue-light);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  font-size: 1.6rem;
+  color: var(--text-dark);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.modal-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-body);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.form-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.required-star {
+  color: var(--accent-red);
+}
+
+.optional-tag {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text-dark);
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input:focus {
+  border-color: var(--primary-blue);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(21, 71, 166, 0.15);
+}
+
+.btn-submit-lead {
+  background: linear-gradient(135deg, #1547A6 0%, #1E5FD8 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 20px rgba(21, 71, 166, 0.28);
+  transition: all var(--transition-fast);
+  margin-top: 8px;
+}
+
+.btn-submit-lead:hover {
+  background: linear-gradient(135deg, #0D3A8F 0%, #1547A6 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(21, 71, 166, 0.35);
+}
+
+.form-privacy-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Modal Success State */
+.modal-success-state {
+  text-align: center;
+  padding: 16px 8px;
+}
+
+.success-icon-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+  color: #10B981;
+  font-size: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+}
+
+.success-title {
+  font-size: 1.6rem;
+  color: var(--text-dark);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.success-desc {
+  font-size: 0.95rem;
+  color: var(--text-body);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.success-action-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.success-hint {
+  font-size: 0.9rem;
+  color: var(--text-body);
+  margin-bottom: 14px;
+}
+
+.success-cta-btn {
+  width: 100%;
+  padding: 14px 24px;
+}
+
+.btn-text-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 8px;
+}
+
+.btn-text-close:hover {
+  color: var(--text-dark);
+}
+
+/* Two CTA buttons in Navbar */
+.nav-sub-cta {
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  border: 1.5px solid var(--primary-blue-border);
+  color: var(--primary-blue);
+  background: transparent;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.nav-sub-cta:hover {
+  background: var(--primary-blue-light);
+  border-color: var(--primary-blue);
+  transform: translateY(-1px);
+}
+
+/* Footer Contact Info */
+.footer-col-contact .footer-contact-desc {
+  font-size: 0.88rem;
+  color: #94A3B8;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.footer-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  color: #CBD5E1;
+  margin-bottom: 10px;
+}
+
+.footer-contact-link {
+  color: #60A5FA;
+  font-weight: 600;
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+
+.footer-contact-link:hover {
+  color: #93C5FD;
+}
+
+.footer-contact-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-footer-cta {
+  background: var(--primary-blue);
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-footer-cta:hover {
+  background: var(--primary-blue-hover);
+}
+
+.btn-footer-outline {
+  background: transparent;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.btn-footer-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #FFFFFF;
+}
+

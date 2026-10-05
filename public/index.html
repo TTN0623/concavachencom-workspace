@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Con Cá và Chén Cơm | Quản Lý Lịch Học & Deadline Thông Minh Cho Sinh Viên FPT</title>
-  <meta name="description" content="Web app thông minh giúp sinh viên FPT tự động đồng bộ lịch học FAP, sắp xếp công việc theo Ma trận Eisenhower, tính giờ rảnh và dứt điểm chạy deadline thâu đêm.">
-  <meta name="keywords" content="Con Cá và Chén Cơm, FAP FPT, quản lý thời gian, ma trận Eisenhower, sinh viên FPT, deadline, lịch học FPT">
+  <title>Con Cá và Chén Cơm — Quản Lý Lịch Học & Công Việc Thông Minh Cho Sinh Viên FPT</title>
+  <meta name="description" content="Con Cá và Chén Cơm — Web app quản lý lịch học và công việc thông minh cho sinh viên FPT. Tự động đồng bộ lịch học FAP chỉ 1 click, sắp xếp theo ma trận Eisenhower, tính giờ rảnh và tối ưu cùng Gemini AI. Miễn phí 100% cho sinh viên.">
+  <meta name="keywords" content="Con Cá và Chén Cơm, FAP FPT, quản lý lịch học, ma trận Eisenhower, sinh viên FPT, giờ rảnh, Gemini AI, thời khóa biểu FPT">
   
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon.png">
   <link rel="apple-touch-icon" href="/assets/icon-192.png">
 
-  <!-- Google Fonts: Lexend (Headings) & Be Vietnam Pro (Body) - 100% Full Vietnamese Support -->
+  <!-- Google Fonts: Lexend (Headings) & Be Vietnam Pro (Body) - Chuẩn tiếng Việt 100% -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Lexend:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -30,17 +30,21 @@
       <nav class="nav-menu" id="navMenu">
         <a href="#hero" class="nav-link active">Trang chủ</a>
         <a href="#benefits" class="nav-link">Lợi ích</a>
-        <a href="#problems" class="nav-link">Vấn đề</a>
-        <a href="#features" class="nav-link">Tính năng</a>
+        <a href="#pricing" class="nav-link">Bảng giá (Miễn phí)</a>
         <a href="#how-it-works" class="nav-link">Cách hoạt động</a>
+        <a href="#problems" class="nav-link">Nỗi lo sinh viên</a>
         <a href="#testimonials" class="nav-link">Đánh giá</a>
         <a href="#faq" class="nav-link">FAQ</a>
+        <a href="#contact" class="nav-link">Liên hệ</a>
       </nav>
 
       <div class="nav-actions">
-        <a href="/app" class="btn btn-primary nav-cta">
-          <span>Dùng Thử Ngay</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <!-- Hai nút kêu gọi hành động -->
+        <button type="button" class="btn btn-primary nav-cta" onclick="openRegisterModal()">
+          <span>Đăng ký dùng thử sớm</span>
+        </button>
+        <a href="/app" class="btn nav-sub-cta">
+          <span>Vào dùng ngay ➜</span>
         </a>
         <button class="mobile-toggle" id="mobileToggle" aria-label="Mở menu">
           <span></span><span></span><span></span>
@@ -54,48 +58,55 @@
     <section class="hero-section" id="hero">
       <div class="container hero-container">
         
-        <!-- Header Pill Badge -->
+        <!-- Header Pill Badge: Miễn phí 100% -->
         <div class="hero-badge">
           <span class="badge-dot"></span>
-          <span class="badge-text">Trợ thủ quản lý thời gian & lịch học thế hệ mới cho sinh viên FPT</span>
+          <span class="badge-text">🎁 MIỄN PHÍ 100% CHO SINH VIÊN • QUẢN LÝ LỊCH HỌC & CÔNG VIỆC THÔNG MINH</span>
         </div>
 
         <!-- Main Headline -->
         <h1 class="hero-headline">
-          Dứt điểm cảnh “chạy deadline thâu đêm”,<br>
-          <span class="text-highlight">làm chủ lịch học FAP</span> chỉ với 1 click.
+          Con Cá và Chén Cơm<br>
+          <span class="text-highlight">Quản lý lịch học & công việc thông minh</span> cho sinh viên FPT.
         </h1>
 
         <!-- Sub-headline -->
         <p class="hero-subheadline">
-          Web app thông minh tích hợp AI giúp bạn tự động đồng bộ lịch học FAP, sắp xếp việc ưu tiên theo Ma trận Eisenhower và tìm lại những khoảng thời gian rảnh rỗi mà bạn không ngờ tới.
+          Dứt điểm cảnh chạy deadline thâu đêm! Tự động đồng bộ lịch học FAP chỉ 1 click, sắp xếp công việc theo ma trận Eisenhower, tự động tính số giờ rảnh và trợ lý Gemini AI thông minh đồng hành.
         </p>
 
-        <!-- Slogan Pill -->
+        <!-- Slogan Pill & Free Note -->
         <div class="slogan-pill">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-          <span>Thông điệp: <strong>"Kỷ luật là chìa khóa của tự do"</strong></span>
+          <span>Thông điệp: <strong>"Kỷ luật là chìa khóa của tự do"</strong> — 100% Miễn phí cho sinh viên</span>
         </div>
 
-        <!-- Hero CTA Buttons -->
+        <!-- Hai Nút Kêu Gọi Hành Động (Hero CTA Group) -->
         <div class="hero-cta-group">
-          <a href="/app" class="btn btn-hero-cta">
-            <span class="btn-text">Dùng Thử Miễn Phí Ngay</span>
-            <span class="btn-subtext">Không cần cài đặt rườm rà</span>
-            <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </a>
-          <a href="#how-it-works" class="btn btn-outline-hero">
+          <!-- 1. Nút chính: Đăng ký dùng thử sớm -->
+          <button type="button" class="btn btn-hero-cta" onclick="openRegisterModal()">
+            <span class="btn-text">
+              <span>Đăng ký dùng thử sớm</span>
+              <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </span>
+            <span class="btn-subtext">Nhận quyền trải nghiệm tính năng mới sớm nhất</span>
+          </button>
+
+          <!-- 2. Nút phụ: Vào dùng ngay -->
+          <a href="/app" class="btn btn-outline-hero">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <span>Xem cách hoạt động (30s)</span>
+            <span>Vào dùng ngay ➜</span>
           </a>
         </div>
 
         <div class="hero-meta-note">
-          <span class="meta-item">✨ Tối ưu trên Safari, Chrome & Android</span>
+          <span class="meta-item">✨ <strong>Miễn phí 100%</strong> trọn đời sinh viên</span>
           <span class="meta-divider">•</span>
-          <span class="meta-item">🔒 Bảo mật 100% - Không lưu mật khẩu FAP</span>
+          <span class="meta-item">⚡ Đồng bộ FAP trong 1 click</span>
           <span class="meta-divider">•</span>
-          <span class="meta-item">⚡ Tên miền: <strong>concavachencom.site</strong></span>
+          <span class="meta-item">🔒 Bảo mật an toàn — Không lưu mật khẩu FAP</span>
+          <span class="meta-divider">•</span>
+          <span class="meta-item">📱 Dùng như app thật trên điện thoại</span>
         </div>
 
         <!-- Hero Visual Mockup: Sunburst Arch + 3 Smartphone Displays -->
@@ -169,7 +180,7 @@
                     <div class="stat-pills-row">
                       <span class="chip-green">2 Slot học</span>
                       <span class="chip-orange">3 Deadline</span>
-                      <span class="chip-blue">AI gợi ý: Ổn</span>
+                      <span class="chip-blue">AI: Lịch hợp lý</span>
                     </div>
                   </div>
 
@@ -178,15 +189,15 @@
                     <div class="mock-task-item high">
                       <span class="task-checkbox"></span>
                       <div class="task-content">
-                        <strong>Nộp Lab 2 Java (SE17)</strong>
-                        <span>Hạn: 23:59 hôm nay • [Làm Ngay]</span>
+                        <strong>Nộp Lab 2 PRN211 (SE17)</strong>
+                        <span>Hạn: 23:59 hôm nay • [Do Now]</span>
                       </div>
                     </div>
                     <div class="mock-task-item med">
                       <span class="task-checkbox"></span>
                       <div class="task-content">
-                        <strong>Họp nhóm SWP391 qua Meet</strong>
-                        <span>19:30 tối nay • [Lên Lịch]</span>
+                        <strong>Họp nhóm SWP391 qua Google Meet</strong>
+                        <span>19:30 tối nay • [Plan]</span>
                       </div>
                     </div>
                   </div>
@@ -216,28 +227,28 @@
                   
                   <div class="matrix-grid-mock">
                     <div class="m-quad quad-do">
-                      <span class="quad-title">🔥 1. Làm Ngay</span>
+                      <span class="quad-title">🔥 1. Do Now</span>
                       <span class="quad-task">• Nộp Quiz PRN</span>
                       <span class="quad-task">• Check mail FPT</span>
                     </div>
                     <div class="m-quad quad-plan">
-                      <span class="quad-title">📅 2. Lên Lịch</span>
+                      <span class="quad-title">📅 2. Plan</span>
                       <span class="quad-task">• Ôn tập PE</span>
-                      <span class="quad-task">• Đi tập Gym 17:00</span>
+                      <span class="quad-task">• Tập gym 17:00</span>
                     </div>
                     <div class="m-quad quad-delegate">
-                      <span class="quad-title">🤝 3. Ủy Quyền</span>
-                      <span class="quad-task">• Bàn giao Slide</span>
+                      <span class="quad-title">🤝 3. Delegate</span>
+                      <span class="quad-task">• Nhờ bạn in slide</span>
                     </div>
                     <div class="m-quad quad-eliminate">
-                      <span class="quad-title">🗑️ 4. Loại Bỏ</span>
-                      <span class="quad-task">• Lướt TikTok quá 1h</span>
+                      <span class="quad-title">🗑️ 4. Drop</span>
+                      <span class="quad-task">• Lướt feed vô thức</span>
                     </div>
                   </div>
 
                   <div class="ai-speech-bubble">
                     <span class="ai-sparkle">✨ Gemini AI:</span>
-                    <p>"Bạn đã dọn sạch việc khẩn cấp. Buổi chiều rảnh từ 14:00 - 17:00, rất hợp làm slide SWP!"</p>
+                    <p>"Bạn đã dọn sạch việc khẩn cấp. Buổi chiều rảnh từ 14:00 - 17:00, rất thích hợp hoàn thiện Iteration SWP!"</p>
                   </div>
                 </div>
               </div>
@@ -253,148 +264,172 @@
     <section class="highlight-strip" aria-label="Tính năng chính">
       <div class="strip-track">
         <div class="strip-content">
-          <span>Đồng bộ FAP FPT</span> <span class="dot">•</span>
+          <span>Miễn phí 100% cho sinh viên</span> <span class="dot">•</span>
+          <span>Đồng bộ FAP FPT 1-Click</span> <span class="dot">•</span>
+          <span>Đồng bộ Google Calendar</span> <span class="dot">•</span>
           <span>Ma trận Eisenhower</span> <span class="dot">•</span>
-          <span>Báo Deadline Tự Động</span> <span class="dot">•</span>
-          <span>Bản Đồ Giờ Rảnh</span> <span class="dot">•</span>
-          <span>Trợ Lý AI Gemini</span> <span class="dot">•</span>
-          <span>Cài App PWA 1 Chạm</span> <span class="dot">•</span>
+          <span>Tự động tính Giờ Rảnh</span> <span class="dot">•</span>
+          <span>Trợ Lý Gemini AI</span> <span class="dot">•</span>
+          <span>Cài PWA App Điện Thoại</span> <span class="dot">•</span>
           <span>Kỷ Luật Là Chìa Khóa Của Tự Do</span> <span class="dot">•</span>
           <span>concavachencom.site</span> <span class="dot">•</span>
         </div>
         <!-- Duplicate for infinite smooth loop -->
         <div class="strip-content" aria-hidden="true">
-          <span>Đồng bộ FAP FPT</span> <span class="dot">•</span>
+          <span>Miễn phí 100% cho sinh viên</span> <span class="dot">•</span>
+          <span>Đồng bộ FAP FPT 1-Click</span> <span class="dot">•</span>
+          <span>Đồng bộ Google Calendar</span> <span class="dot">•</span>
           <span>Ma trận Eisenhower</span> <span class="dot">•</span>
-          <span>Báo Deadline Tự Động</span> <span class="dot">•</span>
-          <span>Bản Đồ Giờ Rảnh</span> <span class="dot">•</span>
-          <span>Trợ Lý AI Gemini</span> <span class="dot">•</span>
-          <span>Cài App PWA 1 Chạm</span> <span class="dot">•</span>
+          <span>Tự động tính Giờ Rảnh</span> <span class="dot">•</span>
+          <span>Trợ Lý Gemini AI</span> <span class="dot">•</span>
+          <span>Cài PWA App Điện Thoại</span> <span class="dot">•</span>
           <span>Kỷ Luật Là Chìa Khóa Của Tự Do</span> <span class="dot">•</span>
           <span>concavachencom.site</span> <span class="dot">•</span>
         </div>
       </div>
     </section>
 
-    <!-- ==================== SECTION: BENEFITS (WHY CHOOSE US) ==================== -->
-    <!-- Bố cục chuẩn theo ảnh mẫu: 1 Phone ở giữa, 4 Thẻ bo góc 2 bên -->
+    <!-- ==================== SECTION: CÁC LỢI ÍCH THẬT (DẠNG THẺ CÓ ICON) ==================== -->
     <section class="section benefits-section" id="benefits">
       <div class="container">
         
         <div class="section-header text-center">
-          <span class="section-tag">TẠI SAO CHỌN CHÚNG TÔI</span>
-          <h2 class="section-title">Lợi Ích Thực Tế Sau 7 Ngày Trải Nghiệm</h2>
+          <span class="section-tag">LỢI ÍCH THỰC TẾ</span>
+          <h2 class="section-title">6 Lợi Ích Cốt Lõi Dành Riêng Cho Sinh Viên FPT</h2>
           <p class="section-subtitle">
-            Không còn lo trễ nải hay hoang mang. Con Cá và Chén Cơm tái thiết lập kỷ luật và mang lại sự tự do đích thực cho từng sinh viên.
+            Mọi tính năng đều được tối ưu dựa trên nhu cầu thực tế: giải quyết triệt để cảnh rối loạn thời khóa biểu FAP và bão deadline dồn dập.
           </p>
         </div>
 
-        <div class="benefits-showcase-grid">
+        <div class="benefits-grid-6col">
           
-          <!-- LEFT COLUMN (2 Cards) -->
-          <div class="benefit-col benefit-col-left">
-            
-            <div class="benefit-card">
-              <div class="benefit-icon-box">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-              </div>
-              <h3 class="benefit-card-title">Không bao giờ bị cấm thi vì vắng học</h3>
-              <p class="benefit-card-desc">
-                Lịch học slot nào, phòng nào được cập nhật chính xác từng phút. Không còn cảnh chạy hộc tốc lên lầu 4 rồi mới biết đổi sang lầu 2 Beta.
-              </p>
-              <div class="benefit-tag">✓ Chuẩn lịch FAP 100%</div>
-            </div>
-
-            <div class="benefit-card">
-              <div class="benefit-icon-box">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-              </div>
-              <h3 class="benefit-card-title">Hết phân vân "Hôm nay làm gì trước?"</h3>
-              <p class="benefit-card-desc">
-                Ma trận Eisenhower thông minh lọc ra ngay 20% đầu việc quan trọng nhất quyết định điểm số và hiệu quả, dẹp bỏ hoàn toàn thói quen trì hoãn.
-              </p>
-              <div class="benefit-tag">✓ Tiết kiệm 2h suy nghĩ/ngày</div>
-            </div>
-
+          <!-- THẺ 1: Đồng bộ lịch học từ FAP FPT chỉ 1 click -->
+          <div class="real-benefit-card">
+            <div class="real-benefit-icon">⚡</div>
+            <h3 class="real-benefit-title">Đồng bộ lịch học từ FAP FPT chỉ 1 click</h3>
+            <p class="real-benefit-desc">
+              Tự động trích xuất toàn bộ thời khóa biểu FAP bao gồm slot học, phòng học (Alpha, Beta, Gamma...), mã môn và giảng viên phụ trách. Cập nhật tức thì khi có lịch đổi phòng, không bao giờ lo đi nhầm lớp hay vắng điểm danh.
+            </p>
+            <div class="real-benefit-tag">✓ Chuẩn xác 100% lịch FAP</div>
           </div>
 
-          <!-- CENTER COLUMN (Phone Mockup) -->
-          <div class="benefit-col-center">
-            <div class="benefit-phone-frame">
-              <div class="phone-notch"></div>
-              <div class="phone-screen">
-                <div class="mock-header">
-                  <span class="mock-time">20:15</span>
-                  <span class="mock-title">Tổng quan tuần này</span>
-                  <span class="mock-battery">100%</span>
-                </div>
-                
-                <div class="center-app-hero">
-                  <div class="circular-progress-wrap">
-                    <svg viewBox="0 0 100 100" class="circular-progress">
-                      <circle cx="50" cy="50" r="42" class="progress-bg"></circle>
-                      <circle cx="50" cy="50" r="42" class="progress-bar"></circle>
-                    </svg>
-                    <div class="progress-info">
-                      <span class="progress-num">18.5h</span>
-                      <span class="progress-sub">Giờ Rảnh Tuần Này</span>
-                    </div>
-                  </div>
-                </div>
+          <!-- THẺ 2: Đồng bộ Google Calendar -->
+          <div class="real-benefit-card">
+            <div class="real-benefit-icon">📅</div>
+            <h3 class="real-benefit-title">Đồng bộ Google Calendar</h3>
+            <p class="real-benefit-desc">
+              Kết nối hai chiều mượt mà với tài khoản Google cá nhân. Giúp bạn xem toàn bộ lịch học FPT cùng lịch làm việc, họp nhóm, lịch thi trực tiếp trên Google Calendar của máy tính, điện thoại hay đồng hồ thông minh.
+            </p>
+            <div class="real-benefit-tag">✓ Tích hợp đa thiết bị</div>
+          </div>
 
-                <div class="mini-summary-boxes">
-                  <div class="s-box">
-                    <span class="s-box-icon">🎯</span>
-                    <strong>12 / 14</strong>
-                    <span>Deadline xong</span>
-                  </div>
-                  <div class="s-box">
-                    <span class="s-box-icon">⏰</span>
-                    <strong>0 Slot</strong>
-                    <span>Bị trễ giờ</span>
-                  </div>
-                </div>
+          <!-- THẺ 3: Sắp xếp việc theo ma trận Eisenhower (Do Now / Plan / Delegate / Drop) -->
+          <div class="real-benefit-card">
+            <div class="real-benefit-icon">🎯</div>
+            <h3 class="real-benefit-title">Sắp xếp việc theo ma trận Eisenhower (Do Now / Plan / Delegate / Drop)</h3>
+            <p class="real-benefit-desc">
+              Phân loại bài tập và công việc theo 4 góc phần tư khoa học: Làm ngay (Do Now), Lên lịch (Plan), Ủy quyền (Delegate), và Loại bỏ (Drop). Giúp bạn tập trung vào 20% việc quan trọng nhất quyết định điểm số cao.
+            </p>
+            <div class="real-benefit-tag">✓ Dứt điểm thói quen trì hoãn</div>
+          </div>
 
-                <div class="ai-widget-card">
-                  <div class="ai-widget-header">
-                    <span class="gemini-badge">Gemini Copilot</span>
-                    <span class="ai-time">Vừa xong</span>
-                  </div>
-                  <p class="ai-widget-text">
-                    "Tối thứ Năm bạn rảnh 3 tiếng từ 19:00 - 22:00. Bạn có muốn xếp lịch làm Assignment SWP không?"
-                  </p>
-                  <button class="ai-action-btn">Lên lịch tự động ➜</button>
-                </div>
+          <!-- THẺ 4: Tự động tính "Lịch rảnh" — biết còn bao nhiêu giờ trống -->
+          <div class="real-benefit-card">
+            <div class="real-benefit-icon">⏳</div>
+            <h3 class="real-benefit-title">Tự động tính "Lịch rảnh" — biết còn bao nhiêu giờ trống</h3>
+            <p class="real-benefit-desc">
+              Hệ thống tự động quét toàn bộ khoảng trống giữa các slot học và thời gian làm bài để tính ra chính xác số giờ rảnh rỗi trong ngày và trong tuần. Bạn tự tin nhận việc làm thêm / intern hoặc thảnh thơi đi chơi mà không lo trùng lịch.
+            </p>
+            <div class="real-benefit-tag">✓ Cân bằng học tập & cuộc sống</div>
+          </div>
 
-              </div>
+          <!-- THẺ 5: Trợ lý Gemini AI gợi ý sắp xếp thời gian -->
+          <div class="real-benefit-card">
+            <div class="real-benefit-icon">🤖</div>
+            <h3 class="real-benefit-title">Trợ lý Gemini AI gợi ý sắp xếp thời gian</h3>
+            <p class="real-benefit-desc">
+              Trợ lý trí tuệ nhân tạo Gemini phân tích khối lượng môn học, nhắc nhở những môn sắp thi PE/FE nặng, và tự động gợi ý chia nhỏ đồ án môn SWP/Assignment theo từng ngày để bạn không bao giờ bị dồn việc vào phút chót.
+            </p>
+            <div class="real-benefit-tag">✓ Cố vấn học tập thông minh</div>
+          </div>
+
+          <!-- THẺ 6: Cài lên màn hình điện thoại dùng như app thật -->
+          <div class="real-benefit-card">
+            <div class="real-benefit-icon">📲</div>
+            <h3 class="real-benefit-title">Cài lên màn hình điện thoại dùng như app thật</h3>
+            <p class="real-benefit-desc">
+              Được xây dựng theo công nghệ PWA (Progressive Web App). Chỉ với 1 chạm "Thêm vào màn hình chính", bạn có ngay biểu tượng app trên iPhone hay Android. Mở nhanh tức thì, không tốn dung lượng máy, dùng mượt mà mọi lúc mọi nơi.
+            </p>
+            <div class="real-benefit-tag">✓ Tiện lợi không cần cài đặt phức tạp</div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SECTION: GIÁ — MIỄN PHÍ 100% CHO SINH VIÊN ==================== -->
+    <section class="section pricing-section" id="pricing">
+      <div class="container text-center">
+        
+        <div class="section-header text-center">
+          <span class="section-tag section-tag-orange">CHÍNH SÁCH GIÁ</span>
+          <h2 class="section-title">Chi Phí Sử Dụng Cho Sinh Viên</h2>
+          <p class="section-subtitle">
+            Cam kết đồng hành và hỗ trợ tối đa cho cộng đồng sinh viên FPT làm chủ kỷ luật cá nhân.
+          </p>
+        </div>
+
+        <div class="pricing-card-spotlight">
+          <div class="pricing-badge-free">🎁 MIỄN PHÍ 100% CHO SINH VIÊN</div>
+          
+          <h3 class="pricing-headline">Gói Sinh Viên FPT Trọn Đời</h3>
+          
+          <div class="pricing-price-row">
+            <span class="price-free-text">0đ</span>
+            <span class="price-sub-label">/ Toàn bộ thời gian học đại học</span>
+          </div>
+
+          <p class="pricing-desc">
+            Không thu bất kỳ khoản phí nào. Toàn bộ tính năng cao cấp từ đồng bộ lịch học FAP, ma trận Eisenhower, tính giờ rảnh cho đến trợ lý Gemini AI đều mở hoàn toàn cho sinh viên.
+          </p>
+
+          <div class="pricing-features-grid">
+            <div class="pricing-feat-item">
+              <span class="pricing-feat-check">✓</span>
+              <span>Đồng bộ thời khóa biểu FAP FPT 1-Click</span>
+            </div>
+            <div class="pricing-feat-item">
+              <span class="pricing-feat-check">✓</span>
+              <span>Đồng bộ 2 chiều cùng Google Calendar</span>
+            </div>
+            <div class="pricing-feat-item">
+              <span class="pricing-feat-check">✓</span>
+              <span>Ma trận Eisenhower (Do Now / Plan / Delegate / Drop)</span>
+            </div>
+            <div class="pricing-feat-item">
+              <span class="pricing-feat-check">✓</span>
+              <span>Tính toán tự động số Giờ Rảnh còn lại</span>
+            </div>
+            <div class="pricing-feat-item">
+              <span class="pricing-feat-check">✓</span>
+              <span>Gợi ý phân bổ thời gian cùng Gemini AI</span>
+            </div>
+            <div class="pricing-feat-item">
+              <span class="pricing-feat-check">✓</span>
+              <span>Cài PWA lên màn hình điện thoại iPhone & Android</span>
             </div>
           </div>
 
-          <!-- RIGHT COLUMN (2 Cards) -->
-          <div class="benefit-col benefit-col-right">
-
-            <div class="benefit-card">
-              <div class="benefit-icon-box">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-              </div>
-              <h3 class="benefit-card-title">Ngủ đủ giấc trước ngày nộp bài</h3>
-              <p class="benefit-card-desc">
-                Deadline được cảnh báo từ sớm và chia nhỏ theo từng chặng. Tạm biệt những đêm thức trắng cày code, viết report hay ôn PE trong nước mắt.
-              </p>
-              <div class="benefit-tag">✓ Không còn thức trắng đêm</div>
-            </div>
-
-            <div class="benefit-card">
-              <div class="benefit-icon-box">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </div>
-              <h3 class="benefit-card-title">Biết chính xác còn bao nhiêu giờ rảnh</h3>
-              <p class="benefit-card-desc">
-                App tự động quét và tính tổng số giờ trống trong tuần. Bạn tự tin nhận job intern/part-time hoặc thảnh thơi đi chơi mà không hề cắn rứt.
-              </p>
-              <div class="benefit-tag">✓ Cân bằng Học & Cuộc sống</div>
-            </div>
-
+          <!-- 2 Nút Kêu Gọi Hành Động tại Bảng Giá -->
+          <div class="pricing-cta-row">
+            <button type="button" class="btn btn-hero-cta" onclick="openRegisterModal()">
+              <span class="btn-text">Đăng ký dùng thử sớm</span>
+              <span class="btn-subtext">Nhận quyền trải nghiệm ngay hôm nay</span>
+            </button>
+            <a href="/app" class="btn btn-outline-hero">
+              <span>Vào dùng ngay ➜</span>
+            </a>
           </div>
 
         </div>
@@ -453,7 +488,7 @@
       </div>
     </section>
 
-    <!-- ==================== SECTION: HOW IT WORKS / GIẢI PHÁP ==================== -->
+    <!-- ==================== SECTION: CÁCH HOẠT ĐỘNG ==================== -->
     <section class="section how-it-works-section" id="how-it-works">
       <div class="container">
         
@@ -474,10 +509,10 @@
               <span class="step-meta">BƯỚC 1: KHỞI TẠO TỨC THÌ</span>
               <h3 class="step-title">Đồng bộ lịch FAP & Google Calendar 1-Click</h3>
               <p class="step-desc">
-                Chỉ cần 1 nút bấm hoặc dán link iCal/FAP, toàn bộ thời khóa biểu slot học, mã môn, giảng viên, phòng học lập tức được cập nhật chuẩn xác. Không cần nhập tay từng môn.
+                Chỉ cần 1 nút bấm hoặc dán link thời khóa biểu FAP, toàn bộ lịch học slot, phòng học, môn học lập tức hiển thị chuẩn xác. Không cần gõ tay từng buổi.
               </p>
               <ul class="step-bullet-list">
-                <li>✓ Tự động cập nhật khi phòng học thay đổi</li>
+                <li>✓ Tự động cập nhật khi đổi phòng học</li>
                 <li>✓ Tích hợp 2 chiều cùng Google Calendar</li>
               </ul>
             </div>
@@ -507,7 +542,7 @@
               <span class="step-meta">BƯỚC 2: PHÂN LOẠI CHIẾN LƯỢC</span>
               <h3 class="step-title">Sắp xếp công việc theo Ma trận Eisenhower</h3>
               <p class="step-desc">
-                Mỗi khi có bài tập hay công việc mới, hệ thống tự động giúp bạn phân loại vào 4 góc: Làm Ngay (Khẩn cấp & Quan trọng), Lên Lịch (Quan trọng), Ủy Quyền, và Loại Bỏ.
+                Mỗi khi có bài tập hay công việc mới, ứng dụng giúp bạn phân loại vào 4 ô: Do Now (Làm Ngay), Plan (Lên Lịch), Delegate (Ủy Quyền), và Drop (Loại Bỏ).
               </p>
               <ul class="step-bullet-list">
                 <li>✓ Biết rõ việc nào cần làm ngay trong 2 giờ tới</li>
@@ -517,19 +552,19 @@
             <div class="step-preview-box">
               <div class="step-preview-ui matrix-demo">
                 <div class="mini-quad red">
-                  <strong>🔥 Làm ngay</strong>
+                  <strong>🔥 Do Now</strong>
                   <span>Quiz PRN (hạn 23h)</span>
                 </div>
                 <div class="mini-quad green">
-                  <strong>📅 Lên lịch</strong>
-                  <span>Học PE Java (T7)</span>
+                  <strong>📅 Plan</strong>
+                  <span>Học PE C# (Thứ 7)</span>
                 </div>
                 <div class="mini-quad yellow">
-                  <strong>🤝 Ủy quyền</strong>
+                  <strong>🤝 Delegate</strong>
                   <span>Nhờ bạn in tài liệu</span>
                 </div>
                 <div class="mini-quad gray">
-                  <strong>🗑️ Loại bỏ</strong>
+                  <strong>🗑️ Drop</strong>
                   <span>Lướt tin vô bổ</span>
                 </div>
               </div>
@@ -541,13 +576,13 @@
             <div class="step-badge-number">3</div>
             <div class="step-content">
               <span class="step-meta">BƯỚC 3: KIỂM SOÁT THỜI GIAN</span>
-              <h3 class="step-title">Tự động tính và hiển thị "Bản đồ Giờ Rảnh"</h3>
+              <h3 class="step-title">Tự động tính và hiển thị "Lịch Rảnh"</h3>
               <p class="step-desc">
-                Tính năng độc quyền chỉ có tại Con Cá và Chén Cơm. Hệ thống tính toán toàn bộ slot học và việc cần làm để chỉ ra chính xác số giờ trống còn lại của bạn trong tuần.
+                Tính toán toàn bộ slot học và việc cần làm để chỉ ra chính xác số giờ trống còn lại trong tuần, giúp bạn chủ động nhận việc làm thêm hoặc nghỉ ngơi.
               </p>
               <ul class="step-bullet-list">
                 <li>✓ Tự tin nhận việc làm thêm / intern mà không sợ trùng lịch</li>
-                <li>✓ Lên kế hoạch nghỉ ngơi, hẹn hò, thể thao mà không lo lắng</li>
+                <li>✓ Lên kế hoạch nghỉ ngơi, thể thao mà không lo lắng</li>
               </ul>
             </div>
             <div class="step-preview-box">
@@ -568,10 +603,10 @@
           <div class="step-card reverse">
             <div class="step-badge-number">4</div>
             <div class="step-content">
-              <span class="step-meta">BƯỚC 4: TỐI ƯU BẰNG TRÍ TUỆ NHÂN TẠO</span>
+              <span class="step-meta">BƯỚC 4: TỐI ƯU THỜI GIAN</span>
               <h3 class="step-title">Trợ lý AI Gemini phân tích & gợi ý thông minh</h3>
               <p class="step-desc">
-                Gemini AI đồng hành như một người bạn cố vấn học tập: cảnh báo môn nào sắp thi PE nặng, gợi ý chia nhỏ đồ án làm theo từng ngày để bạn không bao giờ bị dồn việc.
+                Gemini AI đồng hành như một cố vấn học tập: cảnh báo môn nào sắp thi PE nặng, gợi ý chia nhỏ đồ án làm theo từng ngày để bạn không bao giờ bị dồn việc.
               </p>
               <ul class="step-bullet-list">
                 <li>✓ Gợi ý khung giờ học tập tập trung nhất (Deep Work)</li>
@@ -599,88 +634,7 @@
       </div>
     </section>
 
-    <!-- ==================== ECOSYSTEM / SYNC SECTION ==================== -->
-    <section class="section ecosystem-section">
-      <div class="container text-center">
-        <span class="section-tag">HỆ SINH THÁI TÍCH HỢP</span>
-        <h3 class="ecosystem-title">Đồng Bộ Liền Mạch Cùng Các Công Cụ Bạn Dùng Hằng Ngày</h3>
-        <div class="brand-logos-row">
-          <div class="brand-item">
-            <span class="brand-icon-logo">🏫</span>
-            <span class="brand-name">FPT FAP Portal</span>
-          </div>
-          <div class="brand-item">
-            <span class="brand-icon-logo">📅</span>
-            <span class="brand-name">Google Calendar</span>
-          </div>
-          <div class="brand-item">
-            <span class="brand-icon-logo">✨</span>
-            <span class="brand-name">Google Gemini AI</span>
-          </div>
-          <div class="brand-item">
-            <span class="brand-icon-logo">📱</span>
-            <span class="brand-name">PWA Web App</span>
-          </div>
-          <div class="brand-item">
-            <span class="brand-icon-logo">💻</span>
-            <span class="brand-name">Mac & Windows</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== SECTION: ALL FEATURES GRID ==================== -->
-    <section class="section features-section" id="features">
-      <div class="container">
-        <div class="section-header text-center">
-          <span class="section-tag">TÍNH NĂNG TOÀN DIỆN</span>
-          <h2 class="section-title">Mọi Công Cụ Bạn Cần Để Làm Chủ Đại Học</h2>
-          <p class="section-subtitle">Được thiết kế tối giản, tốc độ cao, không tính năng thừa thãi.</p>
-        </div>
-
-        <div class="features-grid-3col">
-          
-          <div class="feature-box">
-            <div class="feature-box-icon">⚡</div>
-            <h4>Đồng bộ FAP 1-Click</h4>
-            <p>Tự động trích xuất lịch học từ hệ thống FAP trường FPT, bao gồm mã môn, phòng, slot học và giảng viên phụ trách.</p>
-          </div>
-
-          <div class="feature-box">
-            <div class="feature-box-icon">🎯</div>
-            <h4>Ma trận Eisenhower</h4>
-            <p>4 góc phần tư giúp bạn phân loại bài tập khẩn cấp hay quan trọng chỉ bằng một thao tác kéo thả hoặc chọn tag.</p>
-          </div>
-
-          <div class="feature-box">
-            <div class="feature-box-icon">🔔</div>
-            <h4>Nhắc nhở Deadline đa kênh</h4>
-            <p>Thông báo trước 24h, 6h và 1h trước khi hết hạn nộp bài. Đảm bảo không bao giờ trễ Assignment hay Quiz trên Coursera/LMS.</p>
-          </div>
-
-          <div class="feature-box">
-            <div class="feature-box-icon">📊</div>
-            <h4>Bản đồ "Giờ Rảnh" Thông Minh</h4>
-            <p>Trực quan hóa quỹ thời gian trống trong tuần để bạn chủ động nhận việc làm thêm, học thêm kỹ năng mới hoặc nghỉ ngơi.</p>
-          </div>
-
-          <div class="feature-box">
-            <div class="feature-box-icon">🤖</div>
-            <h4>Trợ lý AI Gemini</h4>
-            <p>Tự động phân tích khối lượng môn học, đưa ra gợi ý phân bổ thời gian hợp lý và nhắc nhở duy trì kỷ luật mỗi ngày.</p>
-          </div>
-
-          <div class="feature-box">
-            <div class="feature-box-icon">📲</div>
-            <h4>Cài đặt PWA như App thật</h4>
-            <p>Thêm vào màn hình chính iPhone / Android chỉ với 1 chạm. Không tốn dung lượng máy, mở lên là dùng mượt mà ngay.</p>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== BANNER CTA GREEN (GIỐNG MẪU ẢNH) ==================== -->
+    <!-- ==================== BANNER CTA GREEN/BLUE ==================== -->
     <section class="section app-download-banner-section" id="download">
       <div class="container">
         
@@ -691,54 +645,54 @@
               Bắt Đầu Hành Trình Làm Chủ Thời Gian & Điểm Số
             </h2>
             <p class="banner-desc">
-              Kỷ luật là chìa khóa của tự do. Đừng để kỳ học này trôi qua trong căng thẳng và hối tiếc. Trải nghiệm ngay trên trình duyệt web của bạn!
+              Kỷ luật là chìa khóa của tự do. Đừng để kỳ học này trôi qua trong căng thẳng và hối tiếc. Web app hoàn toàn miễn phí cho mọi sinh viên FPT!
             </p>
 
             <div class="banner-actions">
-              <a href="/app" class="btn btn-banner-cta">
-                <span>🚀 Mở Web App Ngay</span>
+              <!-- Hai nút CTA -->
+              <button type="button" class="btn btn-banner-cta" onclick="openRegisterModal()">
+                <span>🚀 Đăng ký dùng thử sớm</span>
+              </button>
+              <a href="/app" class="btn btn-outline-banner" style="display:inline-flex; align-items:center; padding:12px 24px; border:1.5px solid #FFFFFF; border-radius:9999px; color:#FFFFFF; font-weight:600;">
+                <span>Vào dùng ngay ➜</span>
               </a>
-              <span class="banner-note">Miễn phí trải nghiệm • Không cần thẻ tín dụng</span>
             </div>
 
-            <div class="banner-features-check">
-              <span>✓ Cài đặt như app</span>
-              <span>✓ Tự động lưu trữ đám mây</span>
-              <span>✓ Dành cho sinh viên</span>
+            <div class="banner-features-check" style="margin-top:20px;">
+              <span>✓ Miễn phí 100% cho sinh viên</span>
+              <span>✓ Cài đặt PWA lên điện thoại</span>
+              <span>✓ Tự động lưu trữ an toàn</span>
             </div>
           </div>
 
           <div class="app-banner-visual">
             <div class="qr-mockup-box">
               <div class="qr-code-holder">
-                <!-- SVG QR Code Icon Style -->
                 <svg viewBox="0 0 100 100" class="qr-svg">
                   <rect width="100" height="100" fill="#FFFFFF" rx="10"/>
-                  <!-- Position markers -->
-                  <rect x="10" y="10" width="24" height="24" fill="#0D5C30"/>
+                  <rect x="10" y="10" width="24" height="24" fill="#1547A6"/>
                   <rect x="14" y="14" width="16" height="16" fill="#FFFFFF"/>
-                  <rect x="18" y="18" width="8" height="8" fill="#0D5C30"/>
+                  <rect x="18" y="18" width="8" height="8" fill="#1547A6"/>
 
-                  <rect x="66" y="10" width="24" height="24" fill="#0D5C30"/>
+                  <rect x="66" y="10" width="24" height="24" fill="#1547A6"/>
                   <rect x="70" y="14" width="16" height="16" fill="#FFFFFF"/>
-                  <rect x="74" y="18" width="8" height="8" fill="#0D5C30"/>
+                  <rect x="74" y="18" width="8" height="8" fill="#1547A6"/>
 
-                  <rect x="10" y="66" width="24" height="24" fill="#0D5C30"/>
+                  <rect x="10" y="66" width="24" height="24" fill="#1547A6"/>
                   <rect x="14" y="70" width="16" height="16" fill="#FFFFFF"/>
-                  <rect x="18" y="74" width="8" height="8" fill="#0D5C30"/>
+                  <rect x="18" y="74" width="8" height="8" fill="#1547A6"/>
                   
-                  <!-- Dots -->
-                  <rect x="42" y="15" width="6" height="6" fill="#0D5C30"/>
-                  <rect x="52" y="15" width="6" height="6" fill="#0D5C30"/>
-                  <rect x="42" y="25" width="16" height="6" fill="#0D5C30"/>
-                  <rect x="15" y="42" width="6" height="16" fill="#0D5C30"/>
-                  <rect x="25" y="45" width="12" height="6" fill="#0D5C30"/>
-                  <rect x="45" y="45" width="10" height="10" fill="#0D5C30"/>
-                  <rect x="65" y="42" width="8" height="8" fill="#0D5C30"/>
-                  <rect x="78" y="42" width="12" height="6" fill="#0D5C30"/>
-                  <rect x="65" y="65" width="10" height="6" fill="#0D5C30"/>
-                  <rect x="42" y="75" width="16" height="8" fill="#0D5C30"/>
-                  <rect x="70" y="75" width="18" height="15" fill="#0D5C30"/>
+                  <rect x="42" y="15" width="6" height="6" fill="#1547A6"/>
+                  <rect x="52" y="15" width="6" height="6" fill="#1547A6"/>
+                  <rect x="42" y="25" width="16" height="6" fill="#1547A6"/>
+                  <rect x="15" y="42" width="6" height="16" fill="#1547A6"/>
+                  <rect x="25" y="45" width="12" height="6" fill="#1547A6"/>
+                  <rect x="45" y="45" width="10" height="10" fill="#1547A6"/>
+                  <rect x="65" y="42" width="8" height="8" fill="#1547A6"/>
+                  <rect x="78" y="42" width="12" height="6" fill="#1547A6"/>
+                  <rect x="65" y="65" width="10" height="6" fill="#1547A6"/>
+                  <rect x="42" y="75" width="16" height="8" fill="#1547A6"/>
+                  <rect x="70" y="75" width="18" height="15" fill="#1547A6"/>
                 </svg>
               </div>
               <div class="qr-scan-label">
@@ -752,15 +706,15 @@
       </div>
     </section>
 
-    <!-- ==================== SECTION: TESTIMONIALS (TẠO NIỀM TIN) ==================== -->
+    <!-- ==================== SECTION: TESTIMONIALS ==================== -->
     <section class="section testimonials-section" id="testimonials">
       <div class="container">
         
         <div class="section-header text-center">
           <span class="section-tag">CẢM NHẬN NGƯỜI DÙNG</span>
-          <h2 class="section-title">Sinh Viên FPT Nói Gì Về "Con Cá & Chén Cơm"?</h2>
+          <h2 class="section-title">Sinh Viên FPT Nói Gì Về "Con Cá và Chén Cơm"?</h2>
           <p class="section-subtitle">
-            Được thiết kế bởi chính những người từng "trầy da tróc vẩy" vì FAP và áp lực môn học FPT.
+            Được xây dựng bởi chính những người từng trải qua áp lực FAP và deadline đồ án trường FPT.
           </p>
         </div>
 
@@ -827,21 +781,21 @@
           
           <details class="faq-item" open>
             <summary class="faq-question">
-              <span>App có yêu cầu nhập mật khẩu tài khoản FAP không?</span>
+              <span>Ứng dụng này có thu phí không?</span>
               <span class="faq-icon">+</span>
             </summary>
             <div class="faq-answer">
-              <p>Hoàn toàn KHÔNG. Bạn không bao giờ phải nhập mật khẩu FAP của mình. App đồng bộ lịch học an toàn thông qua liên kết lịch iCal tiêu chuẩn hoặc file thời khóa biểu công khai do hệ thống FAP cung cấp. Thông tin cá nhân của bạn được bảo mật 100%.</p>
+              <p>Hoàn toàn <strong>MIỄN PHÍ 100%</strong> cho sinh viên FPT và các bạn trẻ. Tất cả các tính năng từ đồng bộ lịch học FAP, ma trận Eisenhower, tính giờ rảnh tự động đến trợ lý Gemini AI đều không thu phí.</p>
             </div>
           </details>
 
           <details class="faq-item">
             <summary class="faq-question">
-              <span>Ứng dụng có miễn phí cho sinh viên không?</span>
+              <span>App có yêu cầu nhập mật khẩu tài khoản FAP không?</span>
               <span class="faq-icon">+</span>
             </summary>
             <div class="faq-answer">
-              <p>Có! Các tính năng cốt lõi như đồng bộ lịch học FAP, tạo và phân loại công việc theo ma trận Eisenhower, tính giờ rảnh đều miễn phí cho cộng đồng sinh viên.</p>
+              <p>Hoàn toàn KHÔNG. Bạn không bao giờ phải nhập mật khẩu FAP của mình. App đồng bộ lịch học an toàn thông qua liên kết lịch iCal tiêu chuẩn hoặc file thời khóa biểu do hệ thống FAP cung cấp. Thông tin cá nhân của bạn được bảo mật tuyệt đối 100%.</p>
             </div>
           </details>
 
@@ -873,7 +827,7 @@
     <section class="final-cta-section text-center">
       <div class="container">
         <div class="final-cta-box">
-          <span class="final-tag">BẮT ĐẦU NGAY CHỈ VỚI 30 GIÂY</span>
+          <span class="final-tag">🎁 MIỄN PHÍ 100% CHO SINH VIÊN</span>
           <h2 class="final-title">
             Đừng Để Sự Trì Hoãn Đánh Cắp Kỳ Học Tiếp Theo Của Bạn!
           </h2>
@@ -881,22 +835,27 @@
             Kỷ luật hôm nay, thảnh thơi ngày mai. Hãy biến mỗi ngày ở giảng đường đại học trở nên rõ ràng và nhẹ nhàng hơn bao giờ hết.
           </p>
 
-          <div class="final-btn-wrap">
-            <a href="/app" class="btn btn-hero-cta final-cta-btn">
-              <span>🚀 Bắt Đầu Quản Lý Lịch Học Miễn Phí Ngay</span>
+          <div class="final-btn-wrap" style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-top:28px;">
+            <!-- Hai nút CTA -->
+            <button type="button" class="btn btn-hero-cta final-cta-btn" onclick="openRegisterModal()">
+              <span>🚀 Đăng ký dùng thử sớm</span>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <a href="/app" class="btn btn-outline-hero" style="background:#FFFFFF; font-weight:700; padding:16px 32px; border-radius:9999px;">
+              <span>Vào dùng ngay ➜</span>
             </a>
           </div>
-          <p class="final-subnote">Chỉ mất 30 giây để thiết lập • Không cần thẻ tín dụng • Truy cập tức thì tại <strong>concavachencom.site/app</strong></p>
+          <p class="final-subnote">Miễn phí 100% cho sinh viên • Thiết lập trong 30 giây • Không cần thẻ tín dụng</p>
         </div>
       </div>
     </section>
   </main>
 
   <!-- ==================== FOOTER ==================== -->
-  <footer class="footer">
+  <footer class="footer" id="contact">
     <div class="container footer-container">
       
+      <!-- Cột 1: Brand & Logo -->
       <div class="footer-col footer-col-brand">
         <div class="brand-logo footer-logo">
           <img src="/assets/logo-horizontal-dark.png" alt="Con Cá và Chén Cơm" class="footer-brand-logo">
@@ -905,40 +864,54 @@
           "Kỷ luật là chìa khóa của tự do."
         </p>
         <p class="footer-subtext">
-          Ứng dụng web thông minh hỗ trợ sinh viên FPT và các trường đại học quản lý thời gian, lịch học FAP và vượt qua áp lực deadline.
+          Con Cá và Chén Cơm — web app quản lý lịch học & công việc thông minh cho sinh viên FPT. Giúp bạn dứt điểm chạy deadline thâu đêm và làm chủ thời gian.
         </p>
       </div>
 
+      <!-- Cột 2: Sản phẩm -->
       <div class="footer-col">
-        <h4 class="footer-col-title">Sản Phẩm</h4>
+        <h4 class="footer-col-title">Tính Năng Cốt Lõi</h4>
         <ul class="footer-links">
-          <li><a href="#hero">Đồng bộ lịch FAP</a></li>
-          <li><a href="#benefits">Ma trận Eisenhower</a></li>
-          <li><a href="#features">Bản đồ giờ rảnh</a></li>
-          <li><a href="#features">Trợ lý AI Gemini</a></li>
-          <li><a href="/app">Mở Web App</a></li>
+          <li><a href="#benefits">Đồng bộ lịch học FAP FPT</a></li>
+          <li><a href="#benefits">Đồng bộ Google Calendar</a></li>
+          <li><a href="#benefits">Ma trận Eisenhower 4 ô</a></li>
+          <li><a href="#benefits">Tự động tính lịch rảnh</a></li>
+          <li><a href="#benefits">Trợ lý Gemini AI</a></li>
+          <li><a href="#benefits">Cài PWA điện thoại</a></li>
         </ul>
       </div>
 
+      <!-- Cột 3: Khám Phá -->
       <div class="footer-col">
         <h4 class="footer-col-title">Khám Phá</h4>
         <ul class="footer-links">
-          <li><a href="#benefits">Lợi ích sinh viên</a></li>
-          <li><a href="#problems">Nỗi đau & Vấn đề</a></li>
+          <li><a href="#benefits">Lợi ích thực tế</a></li>
+          <li><a href="#pricing">Bảng giá (Miễn phí 100%)</a></li>
           <li><a href="#how-it-works">Cách hoạt động</a></li>
-          <li><a href="#testimonials">Đánh giá thực tế</a></li>
+          <li><a href="#problems">Nỗi lo sinh viên FPT</a></li>
+          <li><a href="#testimonials">Đánh giá sinh viên</a></li>
           <li><a href="#faq">Câu hỏi thường gặp</a></li>
         </ul>
       </div>
 
-      <div class="footer-col">
-        <h4 class="footer-col-title">Truy Cập</h4>
-        <div class="footer-access-box">
-          <p>Tên miền chính thức:</p>
-          <a href="/app" class="domain-badge">
-            concavachencom.site/app ↗
-          </a>
-          <p class="secure-tag">🔒 An toàn • Tiện lợi • Chuẩn FPT</p>
+      <!-- Cột 4: PHẦN LIÊN HỆ (Yêu cầu: email trtainguyen2306@gmail.com) -->
+      <div class="footer-col footer-col-contact">
+        <h4 class="footer-col-title">Liên Hệ & Hỗ Trợ</h4>
+        <p class="footer-contact-desc">Mọi thắc mắc, phản hồi hay góp ý phát triển app, xin vui lòng gửi email về:</p>
+        
+        <div class="footer-contact-item">
+          <span class="contact-icon">📧</span>
+          <a href="mailto:trtainguyen2306@gmail.com" class="footer-contact-link">trtainguyen2306@gmail.com</a>
+        </div>
+        
+        <div class="footer-contact-item">
+          <span class="contact-icon">💬</span>
+          <span>Hỗ trợ sinh viên FPT 24/7</span>
+        </div>
+
+        <div class="footer-contact-actions">
+          <button type="button" class="btn btn-footer-cta" onclick="openRegisterModal()">Đăng ký dùng thử sớm</button>
+          <a href="/app" class="btn btn-footer-outline">Vào dùng ngay ➜</a>
         </div>
       </div>
 
@@ -946,15 +919,76 @@
 
     <div class="footer-bottom">
       <div class="container footer-bottom-inner">
-        <p>© 2026 Con Cá và Chén Cơm. All rights reserved. Designed for student freedom & excellence.</p>
+        <p>© 2026 Con Cá và Chén Cơm. Miễn phí 100% cho sinh viên FPT. All rights reserved.</p>
         <div class="footer-bottom-links">
-          <a href="#">Điều khoản sử dụng</a>
-          <a href="#">Chính sách bảo mật</a>
+          <a href="mailto:trtainguyen2306@gmail.com">Liên hệ hỗ trợ: trtainguyen2306@gmail.com</a>
           <a href="https://concavachencom.site">concavachencom.site</a>
+          <a href="/app">concavachencom.site/app</a>
         </div>
       </div>
     </div>
   </footer>
+
+  <!-- ==================== REGISTRATION FORM MODAL (ĐĂNG KÝ DÙNG THỬ SỚM) ==================== -->
+  <div class="modal-overlay" id="registerModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" onclick="closeRegisterModal()"></div>
+    <div class="modal-container">
+      <button class="modal-close" onclick="closeRegisterModal()" aria-label="Đóng cửa sổ">&times;</button>
+      
+      <!-- FORM STATE -->
+      <div id="modalFormContent">
+        <div class="modal-badge">🎁 MIỄN PHÍ 100% CHO SINH VIÊN</div>
+        <h3 class="modal-title">Đăng Ký Dùng Thử Sớm</h3>
+        <p class="modal-subtitle">
+          Trở thành những sinh viên FPT đầu tiên trải nghiệm <strong>Con Cá và Chén Cơm</strong> để làm chủ lịch học và thoát khỏi áp lực deadline.
+        </p>
+
+        <form id="leadRegisterForm" class="modal-form" onsubmit="handleRegisterSubmit(event)">
+          <div class="form-group">
+            <label for="leadFullName" class="form-label">Họ và tên <span class="required-star">*</span></label>
+            <input type="text" id="leadFullName" name="fullname" class="form-input" placeholder="Ví dụ: Nguyễn Văn An" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="leadEmail" class="form-label">Email <span class="required-star">*</span></label>
+            <input type="email" id="leadEmail" name="email" class="form-input" placeholder="Ví dụ: annvse170001@fpt.edu.vn hoặc gmail của bạn" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label for="leadStudentId" class="form-label">Mã sinh viên <span class="optional-tag">(không bắt buộc)</span></label>
+            <input type="text" id="leadStudentId" name="studentId" class="form-input" placeholder="Ví dụ: SE170123, SS180456...">
+          </div>
+
+          <button type="submit" class="btn-submit-lead" id="btnSubmitLead">
+            <span>Gửi đăng ký ngay</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+
+          <p class="form-privacy-note">🔒 Thông tin được bảo mật 100%. Không spam. Miễn phí cho sinh viên.</p>
+        </form>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div id="modalSuccessContent" class="modal-success-state" style="display: none;">
+        <div class="success-icon-circle">🎉</div>
+        <h3 class="success-title">Đăng Ký Thành Công!</h3>
+        <p class="success-desc">
+          Cảm ơn bạn <strong id="successUserName">bạn</strong>! Thông tin của bạn đã được ghi nhận. Bạn là một trong những sinh viên ưu tiên trải nghiệm sớm nhất.
+        </p>
+
+        <div class="success-action-box">
+          <p class="success-hint">Bạn có thể vào trải nghiệm trực tiếp phiên bản web app hiện tại ngay bây giờ:</p>
+          <a href="/app" class="btn btn-hero-cta success-cta-btn">
+            <span>🚀 Vào dùng ngay bây giờ</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+
+        <button type="button" class="btn-text-close" onclick="closeRegisterModal()">Đóng cửa sổ</button>
+      </div>
+
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
