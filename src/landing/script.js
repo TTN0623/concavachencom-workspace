@@ -169,16 +169,18 @@ function handleRegisterSubmit(event) {
   // Gửi thật sang Google Apps Script -> Lưu Google Sheet "Leads" + Email báo Admin
   // Dùng mode:'no-cors' vì Apps Script Web App không trả CORS header cho domain khác;
   // request vẫn được Google xử lý và ghi dữ liệu dù trình duyệt không đọc được response.
-  let deliveryFailed = false;
+  // Chạy kiểu "bắn rồi quên" (fire-and-forget): GAS có độ trễ redirect ẩn ~5-10s,
+  // không chờ promise này mới cho khách thấy màn hình thành công, tránh cảm giác bị treo.
   fetch(LEAD_WEB_APP_URL, {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action: 'registerLead', ...leadData })
   }).catch(err => {
-    deliveryFailed = true;
     console.warn('Gửi lead tới Google Apps Script thất bại (có thể do mất mạng):', err);
-  }).finally(() => {
+  });
+
+  setTimeout(() => {
     // Reset button
     if (submitBtn) {
       submitBtn.disabled = false;
@@ -194,9 +196,5 @@ function handleRegisterSubmit(event) {
     if (nameHolder) nameHolder.textContent = fullname;
     if (formBox) formBox.style.display = 'none';
     if (successBox) successBox.style.display = 'block';
-
-    if (deliveryFailed) {
-      console.warn('⚠️ Lead có thể chưa tới được máy chủ, vui lòng liên hệ trực tiếp email nếu không thấy phản hồi.');
-    }
-  });
+  }, 500);
 }
