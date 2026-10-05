@@ -82,26 +82,61 @@ function build() {
 
   indexHtml = indexHtml.replace(gasPreloadPattern, standalonePreloadBlock);
 
-  // 3. Đảm bảo thư mục public tồn tại
+  // 3. Đảm bảo thư mục public và public/app tồn tại
   if (!fs.existsSync(PUBLIC_DIR)) {
     fs.mkdirSync(PUBLIC_DIR, { recursive: true });
   }
+  const APP_DIR = path.join(PUBLIC_DIR, 'app');
+  if (!fs.existsSync(APP_DIR)) {
+    fs.mkdirSync(APP_DIR, { recursive: true });
+  }
 
-  // 4. Ghi file public/index.html
-  const distPath = path.join(PUBLIC_DIR, 'index.html');
-  fs.writeFileSync(distPath, indexHtml, 'utf8');
-  console.log(`✅ Build thành công: ${distPath} (${(indexHtml.length / 1024).toFixed(1)} KB)`);
+  // 4. Ghi file public/app/index.html & public/app.html (Ứng dụng Con Cá và Chén Cơm)
+  const appDistPath = path.join(APP_DIR, 'index.html');
+  fs.writeFileSync(appDistPath, indexHtml, 'utf8');
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'app.html'), indexHtml, 'utf8');
+  console.log(`✅ Build App thành công: ${appDistPath} (${(indexHtml.length / 1024).toFixed(1)} KB)`);
 
-  // 5. Tự động sinh public/robots.txt cho Googlebot & Search Engines
+  // 5. Build Landing Page từ src/landing/ vào public/
+  const LANDING_DIR = path.join(ROOT_DIR, 'src', 'landing');
+  if (fs.existsSync(LANDING_DIR)) {
+    const landingHtmlPath = path.join(LANDING_DIR, 'index.html');
+    const landingCssPath = path.join(LANDING_DIR, 'styles.css');
+    const landingJsPath = path.join(LANDING_DIR, 'script.js');
+
+    if (fs.existsSync(landingHtmlPath)) {
+      fs.copyFileSync(landingHtmlPath, path.join(PUBLIC_DIR, 'index.html'));
+      console.log('✅ Đã xuất Landing Page: public/index.html (Đường dẫn /)');
+    }
+    if (fs.existsSync(landingCssPath)) {
+      fs.copyFileSync(landingCssPath, path.join(PUBLIC_DIR, 'styles.css'));
+      console.log('✅ Đã xuất Landing CSS: public/styles.css');
+    }
+    if (fs.existsSync(landingJsPath)) {
+      fs.copyFileSync(landingJsPath, path.join(PUBLIC_DIR, 'script.js'));
+      console.log('✅ Đã xuất Landing JS: public/script.js');
+    }
+
+    const landingAssets = path.join(LANDING_DIR, 'assets');
+    if (fs.existsSync(landingAssets)) {
+      const publicAssets = path.join(PUBLIC_DIR, 'assets');
+      if (!fs.existsSync(publicAssets)) fs.mkdirSync(publicAssets, { recursive: true });
+      fs.cpSync(landingAssets, publicAssets, { recursive: true });
+      console.log('✅ Đã đồng bộ Landing assets: public/assets');
+    }
+  }
+
+  // 6. Tự động sinh public/robots.txt cho Googlebot & Search Engines
   const robotsContent = `User-agent: *
 Allow: /
+Allow: /app
 
 Sitemap: https://concavachencom.site/sitemap.xml
 `;
   fs.writeFileSync(path.join(PUBLIC_DIR, 'robots.txt'), robotsContent, 'utf8');
   console.log('✅ Đã tạo: public/robots.txt');
 
-  // 6. Tự động sinh public/sitemap.xml cho Google Search Console
+  // 7. Tự động sinh public/sitemap.xml cho Google Search Console
   const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -109,6 +144,12 @@ Sitemap: https://concavachencom.site/sitemap.xml
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://concavachencom.site/app</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
 </urlset>
 `;

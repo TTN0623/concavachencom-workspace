@@ -73,7 +73,7 @@
                     if (!isLoggedIn) {
                         headerAvatar.className = 'w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all';
                     } else {
-                        headerAvatar.className = 'w-8 h-8 rounded-full bg-[#0054a6] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all';
+                        headerAvatar.className = 'w-8 h-8 rounded-full bg-[#1547A6] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all';
                     }
                 }
             }
@@ -95,7 +95,7 @@
                 } else {
                     dropAvatar.innerText = initials;
                     dropAvatar.className = isLoggedIn 
-                        ? 'w-10 h-10 rounded-full bg-[#0054a6] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0' 
+                        ? 'w-10 h-10 rounded-full bg-[#1547A6] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0' 
                         : 'w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-black text-sm flex items-center justify-center shadow-xs shrink-0';
                 }
             }
@@ -110,7 +110,7 @@
             if (dropRole) {
                 dropRole.innerText = isLoggedIn ? (isCurrentUserAdmin ? 'Admin' : 'Sinh viên') : 'Khách';
                 dropRole.className = isLoggedIn 
-                    ? (isCurrentUserAdmin ? 'text-[9px] font-black px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 shrink-0' : 'text-[9px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 shrink-0')
+                    ? (isCurrentUserAdmin ? 'text-[9px] font-black px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 shrink-0' : 'text-[9px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-[#1547A6] dark:bg-blue-950 dark:text-blue-300 shrink-0')
                     : 'text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 shrink-0';
             }
 
@@ -126,7 +126,7 @@
                     `;
                 } else {
                     dropActionContainer.innerHTML = `
-                        <button type="button" onclick="closeProfileDropdown(); openAuthModal();" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#0054a6] hover:bg-[#004285] text-white transition-colors text-xs font-bold shadow-xs cursor-pointer">
+                        <button type="button" onclick="closeProfileDropdown(); openAuthModal();" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#1547A6] hover:bg-[#0D3A8F] text-white transition-colors text-xs font-bold shadow-xs cursor-pointer">
                             <svg class="w-3.5 h-3.5 bg-white rounded-full p-0.5 shrink-0" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -1034,7 +1034,7 @@
             const gateBtn = document.getElementById('btnAuthGateSignIn');
             if (window.supabaseClient) {
                 try {
-                    const redirectUrl = window.location.origin;
+                    const redirectUrl = window.location.origin + (window.location.pathname.startsWith('/app') ? '/app' : '');
                     const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
@@ -1180,8 +1180,9 @@
 
                 // 7. Điều hướng về URL chuẩn không chứa query/hash thừa
                 if (window.location.hostname.includes('concavachencom.site')) {
-                    if (window.location.pathname !== '/' || window.location.search || window.location.hash) {
-                        window.location.href = 'https://concavachencom.site';
+                    const targetPath = window.location.pathname.startsWith('/app') ? '/app' : '/';
+                    if (window.location.pathname !== targetPath || window.location.search || window.location.hash) {
+                        window.location.href = window.location.origin + targetPath;
                     }
                 }
             }

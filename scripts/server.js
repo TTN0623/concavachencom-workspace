@@ -419,31 +419,87 @@ const MOCK_SCRIPT = `
 </script>
 `;
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/' || req.url === '/index.html') {
-    if (!fs.existsSync(PUBLIC_INDEX_PATH)) {
-      try {
-        require('./build.js');
-      } catch (e) {
-        console.error('Lỗi tự động build:', e);
-      }
-    }
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8'
+};
 
+const server = http.createServer((req, res) => {
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  let pathname = parsedUrl.pathname;
+
+  // 1. Tự động build nếu chưa có thư mục public
+  const APP_INDEX_PATH = path.join(ROOT_DIR, 'public', 'app', 'index.html');
+  if (!fs.existsSync(PUBLIC_INDEX_PATH) || !fs.existsSync(APP_INDEX_PATH)) {
+    try {
+      require('./build.js');
+    } catch (e) {
+      console.error('Lỗi tự động build:', e);
+    }
+  }
+
+  // 2. Điều hướng trang chủ (Landing Page)
+  if (pathname === '/' || pathname === '/index.html') {
     fs.readFile(PUBLIC_INDEX_PATH, 'utf8', (err, html) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Lỗi nạp file index.html: ' + err.message);
+        res.end('Lỗi nạp Landing Page: ' + err.message);
         return;
       }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(html);
     });
-  } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
+    return;
   }
+
+  // 3. Điều hướng ứng dụng Con Cá và Chén Cơm (/app hoặc /app/)
+  if (pathname === '/app' || pathname === '/app/' || pathname === '/app/index.html') {
+    fs.readFile(APP_INDEX_PATH, 'utf8', (err, html) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Lỗi nạp ứng dụng Con Cá và Chén Cơm: ' + err.message);
+        return;
+      }
+      // Nhúng mock script vào local dev server để test đầy đủ tính năng
+      const enrichedHtml = html.includes('</head>')
+        ? html.replace('</head>', MOCK_SCRIPT + '</head>')
+        : html + MOCK_SCRIPT;
+
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(enrichedHtml);
+    });
+    return;
+  }
+
+  // 4. Phục vụ các file tĩnh (styles.css, script.js, icons, images, v.v.)
+  const safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
+  const filePath = path.join(ROOT_DIR, 'public', safePath);
+
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': contentType });
+    fs.createReadStream(filePath).pipe(res);
+    return;
+  }
+
+  // 5. Fallback 404
+  res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('404 Not Found - Đường dẫn không tồn tại trên concavachencom.site');
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log('🚀 Cá Cơm và Chén Cơm Local Server running at http://localhost:' + PORT);
+  console.log('================================================================');
+  console.log('🚀 CON CÁ VÀ CHÉN CƠM - DỰ ÁN HỢP NHẤT ĐÃ KHỞI CHẠY!');
+  console.log('👉 Trang chủ (Landing Page): http://localhost:' + PORT + '/');
+  console.log('👉 Ứng dụng quản lý (App):   http://localhost:' + PORT + '/app');
+  console.log('================================================================');
 });

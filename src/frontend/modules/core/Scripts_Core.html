@@ -120,7 +120,7 @@
         }
 
         const STANDARD_CATEGORIES = [
-            { key: 'Học tập', label: 'Học tập', icon: '📚', bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-[#0054a6] dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800', dot: 'bg-blue-500' },
+            { key: 'Học tập', label: 'Học tập', icon: '📚', bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-[#1547A6] dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800', dot: 'bg-blue-500' },
             { key: 'Công việc', label: 'Công việc', icon: '💼', bg: 'bg-purple-50 dark:bg-purple-950/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800', dot: 'bg-purple-500' },
             { key: 'Cá nhân', label: 'Cá nhân', icon: '🌱', bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' }
         ];
@@ -220,14 +220,14 @@
                     const isSelected = (selectedCategoryFilter === item.key);
                     if (item.key === 'all') {
                         return `
-                            <button type="button" onclick="setCategoryFilter('all')" class="px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-[#0054a6] text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'}">
+                            <button type="button" onclick="setCategoryFilter('all')" class="px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-[#1547A6] text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'}">
                                 <span>${item.icon} ${item.label}</span>
                                 <span class="px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">${item.count}</span>
                             </button>
                         `;
                     }
                     return `
-                        <button type="button" onclick="setCategoryFilter('${item.key}')" class="px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-[#0054a6] text-white shadow-xs' : `${item.col.bg} ${item.col.text} border ${item.col.border} hover:opacity-90`}">
+                        <button type="button" onclick="setCategoryFilter('${item.key}')" class="px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-[#1547A6] text-white shadow-xs' : `${item.col.bg} ${item.col.text} border ${item.col.border} hover:opacity-90`}">
                             <span>${item.icon} ${item.label}</span>
                             <span class="px-1.5 py-0.2 rounded-full text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-white/70 dark:bg-slate-800 text-slate-700 dark:text-slate-200'}">${item.count}</span>
                         </button>

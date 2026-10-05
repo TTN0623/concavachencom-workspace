@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Allow: /app
 
 Sitemap: https://concavachencom.site/sitemap.xml

@@ -50,16 +50,16 @@
             const androidContent = document.getElementById('pwaAndroidContent');
 
             if (tab === 'ios') {
-                iosTab?.classList.add('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                iosTab?.classList.add('border-[#1547A6]', 'text-[#1547A6]', 'font-bold');
                 iosTab?.classList.remove('border-transparent', 'text-slate-500');
-                androidTab?.classList.remove('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                androidTab?.classList.remove('border-[#1547A6]', 'text-[#1547A6]', 'font-bold');
                 androidTab?.classList.add('border-transparent', 'text-slate-500');
                 iosContent?.classList.remove('hidden');
                 androidContent?.classList.add('hidden');
             } else {
-                androidTab?.classList.add('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                androidTab?.classList.add('border-[#1547A6]', 'text-[#1547A6]', 'font-bold');
                 androidTab?.classList.remove('border-transparent', 'text-slate-500');
-                iosTab?.classList.remove('border-[#0054a6]', 'text-[#0054a6]', 'font-bold');
+                iosTab?.classList.remove('border-[#1547A6]', 'text-[#1547A6]', 'font-bold');
                 iosTab?.classList.add('border-transparent', 'text-slate-500');
                 androidContent?.classList.remove('hidden');
                 iosContent?.classList.add('hidden');
@@ -115,14 +115,14 @@
             const btnAll = document.getElementById('notifTabAll');
             const btnUnread = document.getElementById('notifTabUnread');
             if (tab === 'all') {
-                btnAll?.classList.add('bg-[#0054a6]', 'text-white');
+                btnAll?.classList.add('bg-[#1547A6]', 'text-white');
                 btnAll?.classList.remove('text-slate-600', 'dark:text-slate-400');
-                btnUnread?.classList.remove('bg-[#0054a6]', 'text-white');
+                btnUnread?.classList.remove('bg-[#1547A6]', 'text-white');
                 btnUnread?.classList.add('text-slate-600', 'dark:text-slate-400');
             } else {
-                btnUnread?.classList.add('bg-[#0054a6]', 'text-white');
+                btnUnread?.classList.add('bg-[#1547A6]', 'text-white');
                 btnUnread?.classList.remove('text-slate-600', 'dark:text-slate-400');
-                btnAll?.classList.remove('bg-[#0054a6]', 'text-white');
+                btnAll?.classList.remove('bg-[#1547A6]', 'text-white');
                 btnAll?.classList.add('text-slate-600', 'dark:text-slate-400');
             }
             renderNotificationItems();

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <!-- PWA & Mobile Web App Meta Tags -->
-    <meta name="theme-color" content="#0054a6">
+    <meta name="theme-color" content="#1547A6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Con Cá và Chén Cơm">
@@ -97,7 +97,7 @@
         </div>
         <div style="font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-0.5px;margin-bottom:6px;">Con Cá và Chén Cơm</div>
         <div style="font-size:12px;color:#64748b;margin-bottom:20px;">Đang tải ứng dụng & dữ liệu...</div>
-        <div style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#0054a6;border-radius:50%;animation:splashSpin 0.7s linear infinite;"></div>
+        <div style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#1547A6;border-radius:50%;animation:splashSpin 0.7s linear infinite;"></div>
         <style>
             @keyframes splashSpin{to{transform:rotate(360deg)}}
             .dark #appInitialSplash { background: #0f172a !important; }
@@ -156,7 +156,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-base">🔔</span>
                             <span class="font-bold text-sm text-slate-800 dark:text-slate-100">Thông báo & Báo cáo</span>
-                            <span id="notificationUnreadCountBadge" class="hidden px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 rounded-full">0 mới</span>
+                            <span id="notificationUnreadCountBadge" class="hidden px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-[#1547A6] dark:bg-blue-950 dark:text-blue-300 rounded-full">0 mới</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <button type="button" onclick="markAllNotificationsAsRead()" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer" title="Đánh dấu tất cả đã đọc">
@@ -170,7 +170,7 @@
 
                     <!-- Filter Tabs: Tất cả / Chưa đọc -->
                     <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/60 flex items-center gap-1 bg-white dark:bg-slate-900 text-xs font-semibold">
-                        <button type="button" id="notifTabAll" onclick="setNotificationTab('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-[#0054a6] text-white">
+                        <button type="button" id="notifTabAll" onclick="setNotificationTab('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer bg-[#1547A6] text-white">
                             Tất cả
                         </button>
                         <button type="button" id="notifTabUnread" onclick="setNotificationTab('unread')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
@@ -209,7 +209,7 @@
             <!-- Profile User FAP with Interactive Dropdown Menu -->
             <div class="relative shrink-0" id="headerProfileContainer">
                 <button type="button" id="headerProfileTrigger" onclick="toggleProfileDropdown(event)" class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700 hover:opacity-90 transition-opacity cursor-pointer focus:outline-none py-1" title="Tài khoản & Cài đặt">
-                    <div id="headerAvatar" class="w-8 h-8 rounded-full bg-[#0054a6] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all">
+                    <div id="headerAvatar" class="w-8 h-8 rounded-full bg-[#1547A6] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0 transition-all">
                         NT
                     </div>
                     <div class="hidden lg:flex flex-col text-left leading-tight">
@@ -223,13 +223,13 @@
                 <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden">
                     <!-- User Header Info -->
                     <div class="p-3.5 bg-slate-50 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                        <div id="dropdownAvatar" class="w-10 h-10 rounded-full bg-[#0054a6] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
+                        <div id="dropdownAvatar" class="w-10 h-10 rounded-full bg-[#1547A6] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
                             NT
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-1.5">
                                 <p id="dropdownProfileName" class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">Nguyễn Trọng Tài</p>
-                                <span id="dropdownRoleBadge" class="text-[9px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 shrink-0">Sinh viên</span>
+                                <span id="dropdownRoleBadge" class="text-[9px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-[#1547A6] dark:bg-blue-950 dark:text-blue-300 shrink-0">Sinh viên</span>
                             </div>
                             <p id="dropdownEmail" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">trtainguyen2306@gmail.com</p>
                         </div>
@@ -281,7 +281,7 @@
                         HỌC TẬP & CÔNG VIỆC
                     </div>
                     <nav class="space-y-1">
-                        <button type="button" id="navDashboardBtn" onclick="switchView('dashboard')" class="w-full flex items-center gap-2 px-3 py-2 bg-[#0054a6] text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer text-left transition-colors">
+                        <button type="button" id="navDashboardBtn" onclick="switchView('dashboard')" class="w-full flex items-center gap-2 px-3 py-2 bg-[#1547A6] text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer text-left transition-colors">
                             <span>🏠</span>
                             <span>Trang chính (Lịch & Tiến độ)</span>
                         </button>
@@ -317,7 +317,7 @@
             <!-- Footer Sidebar: Bản quyền & Badge Phiên bản -->
             <div class="p-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
                 <span class="font-bold text-slate-600 text-[11px] tracking-wide uppercase">CON CÁ VÀ CHÉN CƠM</span>
-                <span class="inline-block px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-[#0054a6] border border-blue-200 rounded-full font-bold text-[10px] cursor-pointer transition-colors" id="appVersionBadge" title="Bấm để tải lại bản mới nhất (xóa cache)" onclick="applyVersionUpdate()">v1.7.0</span>
+                <span class="inline-block px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-[#1547A6] border border-blue-200 rounded-full font-bold text-[10px] cursor-pointer transition-colors" id="appVersionBadge" title="Bấm để tải lại bản mới nhất (xóa cache)" onclick="applyVersionUpdate()">v1.7.0</span>
             </div>
         </aside>
 
@@ -357,7 +357,7 @@
                                 &larr; Tuần trước
                             </button>
                             
-                            <button type="button" onclick="goToCurrentWeek()" class="px-3.5 py-1.5 bg-[#0054a6] hover:bg-[#004285] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <button type="button" onclick="goToCurrentWeek()" class="px-3.5 py-1.5 bg-[#1547A6] hover:bg-[#0D3A8F] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
                                 <span>📅</span>
                                 <span>Tuần hiện tại</span>
                             </button>
@@ -373,7 +373,7 @@
                                 <span>⚡</span>
                                 <span>Đồng bộ FAP</span>
                             </button>
-                            <button type="button" id="syncCalendarBtn" onclick="syncGoogleCalendar()" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#0054a6] border border-blue-200 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                            <button type="button" id="syncCalendarBtn" onclick="syncGoogleCalendar()" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#1547A6] border border-blue-200 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
                                 <span id="calendarSyncIcon">📅</span>
                                 <span>Đồng bộ Google Calendar</span>
                             </button>
@@ -398,13 +398,13 @@
                             </div>
 
                             <div class="flex items-baseline justify-between mt-1">
-                                <span class="text-3xl font-extrabold text-[#0054a6] dark:text-blue-400" id="todayPercentText">0%</span>
+                                <span class="text-3xl font-extrabold text-[#1547A6] dark:text-blue-400" id="todayPercentText">0%</span>
                                 <span class="text-xs text-slate-500 font-medium" id="todayRatioText">0 / 0 việc</span>
                             </div>
 
                             <!-- Progress Bar Ngày -->
                             <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                                <div id="todayProgressBar" class="bg-[#0054a6] h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                <div id="todayProgressBar" class="bg-[#1547A6] h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
                             </div>
 
                             <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
@@ -421,7 +421,7 @@
                                     <span class="text-base">📊</span>
                                     <h3 class="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wide">Tiến độ & Hiệu suất tuần</h3>
                                 </div>
-                                <span id="weekStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#0054a6] dark:bg-blue-900/60 dark:text-blue-300">Tuần 40</span>
+                                <span id="weekStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#1547A6] dark:bg-blue-900/60 dark:text-blue-300">Tuần 40</span>
                             </div>
 
                             <div class="flex items-baseline justify-between">
@@ -540,7 +540,7 @@
                             &larr; Tuần trước
                         </button>
                         
-                        <button type="button" onclick="syncDataWithoutReload()" class="px-3.5 py-1.5 bg-[#0054a6] hover:bg-[#004285] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
+                        <button type="button" onclick="syncDataWithoutReload()" class="px-3.5 py-1.5 bg-[#1547A6] hover:bg-[#0D3A8F] text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
                             <span>📅</span>
                             <span>Tuần hiện tại</span>
                         </button>
@@ -603,7 +603,7 @@
                         </div>
                         
                         <div class="flex items-center gap-2.5 flex-wrap">
-                            <button type="button" id="btnBatchSchedule" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-[#0054a6] to-blue-700 hover:from-blue-700 hover:to-[#004285] text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all cursor-pointer">
+                            <button type="button" id="btnBatchSchedule" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-[#1547A6] to-blue-700 hover:from-blue-700 hover:to-[#0D3A8F] text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all cursor-pointer">
                                 <span>🚀 Đẩy lên Trang chính & Lịch rảnh</span>
                                 <span id="unscheduledCountBadge" class="bg-amber-400 text-slate-900 text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none hidden">0</span>
                             </button>
@@ -627,7 +627,7 @@
                             <div class="flex items-center justify-between flex-wrap gap-2 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                                 <div class="flex items-center gap-1.5 flex-wrap text-xs">
                                     <span class="text-slate-500 dark:text-slate-400 font-bold mr-1 text-[11px]">Lọc công việc:</span>
-                                    <button type="button" id="filterAllBtn" onclick="setMatrixFilter('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0054a6] text-white shadow-2xs transition-all cursor-pointer">
+                                    <button type="button" id="filterAllBtn" onclick="setMatrixFilter('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#1547A6] text-white shadow-2xs transition-all cursor-pointer">
                                         Tất cả (<span id="filterCountAll">0</span>)
                                     </button>
                                     <button type="button" id="filterActiveBtn" onclick="setMatrixFilter('active')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer">
@@ -639,7 +639,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none">
-                                        <input type="checkbox" id="matrixHideDoneCheckbox" onchange="toggleHideDone(this.checked)" class="w-3.5 h-3.5 rounded text-[#0054a6] focus:ring-[#0054a6] cursor-pointer">
+                                        <input type="checkbox" id="matrixHideDoneCheckbox" onchange="toggleHideDone(this.checked)" class="w-3.5 h-3.5 rounded text-[#1547A6] focus:ring-[#1547A6] cursor-pointer">
                                         <span class="text-[11px] font-medium">Ẩn việc đã xong</span>
                                     </label>
                                 </div>
@@ -654,7 +654,7 @@
                                             <h3 class="font-bold text-slate-800 dark:text-slate-100 text-xs tracking-wide">
                                                 Chưa sắp xếp (Inbox)
                                             </h3>
-                                            <span class="text-[10px] bg-blue-100 text-[#0054a6] dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold" id="inboxCount">0</span>
+                                            <span class="text-[10px] bg-blue-100 text-[#1547A6] dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold" id="inboxCount">0</span>
                                         </div>
                                         <span class="text-[11px] text-slate-400 dark:text-slate-500 font-normal hidden sm:inline">
                                             &bull; Kéo thả các thẻ việc từ khay này vào 4 ô phân loại Ma trận bên dưới
@@ -746,7 +746,7 @@
                                         <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
                                             Nội dung công việc <span class="text-red-500">*</span>
                                         </label>
-                                        <textarea id="taskInput" required rows="2" placeholder="Ví dụ: Ôn tập môn CSI106 phòng P.205..." class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-[#0054a6] focus:border-[#0054a6] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none transition-all resize-y min-h-[50px]"></textarea>
+                                        <textarea id="taskInput" required rows="2" placeholder="Ví dụ: Ôn tập môn CSI106 phòng P.205..." class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-[#1547A6] focus:border-[#1547A6] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none transition-all resize-y min-h-[50px]"></textarea>
                                     </div>
 
                                     <!-- 2. Hạn chót (Deadline) -->
@@ -758,11 +758,11 @@
                                             <button type="button" onclick="clearDeadline('taskDeadline')" class="text-[10px] text-red-500 hover:underline cursor-pointer">Xóa hạn</button>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <div id="taskDeadlineDisplay" onclick="openCustomDatePicker('taskDeadline')" class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-[#0054a6] transition-all flex items-center justify-between shadow-2xs" title="Nhấp để mở hộp thoại chọn ngày tháng và giờ">
+                                            <div id="taskDeadlineDisplay" onclick="openCustomDatePicker('taskDeadline')" class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-[#1547A6] transition-all flex items-center justify-between shadow-2xs" title="Nhấp để mở hộp thoại chọn ngày tháng và giờ">
                                                 <span id="taskDeadlineDisplayText" class="text-slate-500 dark:text-slate-400">dd/mm, --:--</span>
-                                                <span class="text-[11px] text-[#0054a6] bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded font-sans font-semibold">Chưa chọn</span>
+                                                <span class="text-[11px] text-[#1547A6] bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded font-sans font-semibold">Chưa chọn</span>
                                             </div>
-                                            <button type="button" onclick="openCustomDatePicker('taskDeadline')" class="px-3.5 py-2 bg-[#0054a6] hover:bg-[#004285] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 transition-colors" title="Mở hộp lựa ngày tháng và giờ">
+                                            <button type="button" onclick="openCustomDatePicker('taskDeadline')" class="px-3.5 py-2 bg-[#1547A6] hover:bg-[#0D3A8F] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 transition-colors" title="Mở hộp lựa ngày tháng và giờ">
                                                 <span>📅</span>
                                                 <span>Chọn lịch</span>
                                             </button>
@@ -779,7 +779,7 @@
                                     <!-- 3. Mức độ ưu tiên -->
                                     <div class="flex flex-col gap-1">
                                         <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300">Mức độ ưu tiên:</label>
-                                        <select id="taskPriority" class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#0054a6] outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium">
+                                        <select id="taskPriority" class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#1547A6] outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium">
                                             <option value="high">🔴 Cao (Khẩn cấp & Quan trọng)</option>
                                             <option value="medium" selected>🟡 Trung bình (Bình thường)</option>
                                             <option value="low">🟢 Thấp (Linh hoạt)</option>
@@ -791,7 +791,7 @@
                                         <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
                                             <span>🏷️</span> Phân loại công việc:
                                         </label>
-                                        <select id="taskCategory" class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#0054a6] outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold cursor-pointer">
+                                        <select id="taskCategory" class="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#1547A6] outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold cursor-pointer">
                                             <option value="Học tập" selected>📚 Học tập</option>
                                             <option value="Công việc">💼 Công việc</option>
                                             <option value="Cá nhân">🌱 Cá nhân</option>
@@ -804,9 +804,9 @@
                                             <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                                                 <span>⏱️</span> Thời lượng ước tính (Duration):
                                             </span>
-                                            <span id="taskDurationLabel" class="text-[11px] font-black text-[#0054a6] dark:text-blue-400 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded shadow-2xs">60 phút (1 giờ)</span>
+                                            <span id="taskDurationLabel" class="text-[11px] font-black text-[#1547A6] dark:text-blue-400 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded shadow-2xs">60 phút (1 giờ)</span>
                                         </div>
-                                        <input type="range" id="taskDuration" min="15" max="300" step="15" value="60" oninput="updateDurationDisplay('taskDuration', 'taskDurationLabel')" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#0054a6]">
+                                        <input type="range" id="taskDuration" min="15" max="300" step="15" value="60" oninput="updateDurationDisplay('taskDuration', 'taskDurationLabel')" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1547A6]">
                                         <div class="flex items-center justify-between text-[9px] text-slate-400 font-medium px-0.5">
                                             <span>15p</span>
                                             <span>1h</span>
@@ -825,7 +825,7 @@
 
                                     <div class="flex items-center justify-between gap-2 pt-1 shrink-0">
                                         <span class="text-[10px] text-slate-400">Shift+Enter: xuống dòng</span>
-                                        <button type="submit" class="bg-[#0054a6] hover:bg-[#004285] text-white font-bold text-xs py-2 px-4 rounded-xl transition-colors shadow-xs cursor-pointer flex items-center gap-1.5 shrink-0">
+                                        <button type="submit" class="bg-[#1547A6] hover:bg-[#0D3A8F] text-white font-bold text-xs py-2 px-4 rounded-xl transition-colors shadow-xs cursor-pointer flex items-center gap-1.5 shrink-0">
                                             <span>📥</span>
                                             <span>Thêm vào Inbox</span>
                                         </button>
@@ -842,9 +842,9 @@
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
                                 <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                                    <span class="p-1 rounded-lg bg-blue-50 text-[#0054a6] border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 text-sm">🎓</span>
+                                    <span class="p-1 rounded-lg bg-blue-50 text-[#1547A6] border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800 text-sm">🎓</span>
                                     <span>Lịch học cố định trong tuần (FAP Schedule)</span>
-                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#0054a6] border border-blue-200 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800" id="fapScheduleTotalBadge">0 buổi</span>
+                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#1547A6] border border-blue-200 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800" id="fapScheduleTotalBadge">0 buổi</span>
                                 </h2>
                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                     Lịch học chính khóa cố định từ FAP. Bạn có thể bấm để đánh dấu <strong>Hoàn tất ca học</strong> hoặc <strong>Báo huỷ (Cancel)</strong> khi được nghỉ.
@@ -854,7 +854,7 @@
                             <!-- Bộ lọc trạng thái lịch học FAP -->
                             <div class="flex items-center gap-1.5 flex-wrap text-xs">
                                 <span class="text-slate-400 font-bold mr-1 text-[11px]">Trạng thái:</span>
-                                <button type="button" id="fapFilterAllBtn" onclick="setFapFilter('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0054a6] text-white shadow-2xs transition-all cursor-pointer">
+                                <button type="button" id="fapFilterAllBtn" onclick="setFapFilter('all')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#1547A6] text-white shadow-2xs transition-all cursor-pointer">
                                     Tất cả (<span id="fapFilterCountAll">0</span>)
                                 </button>
                                 <button type="button" id="fapFilterUpcomingBtn" onclick="setFapFilter('upcoming')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
@@ -901,7 +901,7 @@
                             <!-- Nút chuyển tuần -->
                             <div class="flex items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 gap-1">
                                 <button type="button" onclick="changeWeek(-1)" class="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors cursor-pointer" title="Tuần trước">◀ Trước</button>
-                                <button type="button" onclick="goToCurrentWeek()" class="px-2.5 py-1 text-xs font-bold text-[#0054a6] dark:text-blue-400 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors cursor-pointer" title="Về tuần hiện tại">Tuần này</button>
+                                <button type="button" onclick="goToCurrentWeek()" class="px-2.5 py-1 text-xs font-bold text-[#1547A6] dark:text-blue-400 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors cursor-pointer" title="Về tuần hiện tại">Tuần này</button>
                                 <button type="button" onclick="changeWeek(1)" class="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors cursor-pointer" title="Tuần sau">Sau ▶</button>
                             </div>
 

@@ -303,7 +303,7 @@
                 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between">
                     <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
                         <span class="font-medium">Giờ rảnh trung bình</span>
-                        <span class="text-base p-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#0054a6] dark:text-blue-400">⚡</span>
+                        <span class="text-base p-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#1547A6] dark:text-blue-400">⚡</span>
                     </div>
                     <div class="mt-2">
                         <div class="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 font-mono tracking-tight">${formatDuration(avgFreeMin)}</div>
@@ -335,7 +335,7 @@
                 const isToday = day.isToday;
                 const dayTotalFree = dayCalcs[idx].totalFreeMinutes;
                 return `
-                    <div class="flex-1 min-w-[105px] sm:min-w-[115px] text-center px-1.5 py-2 rounded-xl ${isToday ? 'bg-[#0054a6] text-white shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200'} border ${isToday ? 'border-[#0054a6]' : 'border-slate-200 dark:border-slate-700'}">
+                    <div class="flex-1 min-w-[105px] sm:min-w-[115px] text-center px-1.5 py-2 rounded-xl ${isToday ? 'bg-[#1547A6] text-white shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200'} border ${isToday ? 'border-[#1547A6]' : 'border-slate-200 dark:border-slate-700'}">
                         <div class="text-xs font-black tracking-tight">${day.short}</div>
                         <div class="text-[10px] font-mono opacity-80">${day.dateStr}</div>
                         <div class="text-[9px] font-semibold mt-0.5 ${isToday ? 'text-emerald-200' : 'text-emerald-600 dark:text-emerald-400'}">
@@ -397,7 +397,7 @@
                     }
 
                     return `
-                        <div class="flex-1 min-w-[105px] sm:min-w-[115px] flex flex-col gap-1.5 h-full ${isToday ? 'ring-1 ring-[#0054a6]/25 rounded-xl p-1 bg-[#0054a6]/5' : ''}">${cellContent}</div>
+                        <div class="flex-1 min-w-[105px] sm:min-w-[115px] flex flex-col gap-1.5 h-full ${isToday ? 'ring-1 ring-[#1547A6]/25 rounded-xl p-1 bg-[#1547A6]/5' : ''}">${cellContent}</div>
                     `;
                 }).join('');
 
