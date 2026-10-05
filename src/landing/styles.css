@@ -387,6 +387,11 @@ a {
   padding: 6px;
 }
 
+/* CTA đăng ký/vào dùng ngay bên trong menu mobile - ẩn mặc định, chỉ hiện khi thu gọn xuống mobile */
+.nav-menu-ctas {
+  display: none;
+}
+
 .mobile-toggle span {
   width: 24px;
   height: 2.5px;
@@ -2075,6 +2080,28 @@ a {
 
   .mobile-toggle {
     display: flex;
+    padding: 10px;
+  }
+
+  /* Ẩn 2 nút CTA khỏi thanh header trên mobile để hamburger không bị đẩy tràn ra ngoài màn hình */
+  .header-cta-desktop {
+    display: none;
+  }
+
+  /* Hiện lại 2 nút CTA bên trong menu sổ xuống trên mobile, xếp dọc, full width */
+  .nav-menu-ctas {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-card);
+  }
+
+  .nav-menu-ctas .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .hero-headline {

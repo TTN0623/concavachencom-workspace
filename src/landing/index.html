@@ -36,14 +36,24 @@
         <a href="#testimonials" class="nav-link">Đánh giá</a>
         <a href="#faq" class="nav-link">FAQ</a>
         <a href="#contact" class="nav-link">Liên hệ</a>
+
+        <!-- CTA chỉ hiển thị bên trong menu mobile (ẩn trên desktop qua CSS) -->
+        <div class="nav-menu-ctas">
+          <button type="button" class="btn btn-primary nav-cta" onclick="openRegisterModal()">
+            <span>Đăng ký dùng thử sớm</span>
+          </button>
+          <a href="/app" class="btn nav-sub-cta">
+            <span>Vào dùng ngay ➜</span>
+          </a>
+        </div>
       </nav>
 
       <div class="nav-actions">
-        <!-- Hai nút kêu gọi hành động -->
-        <button type="button" class="btn btn-primary nav-cta" onclick="openRegisterModal()">
+        <!-- Hai nút kêu gọi hành động (chỉ hiển thị trên desktop, bản mobile nằm trong menu) -->
+        <button type="button" class="btn btn-primary nav-cta header-cta-desktop" onclick="openRegisterModal()">
           <span>Đăng ký dùng thử sớm</span>
         </button>
-        <a href="/app" class="btn nav-sub-cta">
+        <a href="/app" class="btn nav-sub-cta header-cta-desktop">
           <span>Vào dùng ngay ➜</span>
         </a>
         <button class="mobile-toggle" id="mobileToggle" aria-label="Mở menu">

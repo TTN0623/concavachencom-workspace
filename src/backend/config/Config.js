@@ -11,6 +11,7 @@ const APP_CONFIG = {
   SHEET_NAME_USERS: 'Users',
   SHEET_NAME_FEEDBACK: 'Feedback',
   SHEET_NAME_ANNOUNCEMENTS: 'Announcements',
+  SHEET_NAME_LEADS: 'Leads',
   ADMIN_EMAIL: 'trtainguyen2306@gmail.com',
   SUPABASE_URL: 'https://kqkvsucqkhqsuxrimhez.supabase.co',
   SUPABASE_KEY: 'sb_publishable_UxRex145DBNTSgTOyjjObA_6-ioFEz2'

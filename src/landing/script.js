@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
       mobileToggle.classList.toggle('open');
     });
 
-    // Close mobile menu when clicking any nav link
-    const navLinks = navMenu.querySelectorAll('.nav-link');
+    // Close mobile menu when clicking any nav link hoặc CTA bên trong menu
+    const navLinks = navMenu.querySelectorAll('.nav-link, .nav-menu-ctas a, .nav-menu-ctas button');
     navLinks.forEach(link => {
       link.addEventListener('click', () => {
         navMenu.classList.remove('active');
@@ -113,9 +113,14 @@ function closeRegisterModal() {
   document.body.style.overflow = '';
 }
 
+// Endpoint Google Apps Script (Web App) nhận đăng ký dùng thử sớm từ Landing Page
+// và lưu vào Google Sheet "Leads" + gửi email thông báo cho Admin
+const LEAD_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyS6HtN40EiOxfMGGHNsqN1ZeigSn3nkRJzbsIc1EJoAX3emgBxHXGxYiVGBAtD4sUEag/exec';
+
 /**
  * Xử lý submit Form Đăng Ký
- * Lưu thông tin vào localStorage (concavachencom_leads) để kết nối backend ở bước sau
+ * Gửi thông tin thật sang Google Apps Script (Sheet "Leads" + email báo cho Admin)
+ * Đồng thời lưu thêm vào localStorage làm bản sao dự phòng phía máy khách
  */
 function handleRegisterSubmit(event) {
   event.preventDefault();
@@ -150,18 +155,30 @@ function handleRegisterSubmit(event) {
     userAgent: navigator.userAgent
   };
 
+  // Lưu bản sao dự phòng phía máy khách (không phải nguồn dữ liệu chính)
   try {
     const STORAGE_KEY = 'concavachencom_leads';
     const rawExisting = localStorage.getItem(STORAGE_KEY);
     const leadsList = rawExisting ? JSON.parse(rawExisting) : [];
     leadsList.push(leadData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(leadsList));
-    console.log('✅ Lead saved locally to localStorage["concavachencom_leads"]:', leadData);
   } catch (err) {
-    console.warn('Lỗi khi lưu vào localStorage:', err);
+    console.warn('Lỗi khi lưu bản sao dự phòng vào localStorage:', err);
   }
 
-  setTimeout(() => {
+  // Gửi thật sang Google Apps Script -> Lưu Google Sheet "Leads" + Email báo Admin
+  // Dùng mode:'no-cors' vì Apps Script Web App không trả CORS header cho domain khác;
+  // request vẫn được Google xử lý và ghi dữ liệu dù trình duyệt không đọc được response.
+  let deliveryFailed = false;
+  fetch(LEAD_WEB_APP_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'registerLead', ...leadData })
+  }).catch(err => {
+    deliveryFailed = true;
+    console.warn('Gửi lead tới Google Apps Script thất bại (có thể do mất mạng):', err);
+  }).finally(() => {
     // Reset button
     if (submitBtn) {
       submitBtn.disabled = false;
@@ -177,5 +194,9 @@ function handleRegisterSubmit(event) {
     if (nameHolder) nameHolder.textContent = fullname;
     if (formBox) formBox.style.display = 'none';
     if (successBox) successBox.style.display = 'block';
-  }, 350);
+
+    if (deliveryFailed) {
+      console.warn('⚠️ Lead có thể chưa tới được máy chủ, vui lòng liên hệ trực tiếp email nếu không thấy phản hồi.');
+    }
+  });
 }
