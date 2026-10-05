@@ -3,12 +3,4 @@
 !**/*.js
 !**/*.html
 !**/*.json
-node_modules/**
-.git/**
-rules/**
-docs/**
-scripts/**
-public/**
-package.json
-package-lock.json
-vercel.json
+landing/**

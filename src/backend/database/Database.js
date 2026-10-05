@@ -115,7 +115,18 @@ function setupDatabase() {
     ]);
   }
 
-  return { tasksSheet, usersSheet, feedbackSheet, announcementsSheet };
+  // 5. Tab Leads (Lưu trữ đăng ký dùng thử sớm từ Landing Page concavachencom.site)
+  let leadsSheet = ss.getSheetByName(APP_CONFIG.SHEET_NAME_LEADS);
+  if (!leadsSheet) {
+    leadsSheet = ss.insertSheet(APP_CONFIG.SHEET_NAME_LEADS);
+    leadsSheet.appendRow([
+      "id", "fullname", "email", "studentId", "createdAt", "sourceUrl", "userAgent"
+    ]);
+    leadsSheet.getRange("A1:G1").setFontWeight("bold");
+    leadsSheet.setFrozenRows(1);
+  }
+
+  return { tasksSheet, usersSheet, feedbackSheet, announcementsSheet, leadsSheet };
 }
 
 /**

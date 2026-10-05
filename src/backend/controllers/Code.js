@@ -173,6 +173,13 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Nhận đăng ký dùng thử sớm (lead) từ Landing Page concavachencom.site
+    if (payload.action === 'registerLead') {
+      const res = saveLead(payload);
+      return ContentService.createTextOutput(JSON.stringify(res))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     return ContentService.createTextOutput(JSON.stringify({ 
       success: true, 
       message: 'Received' 
