@@ -269,6 +269,10 @@ a {
   align-items: center;
   justify-content: space-between;
   height: 78px;
+  /* Thanh điều hướng được phép rộng hơn khung nội dung chính (1200px) để đủ chỗ
+     cho 8 mục menu + 2 nút CTA trên 1 dòng, tránh bị bóp chữ xuống dòng. */
+  max-width: 1440px;
+  gap: 16px;
 }
 
 .brand-logo {
@@ -338,15 +342,19 @@ a {
 .nav-menu {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 20px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .nav-link {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-dark);
   position: relative;
   padding: 6px 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-link:hover,
@@ -375,12 +383,14 @@ a {
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .nav-cta {
-  padding: 10px 20px;
-  font-size: 0.9rem;
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  white-space: nowrap;
 }
 
 .mobile-toggle {
@@ -2065,7 +2075,12 @@ a {
   }
 }
 
-@media (max-width: 768px) {
+/* Thanh điều hướng chuyển sang menu rút gọn (hamburger) sớm hơn các phần còn lại
+   của trang (1280px thay vì 768px): 8 mục menu + 2 nút CTA cần nhiều chỗ, ở các
+   màn hình laptop nhỏ/tablet (1024-1279px) chúng sẽ bị đè chồng lên nhau nếu vẫn
+   cố hiển thị 1 dòng ngang. Tách riêng breakpoint cho nav để không ảnh hưởng tới
+   layout các phần khác (vốn chỉ cần đổi ở mốc điện thoại thật 768px). */
+@media (max-width: 1280px) {
   .nav-menu {
     display: none;
     position: absolute;
@@ -2089,12 +2104,12 @@ a {
     padding: 10px;
   }
 
-  /* Ẩn 2 nút CTA khỏi thanh header trên mobile để hamburger không bị đẩy tràn ra ngoài màn hình */
+  /* Ẩn 2 nút CTA khỏi thanh header để hamburger không bị đẩy tràn ra ngoài / đè lên menu */
   .header-cta-desktop {
     display: none;
   }
 
-  /* Hiện lại 2 nút CTA bên trong menu sổ xuống trên mobile, xếp dọc, full width */
+  /* Hiện lại 2 nút CTA bên trong menu sổ xuống, xếp dọc, full width */
   .nav-menu-ctas {
     display: flex;
     flex-direction: column;
@@ -2109,7 +2124,9 @@ a {
     width: 100%;
     justify-content: center;
   }
+}
 
+@media (max-width: 768px) {
   .hero-headline {
     font-size: 2rem;
   }
